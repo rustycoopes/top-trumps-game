@@ -1,0 +1,44 @@
+id,role,type,description,size/ratio,style line ref,source
+bg_table,table background,image,Felt card-table surface with subtle vignette and soft rim light; empty play area for two card slots,16:9,STYLE FORMULA,generate
+card_back,deck card back,image,Ornate card reverse with crest emblem; no text; centered medallion,2:3,STYLE FORMULA,generate
+ui_panel,HUD chrome,image,Dark beveled panel frame for score and turn status; empty interior,4:1,STYLE FORMULA,generate
+btn_primary,button face,image,Raised rectangular button plate; empty center for label overlay,3:1,STYLE FORMULA,generate
+icon_trophy,win badge,image,Gold trophy icon on transparent background for victory screen,1:1,STYLE FORMULA,generate
+icon_skull,lose badge,image,Muted silver crest icon on transparent background for defeat screen,1:1,STYLE FORMULA,generate
+card_01,creature portrait,image,Blaze Wyrm — coiled fire dragon portrait for trading card art; no text,1:1,STYLE FORMULA,generate
+card_02,creature portrait,image,Frost Leviathan — arctic sea serpent portrait for trading card art; no text,1:1,STYLE FORMULA,generate
+card_03,creature portrait,image,Thunder Roc — storm eagle mid-dive portrait for trading card art; no text,1:1,STYLE FORMULA,generate
+card_04,creature portrait,image,Iron Colossus — armored stone giant portrait for trading card art; no text,1:1,STYLE FORMULA,generate
+card_05,creature portrait,image,Shadow Lynx — sleek black panther with glowing eyes; no text,1:1,STYLE FORMULA,generate
+card_06,creature portrait,image,Solar Phoenix — bird of flame rising portrait; no text,1:1,STYLE FORMULA,generate
+card_07,creature portrait,image,Abyss Kraken — deep-sea tentacled horror portrait; no text,1:1,STYLE FORMULA,generate
+card_08,creature portrait,image,Crystal Golem — faceted gemstone humanoid portrait; no text,1:1,STYLE FORMULA,generate
+card_09,creature portrait,image,Venom Hydra — multi-headed swamp serpent portrait; no text,1:1,STYLE FORMULA,generate
+card_10,creature portrait,image,Storm Djinn — swirling genie of wind and lightning; no text,1:1,STYLE FORMULA,generate
+card_11,creature portrait,image,Obsidian Drake — black volcanic dragon portrait; no text,1:1,STYLE FORMULA,generate
+card_12,creature portrait,image,Aurora Stag — luminous antlered spirit deer portrait; no text,1:1,STYLE FORMULA,generate
+card_13,creature portrait,image,Magma Titan — molten rock giant portrait; no text,1:1,STYLE FORMULA,generate
+card_14,creature portrait,image,Moon Wolf — silver spectral wolf howling; no text,1:1,STYLE FORMULA,generate
+card_15,creature portrait,image,Coral Siren — ocean merfolk warrior portrait; no text,1:1,STYLE FORMULA,generate
+card_16,creature portrait,image,Ember Fox — small cunning fire fox portrait; no text,1:1,STYLE FORMULA,generate
+card_17,creature portrait,image,Jade Basilisk — jade-scaled serpent with piercing gaze; no text,1:1,STYLE FORMULA,generate
+card_18,creature portrait,image,Void Moth — enormous cosmic moth with star-dust wings; no text,1:1,STYLE FORMULA,generate
+card_19,creature portrait,image,Sand Sphinx — desert guardian lion with riddle stare; no text,1:1,STYLE FORMULA,generate
+card_20,creature portrait,image,Glacier Bear — massive ice-armored polar bear; no text,1:1,STYLE FORMULA,generate
+card_21,creature portrait,image,Plasma Ray — sleek bio-mechanical manta of light; no text,1:1,STYLE FORMULA,generate
+card_22,creature portrait,image,Thorn Treant — ancient forest tree-being portrait; no text,1:1,STYLE FORMULA,generate
+card_23,creature portrait,image,Blood Bat — giant vampire bat mid-swoop; no text,1:1,STYLE FORMULA,generate
+card_24,creature portrait,image,Quake Behemoth — four-legged earth rumbler portrait; no text,1:1,STYLE FORMULA,generate
+card_25,creature portrait,image,Mirror Wisp — translucent floating spirit of glass light; no text,1:1,STYLE FORMULA,generate
+card_26,creature portrait,image,Cinder Imp — mischievous small horned fire imp; no text,1:1,STYLE FORMULA,generate
+card_27,creature portrait,image,Tide Turtle — armored island-backed sea turtle; no text,1:1,STYLE FORMULA,generate
+card_28,creature portrait,image,Night Owl — wise huge owl with constellation eyes; no text,1:1,STYLE FORMULA,generate
+card_29,creature portrait,image,Rust Beetle — giant mechanical scarab portrait; no text,1:1,STYLE FORMULA,generate
+card_30,creature portrait,image,Star Unicorn — celestial unicorn with comet mane; no text,1:1,STYLE FORMULA,generate
+sfx_flip,card flip,audio,Short crisp card flip whoosh,0.3s,n/a,generate
+sfx_win_trick,trick won,audio,Satisfying soft chime for winning a round,0.5s,n/a,generate
+sfx_lose_trick,trick lost,audio,Low muted thud for losing a round,0.4s,n/a,generate
+sfx_win_game,match victory,audio,Short triumphant fanfare sting,1.5s,n/a,generate
+sfx_lose_game,match defeat,audio,Short somber resolve sting,1.2s,n/a,generate
+sfx_select,ui select,audio,Light tap click for stat selection,0.15s,n/a,generate
+bgm_table,ambient bed,audio,Low tension table-game ambient loop; soft drums and pads,loop 30s,n/a,generate

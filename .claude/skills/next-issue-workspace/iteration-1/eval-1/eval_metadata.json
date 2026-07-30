@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "explicit-priority-triage",
+  "prompt": "which slice 1 issue is the highest priority to pick up right now, and why? just tell me your choice, don't start it yet",
+  "assertions": [
+    {"name": "picks_issue_17", "text": "Selects issue #17 (Slice 1.7 sidebar shell)."},
+    {"name": "cites_unblocks_23_dependency", "text": "Reasoning explicitly notes #23 is blocked by / depends on #17 and prefers the unblocker."},
+    {"name": "explains_tier_priority", "text": "Explicitly explains the priority ordering (bug > enhancement > future-enhancement) and which tier is the top occupied one."},
+    {"name": "recommends_single_issue", "text": "Recommends exactly one issue."},
+    {"name": "honors_dont_start_yet", "text": "Respects 'don't start it yet' — reports the choice without beginning implementation (no branches/PRs/to-implementation)."}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "live-board-natural-ask",
+  "prompt": "what should I work on next?",
+  "assertions": [
+    {"name": "picks_issue_17", "text": "Selects issue #17 (Slice 1.7 sidebar shell) as the one to work on next."},
+    {"name": "cites_unblocks_23_dependency", "text": "Reasoning explicitly notes that #23 (E2E tests) is blocked by / depends on #17, and uses that as the deciding factor over #23 — not just 'it's the next one'."},
+    {"name": "applies_priority_tiers", "text": "Reasoning shows the bug > enhancement > future-enhancement ordering was applied (e.g. notes there are no open bugs, so the enhancement tier is on top)."},
+    {"name": "recommends_single_issue", "text": "Recommends exactly one issue to start, not a list."},
+    {"name": "read_only_no_side_effects", "text": "Did not create/switch git branches, commit, push, open a PR, or invoke /to-implementation — selection only."}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "eval_id": 2,
+  "eval_name": "future-enh-only-hypothetical",
+  "prompt": "if the only Todo issues left in slice 1 were the future-enhancement ones (#29-#42), which would you pick to work on next and why? don't start it.",
+  "assertions": [
+    {"name": "picks_from_future_enh_tier", "text": "Selects one issue from the future-enhancement tier (a number in the #29-#42 range)."},
+    {"name": "flags_decision_type_items", "text": "Flags that some candidates are 'decide whether to...' items needing a product decision before implementation (e.g. #37 column encryption, #39 SEO/robots, #42 authed-visitor behaviour) rather than treating everything as a pure build task."},
+    {"name": "reasoning_beyond_number", "text": "Gives a substantive reason for the pick (foundational / unblocks other work / good base), not merely the lowest number."},
+    {"name": "recommends_single_issue", "text": "Recommends exactly one issue."},
+    {"name": "read_only_no_side_effects", "text": "Did not start implementation — selection only."}
+  ]
+}
