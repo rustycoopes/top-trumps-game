@@ -1,5 +1,13 @@
 package com.toptrumps.rules
 
+/** The final tally, set once every card has been dealt into a pile. */
+public data class MatchOutcome(
+    /** `null` only reachable under [TieFallback.EACH_KEEPS_OWN] — see the all-metrics-tie ADR. */
+    val winner: Seat?,
+    val hostScore: Int,
+    val guestScore: Int,
+)
+
 /**
  * The authoritative, never-serialized game state. [RulesEngine.deal] is its sole constructor;
  * every read — including the host's own UI — goes through [RulesEngine.project]. See the
@@ -8,7 +16,14 @@ package com.toptrumps.rules
 @ConsistentCopyVisibility
 public data class MatchState internal constructor(
     val deck: Deck,
+    val config: MatchConfig,
     val hands: Map<Seat, List<Card>>,
+    val piles: Map<Seat, List<Card>>,
+    val roundNumber: Int,
+    /** Fixed at deal time: the number of cards each hand started with. */
+    val totalRounds: Int,
     val round: RoundState,
+    /** `null` while the match is in progress. */
+    val outcome: MatchOutcome?,
     val revision: Long,
 )

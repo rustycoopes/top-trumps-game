@@ -8,11 +8,20 @@ import com.toptrumps.rules.Direction
 import com.toptrumps.rules.MatchConfig
 import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.MetricSpec
+import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.rules.StatValue
 import com.toptrumps.session.GuestMatchSession
 import com.toptrumps.session.HostMatchSession
 import com.toptrumps.session.LoopbackTransport
+import com.toptrumps.session.MatchSession
+import com.toptrumps.session.MatchView
+import com.toptrumps.session.RemoteCardFace
+import com.toptrumps.session.RemoteMetricSpec
+import com.toptrumps.session.RemoteOpponentView
 import com.toptrumps.session.RemoteRoundState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -37,6 +46,27 @@ private fun testDeck(): Deck = Deck(
     ),
 )
 
+/** X's topSpeed is the deck's worst; X's year is the deck's best under LOW_WINS. */
+private fun rankingDeck(): Deck = Deck(
+    id = "ranking-deck",
+    metrics = listOf(
+        MetricSpec(topSpeed, "Top Speed", "mph", Direction.HIGH_WINS),
+        MetricSpec(year, "Year", "", Direction.LOW_WINS),
+    ),
+    cards = listOf(
+        Card("x", "X", mapOf(topSpeed to StatValue(50.0), year to StatValue(1960.0))),
+        Card("p", "P", mapOf(topSpeed to StatValue(200.0), year to StatValue(1990.0))),
+        Card("q", "Q", mapOf(topSpeed to StatValue(210.0), year to StatValue(2000.0))),
+        Card("r", "R", mapOf(topSpeed to StatValue(220.0), year to StatValue(2010.0))),
+    ),
+)
+
+private fun fakeSession(): MatchSession = object : MatchSession {
+    override val view = MutableStateFlow<MatchView?>(null)
+    override fun submit(intent: PlayerIntent) = Unit
+    override fun close() = Unit
+}
+
 class AiOpponentDriverTest {
 
     @Test
@@ -46,9 +76,9 @@ class AiOpponentDriverTest {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
             val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(seed), hostTransport, backgroundScope)
             val guest = GuestMatchSession(guestTransport, backgroundScope)
-            val ai = AiOpponentDriver(guest, "GUEST", backgroundScope)
+            val ai = AiOpponentDriver(guest, "GUEST", testDeck(), backgroundScope)
 
-            val awaiting = host.view.value!!.round as RemoteRoundState.AwaitingChoice
+            val awaiting = (host.view.value as MatchView.InProgress).round as RemoteRoundState.AwaitingChoice
             if (awaiting.chooser != "GUEST") {
                 host.close()
                 guest.close()
@@ -57,7 +87,10 @@ class AiOpponentDriverTest {
 
             ai.start()
 
-            assertTrue(host.view.value!!.round is RemoteRoundState.Resolved, "AI should have chosen and resolved the round")
+            assertTrue(
+                (host.view.value as MatchView.InProgress).round is RemoteRoundState.Resolved,
+                "AI should have chosen and resolved the round",
+            )
             host.close()
             guest.close()
             return@runTest
@@ -66,29 +99,56 @@ class AiOpponentDriverTest {
     }
 
     @Test
-    fun `chooseMetric deterministically picks the metric with the highest direction-adjusted score`() {
-        val view = com.toptrumps.session.MatchView(
+    fun `chooseMetric picks the metric where the card ranks highest within the deck, not the biggest raw number`() {
+        val view = MatchView.InProgress(
             revision = 0,
-            self = com.toptrumps.session.RemoteCardFace("x", "X", mapOf("topSpeed" to 50.0, "year" to 1960.0)),
-            opponent = com.toptrumps.session.RemoteOpponentView.FaceDown,
-            round = RemoteRoundState.AwaitingChoice("GUEST"),
+            self = RemoteCardFace("x", "X", mapOf("topSpeed" to 50.0, "year" to 1960.0)),
+            opponent = RemoteOpponentView.FaceDown,
+            round = RemoteRoundState.AwaitingChoice("GUEST", remainingMetrics = listOf("topSpeed", "year"), revealedMetrics = emptyList()),
             metrics = listOf(
-                com.toptrumps.session.RemoteMetricSpec("topSpeed", "Top Speed", "mph", "HIGH_WINS"),
-                com.toptrumps.session.RemoteMetricSpec("year", "Year", "", "LOW_WINS"),
+                RemoteMetricSpec("topSpeed", "Top Speed", "mph", "HIGH_WINS"),
+                RemoteMetricSpec("year", "Year", "", "LOW_WINS"),
             ),
+            myScore = 0,
+            opponentScore = 0,
+            roundNumber = 1,
+            totalRounds = 2,
+            myPile = emptyList(),
         )
         val driver = AiOpponentDriver(
-            session = object : com.toptrumps.session.MatchSession {
-                override val view = kotlinx.coroutines.flow.MutableStateFlow<com.toptrumps.session.MatchView?>(null)
-                override fun submit(intent: com.toptrumps.rules.PlayerIntent.ChooseMetric) = Unit
-                override fun close() = Unit
-            },
+            session = fakeSession(),
             seatName = "GUEST",
-            scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
+            deck = rankingDeck(),
+            scope = CoroutineScope(Dispatchers.Unconfined),
         )
 
-        // score(topSpeed) = 50 (HIGH_WINS, unadjusted); score(year) = -1960 (LOW_WINS, negated).
-        // 50 > -1960, so the heuristic picks topSpeed.
+        // A raw-value heuristic would pick topSpeed (50, HIGH_WINS-unadjusted, beats -1960,
+        // year negated for LOW_WINS). Deck-relative ranking correctly picks year instead: 50 is
+        // this deck's worst topSpeed, but 1960 is this deck's best (oldest) year.
+        val chosen = driver.chooseMetric(view)
+        assertEquals(year, chosen.metric)
+    }
+
+    @Test
+    fun `chooseMetric only offers metrics still available in a tiebreak`() {
+        val view = MatchView.InProgress(
+            revision = 0,
+            self = RemoteCardFace("x", "X", mapOf("topSpeed" to 50.0, "year" to 1960.0)),
+            opponent = RemoteOpponentView.FaceDown,
+            round = RemoteRoundState.AwaitingChoice("GUEST", remainingMetrics = listOf("topSpeed"), revealedMetrics = listOf("year")),
+            metrics = listOf(
+                RemoteMetricSpec("topSpeed", "Top Speed", "mph", "HIGH_WINS"),
+                RemoteMetricSpec("year", "Year", "", "LOW_WINS"),
+            ),
+            myScore = 0,
+            opponentScore = 0,
+            roundNumber = 1,
+            totalRounds = 2,
+            myPile = emptyList(),
+        )
+        val driver = AiOpponentDriver(fakeSession(), "GUEST", rankingDeck(), CoroutineScope(Dispatchers.Unconfined))
+
+        // year is deck-best but was tied earlier and excluded — topSpeed is the only option left.
         val chosen = driver.chooseMetric(view)
         assertEquals(topSpeed, chosen.metric)
     }

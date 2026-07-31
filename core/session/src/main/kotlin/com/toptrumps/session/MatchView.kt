@@ -1,5 +1,6 @@
 package com.toptrumps.session
 
+import com.toptrumps.rules.CardFace
 import com.toptrumps.rules.OpponentCardView
 import com.toptrumps.rules.PlayerView
 import com.toptrumps.rules.RoundState
@@ -44,41 +45,96 @@ public sealed interface RemoteOpponentView {
 public sealed interface RemoteRoundState {
     @Serializable
     @SerialName("awaitingChoice")
-    public data class AwaitingChoice(val chooser: String) : RemoteRoundState
+    public data class AwaitingChoice(
+        val chooser: String,
+        val remainingMetrics: List<String>,
+        val revealedMetrics: List<String>,
+    ) : RemoteRoundState
 
     @Serializable
     @SerialName("resolved")
-    public data class Resolved(val decidingMetric: String, val winner: String?) : RemoteRoundState
+    public data class Resolved(
+        val chooser: String,
+        val winner: String?,
+        val decidingMetric: String,
+        val resolution: String,
+        val revealedMetrics: List<String>,
+    ) : RemoteRoundState
 }
 
 @Serializable
-public data class MatchView(
-    val revision: Long,
-    val self: RemoteCardFace,
-    val opponent: RemoteOpponentView,
-    val round: RemoteRoundState,
-    val metrics: List<RemoteMetricSpec>,
-)
+public sealed interface MatchView {
+    public val revision: Long
+    public val myScore: Int
+    public val opponentScore: Int
+    public val myPile: List<RemoteCardFace>
 
-public fun PlayerView.toMatchView(): MatchView = MatchView(
-    revision = revision,
-    self = RemoteCardFace(self.id, self.name, self.stats.mapKeys { it.key.id }.mapValues { it.value.raw }),
-    opponent = when (val opponentView = opponent) {
-        is OpponentCardView.FaceDown -> RemoteOpponentView.FaceDown
-        is OpponentCardView.Contested -> RemoteOpponentView.Contested(
-            opponentView.revealed.map { RemoteRevealedMetric(it.metric.id, it.value.raw) },
-        )
-        is OpponentCardView.Revealed -> RemoteOpponentView.Revealed(
-            RemoteCardFace(
-                opponentView.card.id,
-                opponentView.card.name,
-                opponentView.card.stats.mapKeys { it.key.id }.mapValues { it.value.raw },
-            ),
-        )
-    },
-    round = when (val roundState = round) {
-        is RoundState.AwaitingChoice -> RemoteRoundState.AwaitingChoice(roundState.chooser.name)
-        is RoundState.Resolved -> RemoteRoundState.Resolved(roundState.decidingMetric.id, roundState.winner?.name)
-    },
-    metrics = metrics.map { RemoteMetricSpec(it.key.id, it.label, it.unit, it.direction.name) },
-)
+    @Serializable
+    @SerialName("inProgress")
+    public data class InProgress(
+        override val revision: Long,
+        val self: RemoteCardFace,
+        val opponent: RemoteOpponentView,
+        val round: RemoteRoundState,
+        val metrics: List<RemoteMetricSpec>,
+        override val myScore: Int,
+        override val opponentScore: Int,
+        val roundNumber: Int,
+        val totalRounds: Int,
+        override val myPile: List<RemoteCardFace>,
+    ) : MatchView
+
+    @Serializable
+    @SerialName("finished")
+    public data class Finished(
+        override val revision: Long,
+        val winner: String?,
+        override val myScore: Int,
+        override val opponentScore: Int,
+        override val myPile: List<RemoteCardFace>,
+    ) : MatchView
+}
+
+private fun CardFace.toRemote(): RemoteCardFace =
+    RemoteCardFace(id, name, stats.mapKeys { it.key.id }.mapValues { it.value.raw })
+
+public fun PlayerView.toMatchView(): MatchView = when (this) {
+    is PlayerView.Finished -> MatchView.Finished(
+        revision = revision,
+        winner = winner?.name,
+        myScore = myScore,
+        opponentScore = opponentScore,
+        myPile = myPile.map { it.toRemote() },
+    )
+    is PlayerView.InProgress -> MatchView.InProgress(
+        revision = revision,
+        self = self.toRemote(),
+        opponent = when (val opponentView = opponent) {
+            is OpponentCardView.FaceDown -> RemoteOpponentView.FaceDown
+            is OpponentCardView.Contested -> RemoteOpponentView.Contested(
+                opponentView.revealed.map { RemoteRevealedMetric(it.metric.id, it.value.raw) },
+            )
+            is OpponentCardView.Revealed -> RemoteOpponentView.Revealed(opponentView.card.toRemote())
+        },
+        round = when (val roundState = round) {
+            is RoundState.AwaitingChoice -> RemoteRoundState.AwaitingChoice(
+                chooser = roundState.chooser.name,
+                remainingMetrics = roundState.remainingMetrics.map { it.id },
+                revealedMetrics = roundState.revealedMetrics.map { it.id },
+            )
+            is RoundState.Resolved -> RemoteRoundState.Resolved(
+                chooser = roundState.chooser.name,
+                winner = roundState.winner?.name,
+                decidingMetric = roundState.decidingMetric.id,
+                resolution = roundState.resolution.name,
+                revealedMetrics = roundState.revealedMetrics.map { it.id },
+            )
+        },
+        metrics = metrics.map { RemoteMetricSpec(it.key.id, it.label, it.unit, it.direction.name) },
+        myScore = myScore,
+        opponentScore = opponentScore,
+        roundNumber = roundNumber,
+        totalRounds = totalRounds,
+        myPile = myPile.map { it.toRemote() },
+    )
+}

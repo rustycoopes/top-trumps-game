@@ -7,14 +7,18 @@ import com.toptrumps.ai.AiOpponentDriver
 import com.toptrumps.decks.DeckLoader
 import com.toptrumps.decks.DeckValidationResult
 import com.toptrumps.rules.MatchConfig
+import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.session.GuestMatchSession
 import com.toptrumps.session.HostMatchSession
 import com.toptrumps.session.LoopbackTransport
 import com.toptrumps.session.MatchSession
+import com.toptrumps.session.MatchView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.random.Random
 
 /**
@@ -31,24 +35,50 @@ public class AppGraph(assets: AssetManager) {
     // mutation be single-dispatcher-confined rather than guarded some other way.
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
 
-    /** The human's session for a fresh solo round. Slice 1 has exactly one deck and one round. */
+    /**
+     * The human's session for a fresh solo match. Callable again for a rematch — the returned
+     * [MatchSession.close] tears down everything this match started, including the guest side
+     * and its [AiOpponentDriver] collector, which otherwise outlive the human's own session (see
+     * slice 2's code review: closing only the host's transport left the previous match's guest
+     * session and AI coroutine parked forever on the shared graph scope).
+     */
     public fun startSoloMatch(): MatchSession {
         val deck = when (val result = DeckLoader.load(deckSource, "test-deck")) {
             is DeckValidationResult.Valid -> result.deck
             is DeckValidationResult.Invalid -> error("test-deck failed validation: ${result.errors}")
         }
 
+        // A child of `scope` rather than `scope` itself: every coroutine this match starts (both
+        // sessions' collectors, the AI's) is cancelled together when the match ends, without
+        // touching the next match's — and without leaving `scope` itself cancellable more than
+        // once across the graph's lifetime.
+        val matchScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
+
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(deck, MatchConfig(deck.id), Random(System.nanoTime()), hostTransport, scope)
-        val guest = GuestMatchSession(guestTransport, scope)
+        val host = HostMatchSession(deck, MatchConfig(deck.id), Random(System.nanoTime()), hostTransport, matchScope)
+        val guest = GuestMatchSession(guestTransport, matchScope)
 
-        AiOpponentDriver(guest, seatName = "GUEST", scope = scope).start()
+        AiOpponentDriver(guest, seatName = "GUEST", deck = deck, scope = matchScope).start()
 
-        return host
+        return SoloMatchSession(host, matchScope)
     }
 
     /** Cancels every coroutine this graph started. Call from the owning component's teardown. */
     public fun close() {
         scope.cancel()
+    }
+}
+
+/** Closing a solo match must tear down its guest side and AI driver too, not just the host's. */
+private class SoloMatchSession(
+    private val host: MatchSession,
+    private val matchScope: CoroutineScope,
+) : MatchSession {
+    override val view: StateFlow<MatchView?> get() = host.view
+    override fun submit(intent: PlayerIntent): Unit = host.submit(intent)
+
+    override fun close() {
+        host.close()
+        matchScope.cancel()
     }
 }
