@@ -36,17 +36,37 @@ None — can start immediately.
 
 ## Acceptance criteria
 
-- [ ] A throwaway app registers and discovers `_toptrumps._tcp` on two physical devices on the same Wi-Fi
-- [ ] The manifest contains only `INTERNET` and `ACCESS_NETWORK_STATE`, and no runtime permission dialog appears — **or** the exact permission demanded is recorded
-- [ ] Discovery is confirmed working with no `MulticastLock` held
-- [ ] Current Local Network Protection status is recorded, with the Android version it applies to
-- [ ] Behaviour of concurrent `resolveService` calls on these devices is recorded
-- [ ] Whether `serviceType` returns with a trailing dot is recorded per device
-- [ ] Auto-rename behaviour on name collision is observed and its format noted (as evidence it must not be parsed)
-- [ ] Findings are written into [TDD Open Questions](../TDD.md#open-questions), and the PRD's permission claim is confirmed or corrected
+- [x] A throwaway app registers and discovers `_toptrumps._tcp` on two physical devices on the same Wi-Fi
+- [x] The manifest contains only `INTERNET` and `ACCESS_NETWORK_STATE`, and no runtime permission dialog appears — **or** the exact permission demanded is recorded
+- [x] Discovery is confirmed working with no `MulticastLock` held
+- [ ] Current Local Network Protection status is recorded, with the Android version it applies to — **partial:** no API 36 device was available to test; no data either way
+- [x] Behaviour of concurrent `resolveService` calls on these devices is recorded
+- [x] Whether `serviceType` returns with a trailing dot is recorded per device
+- [x] Auto-rename behaviour on name collision is observed and its format noted (as evidence it must not be parsed)
+- [x] Findings are written into [TDD Open Questions](../TDD.md#open-questions), and the PRD's permission claim is confirmed or corrected
 
 ## Testing
 
 No automated tests — this is a manual spike and the deliverable is knowledge, not code. The app is deleted afterwards.
 
 The one thing to be rigorous about is recording **which device and which Android version** produced each observation. NSD behaviour varies by OEM and version, and an undated, unattributed note will be worthless in three months when something misbehaves.
+
+## Delivered
+
+- **Issue:** [#1](https://github.com/rustycoopes/top-trumps-game/issues/1)
+- **Branch:** `spike/slice-0-nsd` (pushed for backup/reference only — per this slice's own "nothing ships" rule, never merged into `main`)
+- **Date:** 2026-07-31
+- **Devices:** Samsung Galaxy S21 Ultra, `SM-G998U`, Android 13 (API 33); Samsung Galaxy Tab S7 FE, `SM-T733`, Android 14 (API 34)
+
+Built the throwaway single-Activity Views app exactly as specified (Gradle 8.9 / AGP 8.6.1 / Kotlin 1.9.24, `compileSdk`/`targetSdk 35`, `minSdk 26` — `compileSdk` deliberately pinned to 35 rather than the real product's 37, to minimise build-tooling risk on a one-off app). One real bug surfaced and fixed during bring-up: the manifest declared `Theme.Material.Light` but `MainActivity` extends `AppCompatActivity`, which requires a `Theme.AppCompat` descendant — crashed on launch with `IllegalStateException` until switched to `Theme.AppCompat.Light.NoActionBar`.
+
+All four spike questions plus both extra checks were run on both physical devices:
+
+1. **No runtime permission prompt on either device**, confirmed both visually and via `adb shell dumpsys package` (only `INTERNET`/`ACCESS_NETWORK_STATE` ever attached). `NEARBY_WIFI_DEVICES` is not demanded on API 33 or 34. **PRD's no-permissions claim confirmed**, no correction needed.
+2. **No `MulticastLock` held** at any point; discovery worked regardless.
+3. **Local Network Protection: unresolved.** Neither test device runs Android 16/API 36 — no data either way. Remains open until API 36 hardware is available.
+4. **Concurrent `resolveService`:** on the S21 Ultra (API 33), only the first of several back-to-back calls succeeds; the rest fail with `FAILURE_ALREADY_ACTIVE` (`errorCode=3`). Confirmed **not a permanent wedge** — a later solo resolve for the same service succeeded. The Tab S7 FE (API 34) accepted all concurrent calls with no failures — a real cross-version difference, recorded but not acted on (the design already avoids relying on concurrent resolves).
+5. **Trailing dot:** confirmed on both devices — `onServiceFound` reports `serviceType = "_toptrumps._tcp."`.
+6. **Auto-rename:** confirmed by registering the same name (`"Spike"`) on both devices — the second registrant's `onServiceRegistered` callback returned `actualServiceName = "Spike (2)"`. Format is `"<name> (<n>)"`.
+
+Full findings written into [TDD Open Questions 1 and 2](../TDD.md#open-questions). No deviations from the acceptance criteria other than the LNP item, which is a hardware-availability gap rather than a spike failure.
