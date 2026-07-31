@@ -10,16 +10,21 @@ import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.MetricSpec
 import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.rules.StatValue
+import com.toptrumps.rules.TieFallback
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
 private val topSpeed = MetricKey("topSpeed")
 private val year = MetricKey("year")
+private val weight = MetricKey("weight")
 
 private fun testDeck(): Deck = Deck(
     id = "test-deck",
@@ -35,9 +40,62 @@ private fun testDeck(): Deck = Deck(
     ),
 )
 
-/** Submits from whichever side [RulesEngine.deal] actually picked as the first chooser. */
+/**
+ * Every card ties every other card on topSpeed and year, but all four weights are distinct — so
+ * regardless of which two cards a shuffle happens to pair for round one, that round always ties
+ * twice and is always settled by weight on the third pick.
+ */
+private fun tieableDeck(): Deck = Deck(
+    id = "tieable-deck",
+    metrics = listOf(
+        MetricSpec(topSpeed, "Top Speed", "mph", Direction.HIGH_WINS),
+        MetricSpec(year, "Year", "", Direction.LOW_WINS),
+        MetricSpec(weight, "Weight", "kg", Direction.LOW_WINS),
+    ),
+    cards = listOf(
+        Card("a", "Alpha", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0), weight to StatValue(200.0))),
+        Card("b", "Bravo", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0), weight to StatValue(180.0))),
+        Card("c", "Charlie", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0), weight to StatValue(210.0))),
+        Card("d", "Delta", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0), weight to StatValue(190.0))),
+    ),
+)
+
+/**
+ * Every card is identical on every metric, so whichever two cards a shuffle happens to pair for
+ * round one, that round is always an all-metrics tie — the tests below don't need to control
+ * [RulesEngine.deal]'s shuffle to exercise the fallback.
+ */
+private fun allTiedDeck(): Deck = Deck(
+    id = "all-tied-deck",
+    metrics = listOf(
+        MetricSpec(topSpeed, "Top Speed", "mph", Direction.HIGH_WINS),
+        MetricSpec(year, "Year", "", Direction.LOW_WINS),
+    ),
+    cards = listOf(
+        Card("a", "Alpha", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0))),
+        Card("b", "Bravo", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0))),
+        Card("c", "Charlie", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0))),
+        Card("d", "Delta", mapOf(topSpeed to StatValue(120.0), year to StatValue(1975.0))),
+    ),
+)
+
+/** Six distinct-topSpeed cards (three rounds) so a full match always resolves on the first pick. */
+private fun sixCardDeck(): Deck = Deck(
+    id = "six-card-deck",
+    metrics = listOf(MetricSpec(topSpeed, "Top Speed", "mph", Direction.HIGH_WINS)),
+    cards = listOf(
+        Card("a", "Alpha", mapOf(topSpeed to StatValue(120.0))),
+        Card("b", "Bravo", mapOf(topSpeed to StatValue(150.0))),
+        Card("c", "Charlie", mapOf(topSpeed to StatValue(95.0))),
+        Card("d", "Delta", mapOf(topSpeed to StatValue(175.0))),
+        Card("e", "Echo", mapOf(topSpeed to StatValue(200.0))),
+        Card("f", "Foxtrot", mapOf(topSpeed to StatValue(110.0))),
+    ),
+)
+
+/** Submits from whichever side [com.toptrumps.rules.RulesEngine.deal] actually picked as the first chooser. */
 private fun chooseMetric(host: HostMatchSession, guest: GuestMatchSession, metric: MetricKey) {
-    val chooser = (host.view.value!!.round as RemoteRoundState.AwaitingChoice).chooser
+    val chooser = (host.view.value as MatchView.InProgress).round.let { it as RemoteRoundState.AwaitingChoice }.chooser
     val intent = PlayerIntent.ChooseMetric(metric)
     if (chooser == "HOST") host.submit(intent) else guest.submit(intent)
 }
@@ -60,8 +118,8 @@ class MatchSessionTest {
 
         chooseMetric(host, guest, topSpeed)
 
-        val hostWinner = (host.view.value!!.round as RemoteRoundState.Resolved).winner
-        val guestWinner = (guest.view.value!!.round as RemoteRoundState.Resolved).winner
+        val hostWinner = ((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner
+        val guestWinner = ((guest.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner
         assertEquals(hostWinner, guestWinner)
 
         host.close()
@@ -75,52 +133,163 @@ class MatchSessionTest {
             val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope)
             val guest = GuestMatchSession(guestTransport, backgroundScope)
             chooseMetric(host, guest, topSpeed) // HIGH_WINS
-            assertNotNull((host.view.value!!.round as RemoteRoundState.Resolved).winner)
+            assertNotNull(((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner)
         }
         run {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
             val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(2), hostTransport, backgroundScope)
             val guest = GuestMatchSession(guestTransport, backgroundScope)
             chooseMetric(host, guest, year) // LOW_WINS
-            assertNotNull((host.view.value!!.round as RemoteRoundState.Resolved).winner)
+            assertNotNull(((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner)
         }
     }
 
     @Test
-    fun `only the played metric appears in the guest's opponent view`() = runTest(UnconfinedTestDispatcher()) {
+    fun `the opponent's full card is revealed on the guest once the round resolves`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
         val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope)
         val guest = GuestMatchSession(guestTransport, backgroundScope)
 
         chooseMetric(host, guest, topSpeed)
 
-        val opponent = guest.view.value!!.opponent as RemoteOpponentView.Contested
-        assertEquals(1, opponent.revealed.size)
-        assertEquals(topSpeed.id, opponent.revealed.first().metric)
+        val opponent = (guest.view.value as MatchView.InProgress).opponent as RemoteOpponentView.Revealed
+        assertEquals(2, opponent.card.stats.size, "every stat, not just the played one, is now visible")
     }
 
     @Test
-    fun `no unplayed stat value survives the wire as JSON`() = runTest(UnconfinedTestDispatcher()) {
-        val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope)
-        val guest = GuestMatchSession(guestTransport, backgroundScope)
+    fun `during an active tiebreak chain, only the metrics played so far appear on the guest's opponent view`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val (hostTransport, guestTransport) = LoopbackTransport.createPair()
+            val host = HostMatchSession(tieableDeck(), MatchConfig("tieable-deck"), Random(1), hostTransport, backgroundScope)
+            val guest = GuestMatchSession(guestTransport, backgroundScope)
+            val driver = MatchDriver(host, guest)
 
-        chooseMetric(host, guest, topSpeed)
+            driver.choose(topSpeed) // ties
+            driver.choose(year) // ties again
 
-        val guestView = guest.view.value!!
-        val json = String(ProtocolCodec.encodeView(guestView))
-        val ownYearValue = guestView.self.stats.getValue(year.id)
+            val opponent = (guest.view.value as MatchView.InProgress).opponent as RemoteOpponentView.Contested
+            assertEquals(2, opponent.revealed.size)
+            assertEquals(setOf("topSpeed", "year"), opponent.revealed.map { it.metric }.toSet())
 
-        // Every card's year value is distinct. The guest's own card's year legitimately appears
-        // (it's their own hand); nobody else's should — that would mean an un-contested opponent
-        // stat, or another card's stat entirely, crossed the wire.
-        val allYearValues = testDeck().cards.map { it.stats.getValue(year).raw }
-        for (value in allYearValues) {
-            if (value == ownYearValue) continue
-            assertFalse(json.contains(value.toString()), "un-contested year value $value leaked into: $json")
+            host.close()
+            guest.close()
         }
+
+    @Test
+    fun `no unplayed stat value survives the wire as JSON, including across a two-step tiebreak`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val (hostTransport, guestTransport) = LoopbackTransport.createPair()
+            val host = HostMatchSession(tieableDeck(), MatchConfig("tieable-deck"), Random(1), hostTransport, backgroundScope)
+            val guest = GuestMatchSession(guestTransport, backgroundScope)
+            val driver = MatchDriver(host, guest)
+
+            driver.choose(topSpeed) // ties
+            driver.choose(year) // ties again — two stats now legitimately visible
+
+            val guestView = guest.view.value as MatchView.InProgress
+            val json = String(ProtocolCodec.encodeView(guestView))
+            val ownWeightValue = guestView.self.stats.getValue(weight.id)
+
+            // Every card's weight value is distinct, and weight hasn't been played yet. The
+            // guest's own weight legitimately appears (it's their own hand); nobody else's should.
+            val allWeightValues = tieableDeck().cards.map { it.stats.getValue(weight).raw }
+            for (value in allWeightValues) {
+                if (value == ownWeightValue) continue
+                assertFalse(json.contains(value.toString()), "un-contested weight value $value leaked into: $json")
+            }
+
+            host.close()
+            guest.close()
+        }
+
+    @Test
+    fun `CHOOSER_WINS travels on the wire and the guest agrees on the winner`() = runTest(UnconfinedTestDispatcher()) {
+        val (hostTransport, guestTransport) = LoopbackTransport.createPair()
+        val config = MatchConfig("all-tied-deck", TieFallback.CHOOSER_WINS)
+        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope)
+        val guest = GuestMatchSession(guestTransport, backgroundScope)
+        val driver = MatchDriver(host, guest)
+        val chooser = (driver.currentView().round as RemoteRoundState.AwaitingChoice).chooser
+
+        driver.choose(topSpeed)
+        driver.choose(year)
+
+        val hostResolved = (host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved
+        val guestResolved = (guest.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved
+        assertEquals("ALL_METRICS_TIED_FALLBACK", hostResolved.resolution)
+        assertEquals(chooser, hostResolved.winner)
+        assertEquals(hostResolved.winner, guestResolved.winner)
 
         host.close()
         guest.close()
     }
+
+    @Test
+    fun `DEFENDER_WINS travels on the wire and the guest agrees on the winner`() = runTest(UnconfinedTestDispatcher()) {
+        val (hostTransport, guestTransport) = LoopbackTransport.createPair()
+        val config = MatchConfig("all-tied-deck", TieFallback.DEFENDER_WINS)
+        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope)
+        val guest = GuestMatchSession(guestTransport, backgroundScope)
+        val driver = MatchDriver(host, guest)
+        val chooser = (driver.currentView().round as RemoteRoundState.AwaitingChoice).chooser
+        val defender = if (chooser == "HOST") "GUEST" else "HOST"
+
+        driver.choose(topSpeed)
+        driver.choose(year)
+
+        val guestResolved = (guest.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved
+        assertEquals(defender, guestResolved.winner)
+
+        host.close()
+        guest.close()
+    }
+
+    @Test
+    fun `EACH_KEEPS_OWN travels on the wire and both sides see no round winner`() = runTest(UnconfinedTestDispatcher()) {
+        val (hostTransport, guestTransport) = LoopbackTransport.createPair()
+        val config = MatchConfig("all-tied-deck", TieFallback.EACH_KEEPS_OWN)
+        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope)
+        val guest = GuestMatchSession(guestTransport, backgroundScope)
+        val driver = MatchDriver(host, guest)
+
+        driver.choose(topSpeed)
+        driver.choose(year)
+
+        val hostResolved = (host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved
+        val guestResolved = (guest.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved
+        assertNull(hostResolved.winner)
+        assertNull(guestResolved.winner)
+
+        host.close()
+        guest.close()
+    }
+
+    @Test
+    fun `a full match resolves identically on host and guest, with no draw and turn alternation held`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val (hostTransport, guestTransport) = LoopbackTransport.createPair()
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("six-card-deck"), Random(3), hostTransport, backgroundScope)
+            val guest = GuestMatchSession(guestTransport, backgroundScope)
+            val driver = MatchDriver(host, guest)
+            val choosers = mutableListOf<String>()
+
+            driver.playMatch { view, round ->
+                choosers += round.chooser
+                view.metrics.first().key // sixCardDeck has one metric, and every card's value is distinct.
+            }
+
+            assertEquals(3, choosers.size)
+            assertEquals(choosers[0], choosers[2])
+            assertNotEquals(choosers[0], choosers[1])
+
+            val hostFinal = host.view.value as MatchView.Finished
+            val guestFinal = guest.view.value as MatchView.Finished
+            assertEquals(hostFinal.winner, guestFinal.winner)
+            assertNotNull(hostFinal.winner, "an odd round count can never draw under the default CHOOSER_WINS config")
+            assertEquals(6, hostFinal.myScore + hostFinal.opponentScore)
+            assertTrue(hostFinal.myScore % 2 == 0 && hostFinal.opponentScore % 2 == 0)
+
+            host.close()
+            guest.close()
+        }
 }

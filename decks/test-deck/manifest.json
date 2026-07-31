@@ -2,13 +2,367 @@
   "id": "test-deck",
   "name": "Test Deck",
   "metrics": [
-    { "key": "topSpeed", "label": "Top Speed", "unit": "mph", "direction": "HIGH_WINS" },
-    { "key": "year", "label": "Year", "unit": "", "direction": "LOW_WINS" }
+    {
+      "key": "topSpeed",
+      "label": "Top Speed",
+      "unit": "mph",
+      "direction": "HIGH_WINS"
+    },
+    {
+      "key": "year",
+      "label": "Year",
+      "unit": "",
+      "direction": "LOW_WINS"
+    },
+    {
+      "key": "engineCapacity",
+      "label": "Engine Capacity",
+      "unit": "cc",
+      "direction": "HIGH_WINS"
+    },
+    {
+      "key": "weight",
+      "label": "Weight",
+      "unit": "kg",
+      "direction": "LOW_WINS"
+    },
+    {
+      "key": "length",
+      "label": "Length",
+      "unit": "mm",
+      "direction": "LOW_WINS"
+    }
   ],
   "cards": [
-    { "id": "card-a", "name": "Test Card A", "stats": { "topSpeed": 120, "year": 1975 } },
-    { "id": "card-b", "name": "Test Card B", "stats": { "topSpeed": 150, "year": 1988 } },
-    { "id": "card-c", "name": "Test Card C", "stats": { "topSpeed": 95, "year": 1962 } },
-    { "id": "card-d", "name": "Test Card D", "stats": { "topSpeed": 175, "year": 2001 } }
+    {
+      "id": "card-01",
+      "name": "Test Card 01",
+      "stats": {
+        "topSpeed": 118,
+        "year": 1945,
+        "engineCapacity": 325,
+        "weight": 212,
+        "length": 2086
+      }
+    },
+    {
+      "id": "card-02",
+      "name": "Test Card 02",
+      "stats": {
+        "topSpeed": 96,
+        "year": 2014,
+        "engineCapacity": 720,
+        "weight": 111,
+        "length": 1960
+      }
+    },
+    {
+      "id": "card-03",
+      "name": "Test Card 03",
+      "stats": {
+        "topSpeed": 160,
+        "year": 1979,
+        "engineCapacity": 380,
+        "weight": 256,
+        "length": 2530
+      }
+    },
+    {
+      "id": "card-04",
+      "name": "Test Card 04",
+      "stats": {
+        "topSpeed": 152,
+        "year": 1968,
+        "engineCapacity": 1095,
+        "weight": 300,
+        "length": 2506
+      }
+    },
+    {
+      "id": "card-05",
+      "name": "Test Card 05",
+      "stats": {
+        "topSpeed": 147,
+        "year": 1960,
+        "engineCapacity": 835,
+        "weight": 232,
+        "length": 1888
+      }
+    },
+    {
+      "id": "card-06",
+      "name": "Test Card 06",
+      "stats": {
+        "topSpeed": 125,
+        "year": 1944,
+        "engineCapacity": 1285,
+        "weight": 128,
+        "length": 1822
+      }
+    },
+    {
+      "id": "card-07",
+      "name": "Test Card 07",
+      "stats": {
+        "topSpeed": 116,
+        "year": 1952,
+        "engineCapacity": 1750,
+        "weight": 203,
+        "length": 1918
+      }
+    },
+    {
+      "id": "card-08",
+      "name": "Test Card 08",
+      "stats": {
+        "topSpeed": 112,
+        "year": 2017,
+        "engineCapacity": 1055,
+        "weight": 357,
+        "length": 1984
+      }
+    },
+    {
+      "id": "card-09",
+      "name": "Test Card 09",
+      "stats": {
+        "topSpeed": 198,
+        "year": 1938,
+        "engineCapacity": 540,
+        "weight": 353,
+        "length": 1993
+      }
+    },
+    {
+      "id": "card-10",
+      "name": "Test Card 10",
+      "stats": {
+        "topSpeed": 98,
+        "year": 1936,
+        "engineCapacity": 1070,
+        "weight": 350,
+        "length": 2398
+      }
+    },
+    {
+      "id": "card-11",
+      "name": "Test Card 11",
+      "stats": {
+        "topSpeed": 97,
+        "year": 1973,
+        "engineCapacity": 1030,
+        "weight": 196,
+        "length": 1846
+      }
+    },
+    {
+      "id": "card-12",
+      "name": "Test Card 12",
+      "stats": {
+        "topSpeed": 113,
+        "year": 1937,
+        "engineCapacity": 660,
+        "weight": 321,
+        "length": 2341
+      }
+    },
+    {
+      "id": "card-13",
+      "name": "Test Card 13",
+      "stats": {
+        "topSpeed": 145,
+        "year": 1970,
+        "engineCapacity": 1840,
+        "weight": 329,
+        "length": 2041
+      }
+    },
+    {
+      "id": "card-14",
+      "name": "Test Card 14",
+      "stats": {
+        "topSpeed": 119,
+        "year": 1969,
+        "engineCapacity": 805,
+        "weight": 259,
+        "length": 2206
+      }
+    },
+    {
+      "id": "card-15",
+      "name": "Test Card 15",
+      "stats": {
+        "topSpeed": 154,
+        "year": 2002,
+        "engineCapacity": 1870,
+        "weight": 359,
+        "length": 2107
+      }
+    },
+    {
+      "id": "card-16",
+      "name": "Test Card 16",
+      "stats": {
+        "topSpeed": 167,
+        "year": 1958,
+        "engineCapacity": 1780,
+        "weight": 131,
+        "length": 2155
+      }
+    },
+    {
+      "id": "card-17",
+      "name": "Test Card 17",
+      "stats": {
+        "topSpeed": 93,
+        "year": 1930,
+        "engineCapacity": 305,
+        "weight": 162,
+        "length": 1942
+      }
+    },
+    {
+      "id": "card-18",
+      "name": "Test Card 18",
+      "stats": {
+        "topSpeed": 161,
+        "year": 1983,
+        "engineCapacity": 1680,
+        "weight": 130,
+        "length": 2494
+      }
+    },
+    {
+      "id": "card-19",
+      "name": "Test Card 19",
+      "stats": {
+        "topSpeed": 115,
+        "year": 1993,
+        "engineCapacity": 560,
+        "weight": 158,
+        "length": 2173
+      }
+    },
+    {
+      "id": "card-20",
+      "name": "Test Card 20",
+      "stats": {
+        "topSpeed": 181,
+        "year": 1940,
+        "engineCapacity": 1490,
+        "weight": 285,
+        "length": 2410
+      }
+    },
+    {
+      "id": "card-21",
+      "name": "Test Card 21",
+      "stats": {
+        "topSpeed": 173,
+        "year": 2010,
+        "engineCapacity": 750,
+        "weight": 238,
+        "length": 2473
+      }
+    },
+    {
+      "id": "card-22",
+      "name": "Test Card 22",
+      "stats": {
+        "topSpeed": 179,
+        "year": 1935,
+        "engineCapacity": 1305,
+        "weight": 355,
+        "length": 1756
+      }
+    },
+    {
+      "id": "card-23",
+      "name": "Test Card 23",
+      "stats": {
+        "topSpeed": 159,
+        "year": 1995,
+        "engineCapacity": 815,
+        "weight": 343,
+        "length": 2272
+      }
+    },
+    {
+      "id": "card-24",
+      "name": "Test Card 24",
+      "stats": {
+        "topSpeed": 143,
+        "year": 1962,
+        "engineCapacity": 1760,
+        "weight": 286,
+        "length": 2302
+      }
+    },
+    {
+      "id": "card-25",
+      "name": "Test Card 25",
+      "stats": {
+        "topSpeed": 229,
+        "year": 1971,
+        "engineCapacity": 1885,
+        "weight": 244,
+        "length": 1837
+      }
+    },
+    {
+      "id": "card-26",
+      "name": "Test Card 26",
+      "stats": {
+        "topSpeed": 225,
+        "year": 1949,
+        "engineCapacity": 1550,
+        "weight": 204,
+        "length": 2482
+      }
+    },
+    {
+      "id": "card-27",
+      "name": "Test Card 27",
+      "stats": {
+        "topSpeed": 165,
+        "year": 1933,
+        "engineCapacity": 685,
+        "weight": 324,
+        "length": 2428
+      }
+    },
+    {
+      "id": "card-28",
+      "name": "Test Card 28",
+      "stats": {
+        "topSpeed": 224,
+        "year": 2004,
+        "engineCapacity": 1875,
+        "weight": 335,
+        "length": 2161
+      }
+    },
+    {
+      "id": "card-29",
+      "name": "Test Card 29",
+      "stats": {
+        "topSpeed": 193,
+        "year": 1954,
+        "engineCapacity": 955,
+        "weight": 197,
+        "length": 2326
+      }
+    },
+    {
+      "id": "card-30",
+      "name": "Test Card 30",
+      "stats": {
+        "topSpeed": 90,
+        "year": 1997,
+        "engineCapacity": 265,
+        "weight": 187,
+        "length": 1954
+      }
+    }
   ]
 }

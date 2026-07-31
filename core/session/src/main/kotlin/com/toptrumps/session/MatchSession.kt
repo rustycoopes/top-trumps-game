@@ -23,7 +23,7 @@ import kotlin.random.Random
 public interface MatchSession {
     /** `null` only for the guest before its first view has arrived. */
     public val view: StateFlow<MatchView?>
-    public fun submit(intent: PlayerIntent.ChooseMetric)
+    public fun submit(intent: PlayerIntent)
     public fun close()
 }
 
@@ -54,7 +54,7 @@ public class HostMatchSession(
         }
     }
 
-    override fun submit(intent: PlayerIntent.ChooseMetric) {
+    override fun submit(intent: PlayerIntent) {
         // Routed through `scope`, same as the guest-intent path below, rather than mutating
         // `state` synchronously on the caller's thread — the TDD requires all state mutation
         // confined to a single dispatcher. It's the caller's job to supply a confined `scope`
@@ -62,7 +62,7 @@ public class HostMatchSession(
         scope.launch { applyIntent(Seat.HOST, intent) }
     }
 
-    private fun applyIntent(seat: Seat, intent: PlayerIntent.ChooseMetric) {
+    private fun applyIntent(seat: Seat, intent: PlayerIntent) {
         when (val result = RulesEngine.apply(state, seat, intent)) {
             is StepResult.Applied -> {
                 state = result.state
@@ -100,7 +100,7 @@ public class GuestMatchSession(
         }
     }
 
-    override fun submit(intent: PlayerIntent.ChooseMetric) {
+    override fun submit(intent: PlayerIntent) {
         scope.launch { transport.send(ProtocolCodec.encodeIntent(intent)) }
     }
 

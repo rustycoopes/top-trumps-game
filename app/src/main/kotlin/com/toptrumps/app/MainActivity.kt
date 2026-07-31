@@ -3,26 +3,41 @@ package com.toptrumps.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.toptrumps.session.MatchSession
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 public class MainActivity : ComponentActivity() {
 
     private lateinit var appGraph: AppGraph
-    private lateinit var soloMatch: MatchSession
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         appGraph = AppGraph(assets)
-        soloMatch = appGraph.startSoloMatch()
 
         setContent {
-            MatchScreen(session = soloMatch)
+            SoloMatchHost(appGraph)
         }
     }
 
     override fun onDestroy() {
-        soloMatch.close()
         appGraph.close()
         super.onDestroy()
     }
+}
+
+/** Owns the current solo [com.toptrumps.session.MatchSession] and swaps it in for a rematch. */
+@Composable
+private fun SoloMatchHost(appGraph: AppGraph) {
+    var session by remember { mutableStateOf(appGraph.startSoloMatch()) }
+
+    MatchScreen(
+        session = session,
+        onRematch = {
+            session.close()
+            session = appGraph.startSoloMatch()
+        },
+    )
 }

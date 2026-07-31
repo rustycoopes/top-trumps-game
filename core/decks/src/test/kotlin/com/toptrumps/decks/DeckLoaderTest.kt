@@ -20,14 +20,14 @@ class DeckLoaderTest {
     }
 
     @Test
-    fun `the test deck loads and validates with four cards and both win directions`() {
+    fun `the test deck loads and validates with thirty cards and both win directions`() {
         val result = DeckLoader.load(source, "test-deck")
 
         assertTrue(result is DeckValidationResult.Valid, "expected Valid, got $result")
         val deck = (result as DeckValidationResult.Valid).deck
 
-        assertEquals(4, deck.cards.size)
-        assertEquals(2, deck.metrics.size)
+        assertEquals(30, deck.cards.size)
+        assertEquals(5, deck.metrics.size)
         assertTrue(deck.metrics.any { it.direction == Direction.HIGH_WINS })
         assertTrue(deck.metrics.any { it.direction == Direction.LOW_WINS })
     }
