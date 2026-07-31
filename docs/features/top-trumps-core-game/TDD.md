@@ -35,9 +35,9 @@ Deck **content** lives at repo root in `decks/`, outside every module (see §7).
 
 No dependency-injection framework. A hand-written `AppGraph` in `:app` is smaller than Hilt at this size and removes the temptation to inject `Context` where it doesn't belong. `:core:*` may depend only on `kotlinx-coroutines-core`, `kotlinx-serialization-json`, `kotlinx-datetime` and `androidx.annotation` — enforced by a CI check.
 
-**Toolchain:** `minSdk 26`, `targetSdk 35`, `compileSdk 36`, JVM target 17, Kotlin 2.x with the `org.jetbrains.kotlin.plugin.compose` plugin, Gradle Kotlin DSL, version catalog, four convention plugins in `build-logic`. R8 **off** for v1 — the APK is 90% images, and minification buys an entire class of release-only serialisation and Room failures for ~300KB.
+**Toolchain:** `minSdk 26`, `targetSdk 35`, `compileSdk 37`, JVM target 17, Kotlin 2.x with the `org.jetbrains.kotlin.plugin.compose` plugin, Gradle Kotlin DSL, version catalog, four convention plugins in `build-logic`. R8 **off** for v1 — the APK is 90% images, and minification buys an entire class of release-only serialisation and Room failures for ~300KB.
 
-`targetSdk` is deliberately held one below the newest: 35 enforces edge-to-edge (real Compose work, budgeted) while 36 is where Local Network Protection would first bite (see §11).
+`compileSdk` tracks the newest available platform (37 at time of writing) since it only sets the API surface compiled against and must simply be `>= targetSdk`. `targetSdk` is the value actually held back, deliberately, one below the newest: 35 enforces edge-to-edge (real Compose work, budgeted) while 36 is where Local Network Protection would first bite (see §11).
 
 ### 2. Rules engine and the projection boundary
 

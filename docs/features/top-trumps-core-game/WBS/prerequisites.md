@@ -16,9 +16,9 @@ This is not a vertical slice — it delivers nothing playable. It is the checkli
 
 ## Dev machine toolchain
 
-- [ ] Android Studio (current stable), supporting `compileSdk 36`
+- [ ] Android Studio (current stable), supporting `compileSdk 37`
 - [ ] JDK 17
-- [ ] Android SDK platforms/build-tools for API 26 (`minSdk`) through 36 (`compileSdk`)
+- [ ] Android SDK platforms/build-tools for API 26 (`minSdk`) through 37 (`compileSdk`)
 - [ ] Kotlin 2.x plugin, plus `org.jetbrains.kotlin.plugin.compose`
 - [ ] Gradle with Kotlin DSL support, ready for a version catalog and `build-logic` convention plugins (Slice 1 authors these, but Studio/Gradle must support them first)
 - [ ] KSP (Room's annotation processor, needed by Slice 8)
