@@ -1,0 +1,14 @@
+{
+  "id": "test-deck",
+  "name": "Test Deck",
+  "metrics": [
+    { "key": "topSpeed", "label": "Top Speed", "unit": "mph", "direction": "HIGH_WINS" },
+    { "key": "year", "label": "Year", "unit": "", "direction": "LOW_WINS" }
+  ],
+  "cards": [
+    { "id": "card-a", "name": "Test Card A", "stats": { "topSpeed": 120, "year": 1975 } },
+    { "id": "card-b", "name": "Test Card B", "stats": { "topSpeed": 150, "year": 1988 } },
+    { "id": "card-c", "name": "Test Card C", "stats": { "topSpeed": 95, "year": 1962 } },
+    { "id": "card-d", "name": "Test Card D", "stats": { "topSpeed": 175, "year": 2001 } }
+  ]
+}

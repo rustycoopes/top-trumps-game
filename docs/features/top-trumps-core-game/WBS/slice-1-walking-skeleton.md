@@ -38,16 +38,16 @@ Deck storage and the `DeckSource` split: [TDD §7](../TDD.md#7-deck-storage-and-
 
 ## Acceptance criteria
 
-- [ ] Six modules build; `:core:rules`, `:core:decks`, `:core:session`, `:core:ai` use the `kotlin("jvm")` plugin
-- [ ] Adding `import android.util.Log` to `:core:rules` **fails the build**
-- [ ] A CI check rejects any `androidx.*` dependency in `:core:*` beyond `androidx.annotation`
-- [ ] A four-card test deck loads through `DeckSource` and validates
-- [ ] One round plays end to end on a physical device: choose a stat, see both values, see a winner
-- [ ] Win direction works both ways — a `LOW_WINS` metric is won by the lower value
-- [ ] The mid-round view exposes only the contested metric on the opponent's card
-- [ ] `Transport` carries `ByteArray`, and `LoopbackTransport` round-trips the real codec
-- [ ] No `Dispatchers.*` literal appears anywhere in `:core:*`
-- [ ] A debug APK installs and runs on a physical phone
+- [x] Six modules build; `:core:rules`, `:core:decks`, `:core:session`, `:core:ai` use the `kotlin("jvm")` plugin
+- [x] Adding `import android.util.Log` to `:core:rules` **fails the build**
+- [x] A CI check rejects any `androidx.*` dependency in `:core:*` beyond `androidx.annotation`
+- [x] A four-card test deck loads through `DeckSource` and validates
+- [x] One round plays end to end on a physical device: choose a stat, see both values, see a winner
+- [x] Win direction works both ways — a `LOW_WINS` metric is won by the lower value
+- [x] The mid-round view exposes only the contested metric on the opponent's card
+- [x] `Transport` carries `ByteArray`, and `LoopbackTransport` round-trips the real codec
+- [x] No `Dispatchers.*` literal appears anywhere in `:core:*`
+- [x] A debug APK installs and runs on a physical phone
 
 ## Testing
 
@@ -60,3 +60,50 @@ Add the belt-and-braces leak test now, while the view graph is small: serialise 
 Deck validation tests read the real test-deck files through the `java.io.File` `DeckSource`, taking the directory from an injected system property rather than a relative path — relative paths break the moment someone runs a test from the IDE.
 
 No prior art exists; these are the first tests in the codebase.
+
+## Delivered
+
+Issue: [#2](https://github.com/rustycoopes/top-trumps-game/issues/2) · Branch: `slice-1-walking-skeleton` · Date: 2026-07-31
+
+All acceptance criteria met. The six-module structure, version catalog, and `build-logic`
+convention plugins (`toptrumps.jvm-library`, `toptrumps.android-library`,
+`toptrumps.android-application`) are in place; `:core:rules`, `:core:decks`, `:core:session`,
+`:core:ai` use `kotlin("jvm")` with `explicitApi()`, and `import android.util.Log` in
+`:core:rules` was manually confirmed to fail the build. `checkCoreDependencyAllowlist` (wired
+into `check` for every `:core:*` module, and run in CI) enforces the androidx.annotation-only
+allowlist. A four-card test deck at `/decks/test-deck/manifest.json` loads and validates through
+`DeckSource` (`FileDeckSource` for JVM tests, `AndroidAssetDeckSource` on device). `RulesEngine`
+has no `when (metric)` anywhere and resolves a round correctly in both win directions. `Transport`
+carries `ByteArray`; `LoopbackTransport` round-trips the real `ProtocolCodec` (JSON), verified by
+a leak test that serialises the guest's view and asserts no un-contested stat value appears in it.
+No `Dispatchers.*` literal appears in `:core:*` production code — dispatchers are threaded through
+as an injected `CoroutineScope`. A debug APK was installed and played end-to-end (both win
+directions) on a physical Samsung device via `adb`, confirmed by screenshot at each step.
+
+**Toolchain, decided during implementation (not pre-specified in the WBS):** Gradle 9.3.1 (the
+minimum AGP 9.1.1 will run on), AGP 9.1.1, Kotlin 2.2.0, JDK 17
+(`C:\dev\android-build-tools\jdk-17.0.20+8`, the only JDK 17 available on the dev machine — the
+Android Studio-bundled JBR is JDK 25, too new for Gradle at the time this was written). AGP 9.x
+has built-in Kotlin support, so the convention plugins apply `com.android.application`/
+`com.android.library` without a separate `org.jetbrains.kotlin.android` plugin.
+
+**Diverged from the plan:**
+- `RulesEngine.deal()` picks the first chooser at random (`Seat.HOST` or `Seat.GUEST`) rather than
+  always `Seat.HOST`. Otherwise the guest-side AI would never have a turn to exercise in this
+  slice's single-round shape.
+- `MatchView` (`:core:session`) is a wire-serializable mirror of `PlayerView`, not `PlayerView`
+  itself. `PlayerView`'s constructor is `internal` to `:core:rules` by design (structural-redaction
+  ADR), so `:core:session` cannot reconstruct one from decoded bytes in a different Gradle module —
+  `MatchView` is what the guest side of `MatchSession` (and the AI, and the Compose UI) actually
+  holds. It mirrors `OpponentCardView`'s full shape, including the `Revealed` variant, even though
+  `RulesEngine.project()` never produces `Revealed` yet (win piles are out of scope this slice).
+- A code review pass (code-review-master + code-quality-guardian) surfaced a real race condition —
+  `HostMatchSession.submit()` originally mutated shared state synchronously on the caller's thread
+  (the Compose UI thread) while guest-originated intents mutated it via the injected
+  `CoroutineScope`'s dispatcher. Fixed by routing `submit()` through `scope.launch {}` like the
+  guest-intent path, and by having `AppGraph` (`:app`, not `:core:*`) supply a
+  `Dispatchers.Default.limitedParallelism(1)`-confined scope — matching the TDD's own guidance
+  ("confine all state mutation to a single dispatcher") without hardcoding a dispatcher inside
+  `:core:session` itself. Also fixed in the same pass: an uncaught `IOException` path in
+  `DeckLoader.load()`, a missing `AppGraph`/`MatchSession` teardown in `MainActivity.onDestroy()`,
+  and dead code (`RemoteRoundState.winnerSeat()`).

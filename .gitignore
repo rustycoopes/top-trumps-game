@@ -1,0 +1,25 @@
+# Local machine configuration — never commit, SDK path is machine-specific.
+local.properties
+
+# Gradle
+.gradle/
+build/
+buildSrc/build/
+build-logic/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android
+*.apk
+*.ap_
+*.dex
+.cxx/
+captures/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
