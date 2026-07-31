@@ -10,7 +10,7 @@
     <application
         android:allowBackup="false"
         android:label="NSD Spike"
-        android:theme="@android:style/Theme.Material.Light">
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         <activity
             android:name=".MainActivity"
             android:exported="true">
