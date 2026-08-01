@@ -11,7 +11,7 @@
     {
       "key": "year",
       "label": "Year",
-      "unit": "",
+      "unit": "yr",
       "direction": "LOW_WINS"
     },
     {
@@ -43,6 +43,12 @@
         "engineCapacity": 325,
         "weight": 212,
         "length": 2086
+      },
+      "image": {
+        "file": "images/card-01.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -54,6 +60,12 @@
         "engineCapacity": 720,
         "weight": 111,
         "length": 1960
+      },
+      "image": {
+        "file": "images/card-02.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -65,6 +77,12 @@
         "engineCapacity": 380,
         "weight": 256,
         "length": 2530
+      },
+      "image": {
+        "file": "images/card-03.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -76,6 +94,12 @@
         "engineCapacity": 1095,
         "weight": 300,
         "length": 2506
+      },
+      "image": {
+        "file": "images/card-04.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -87,6 +111,12 @@
         "engineCapacity": 835,
         "weight": 232,
         "length": 1888
+      },
+      "image": {
+        "file": "images/card-05.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -98,6 +128,12 @@
         "engineCapacity": 1285,
         "weight": 128,
         "length": 1822
+      },
+      "image": {
+        "file": "images/card-06.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -109,6 +145,12 @@
         "engineCapacity": 1750,
         "weight": 203,
         "length": 1918
+      },
+      "image": {
+        "file": "images/card-07.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -120,6 +162,12 @@
         "engineCapacity": 1055,
         "weight": 357,
         "length": 1984
+      },
+      "image": {
+        "file": "images/card-08.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -131,6 +179,12 @@
         "engineCapacity": 540,
         "weight": 353,
         "length": 1993
+      },
+      "image": {
+        "file": "images/card-09.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -142,6 +196,12 @@
         "engineCapacity": 1070,
         "weight": 350,
         "length": 2398
+      },
+      "image": {
+        "file": "images/card-10.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -153,6 +213,12 @@
         "engineCapacity": 1030,
         "weight": 196,
         "length": 1846
+      },
+      "image": {
+        "file": "images/card-11.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -164,6 +230,12 @@
         "engineCapacity": 660,
         "weight": 321,
         "length": 2341
+      },
+      "image": {
+        "file": "images/card-12.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -175,6 +247,12 @@
         "engineCapacity": 1840,
         "weight": 329,
         "length": 2041
+      },
+      "image": {
+        "file": "images/card-13.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -186,6 +264,12 @@
         "engineCapacity": 805,
         "weight": 259,
         "length": 2206
+      },
+      "image": {
+        "file": "images/card-14.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -197,6 +281,12 @@
         "engineCapacity": 1870,
         "weight": 359,
         "length": 2107
+      },
+      "image": {
+        "file": "images/card-15.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -208,6 +298,12 @@
         "engineCapacity": 1780,
         "weight": 131,
         "length": 2155
+      },
+      "image": {
+        "file": "images/card-16.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -219,6 +315,12 @@
         "engineCapacity": 305,
         "weight": 162,
         "length": 1942
+      },
+      "image": {
+        "file": "images/card-17.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -230,6 +332,12 @@
         "engineCapacity": 1680,
         "weight": 130,
         "length": 2494
+      },
+      "image": {
+        "file": "images/card-18.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -241,6 +349,12 @@
         "engineCapacity": 560,
         "weight": 158,
         "length": 2173
+      },
+      "image": {
+        "file": "images/card-19.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -252,6 +366,12 @@
         "engineCapacity": 1490,
         "weight": 285,
         "length": 2410
+      },
+      "image": {
+        "file": "images/card-20.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -263,6 +383,12 @@
         "engineCapacity": 750,
         "weight": 238,
         "length": 2473
+      },
+      "image": {
+        "file": "images/card-21.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -274,6 +400,12 @@
         "engineCapacity": 1305,
         "weight": 355,
         "length": 1756
+      },
+      "image": {
+        "file": "images/card-22.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -285,6 +417,12 @@
         "engineCapacity": 815,
         "weight": 343,
         "length": 2272
+      },
+      "image": {
+        "file": "images/card-23.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -296,6 +434,12 @@
         "engineCapacity": 1760,
         "weight": 286,
         "length": 2302
+      },
+      "image": {
+        "file": "images/card-24.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -307,6 +451,12 @@
         "engineCapacity": 1885,
         "weight": 244,
         "length": 1837
+      },
+      "image": {
+        "file": "images/card-25.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -318,6 +468,12 @@
         "engineCapacity": 1550,
         "weight": 204,
         "length": 2482
+      },
+      "image": {
+        "file": "images/card-26.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -329,6 +485,12 @@
         "engineCapacity": 685,
         "weight": 324,
         "length": 2428
+      },
+      "image": {
+        "file": "images/card-27.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -340,6 +502,12 @@
         "engineCapacity": 1875,
         "weight": 335,
         "length": 2161
+      },
+      "image": {
+        "file": "images/card-28.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -351,6 +519,12 @@
         "engineCapacity": 955,
         "weight": 197,
         "length": 2326
+      },
+      "image": {
+        "file": "images/card-29.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     },
     {
@@ -362,6 +536,12 @@
         "engineCapacity": 265,
         "weight": 187,
         "length": 1954
+      },
+      "image": {
+        "file": "images/card-30.webp",
+        "licence": "Public Domain",
+        "author": "Test Fixture",
+        "sourceUrl": "https://example.invalid/test-fixture"
       }
     }
   ]

@@ -216,5 +216,5 @@ public object RulesEngine {
         )
     }
 
-    private fun Card.toCardFace(): CardFace = CardFace(id, name, stats)
+    private fun Card.toCardFace(): CardFace = CardFace(id, name, stats, image.file)
 }

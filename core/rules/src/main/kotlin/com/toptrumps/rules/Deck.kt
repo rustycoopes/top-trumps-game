@@ -4,12 +4,20 @@ public data class Card(
     val id: String,
     val name: String,
     val stats: Map<MetricKey, StatValue>,
+    /**
+     * Test-convenience default only — `:core:decks`'s `DeckLoader` always supplies a real
+     * [CardImage] from the manifest on every production path. A `Card` built with this default
+     * would render a blank image rather than fail loudly, so don't rely on it outside tests.
+     */
+    val image: CardImage = CardImage(file = "", licence = "", author = "", sourceUrl = ""),
 )
 
 public data class Deck(
     val id: String,
     val metrics: List<MetricSpec>,
     val cards: List<Card>,
+    /** The picker's display label (story 19) — defaults to [id] for fixtures that don't set it. */
+    val name: String = id,
 )
 
 /**
