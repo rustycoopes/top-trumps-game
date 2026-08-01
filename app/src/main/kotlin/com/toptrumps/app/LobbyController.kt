@@ -146,7 +146,10 @@ public class LobbyController(
             is InvitationState.Connected -> resultingState.transport === transport
             else -> false
         }
-        if (!ours) transport.close()
+        if (!ours) {
+            detachMessageListener(transport)
+            transport.close()
+        }
     }
 
     public fun cancelOutbound() { applyInvitation(InvitationEvent.CancelOutbound) }
@@ -191,8 +194,18 @@ public class LobbyController(
         }
     }
 
+    /**
+     * One listener per lobby-phase transport, tracked so it can be torn down the moment that
+     * transport stops being a lobby socket. Without this, a transport that resolves to
+     * [InvitationState.Connected] would keep being read here *and* by whatever reads it next
+     * (e.g. [MatchController]'s handshake and match session) — [Transport.incoming] is a plain
+     * `Channel`-backed flow, not a broadcast, so two concurrent collectors race for every frame
+     * and each one only ever sees the frames it happens to win.
+     */
+    private val lobbyListeners = mutableMapOf<Transport, Job>()
+
     private fun attachMessageListener(transport: Transport) {
-        scope.launch {
+        lobbyListeners[transport] = scope.launch {
             transport.incoming.collect { bytes ->
                 val message = runCatching { ProtocolCodec.decodeLobbyMessage(bytes) }.getOrNull() ?: return@collect
                 val event = when (message) {
@@ -212,6 +225,11 @@ public class LobbyController(
         }
     }
 
+    /** Stops reading [transport] as a lobby socket — called once it's either connected (ownership moves to [MatchController]) or closed (nothing left to read). */
+    private fun detachMessageListener(transport: Transport) {
+        lobbyListeners.remove(transport)?.cancel()
+    }
+
     private fun transportMatchesPending(transport: Transport): Boolean = when (val state = _invitation.value) {
         is InvitationState.OutboundPending -> state.transport === transport
         is InvitationState.InboundPrompt -> state.transport === transport
@@ -228,12 +246,19 @@ public class LobbyController(
     private fun applyInvitation(event: InvitationEvent): InvitationState {
         val result = InvitationResolver.resolve(_invitation.value, event, instanceId, displayName)
         _invitation.value = result.state
+        // Connected means a match may start reading this same transport next; closed means
+        // there's nothing left to read. Either way, this controller must stop listening now.
+        val newState = result.state
+        if (newState is InvitationState.Connected) detachMessageListener(newState.transport)
         scope.launch {
             result.effects.forEach { effect ->
                 when (effect) {
                     is InvitationEffect.Send ->
                         runCatching { effect.transport.send(ProtocolCodec.encodeLobbyMessage(effect.message)) }
-                    is InvitationEffect.CloseTransport -> effect.transport.close()
+                    is InvitationEffect.CloseTransport -> {
+                        detachMessageListener(effect.transport)
+                        effect.transport.close()
+                    }
                 }
             }
         }

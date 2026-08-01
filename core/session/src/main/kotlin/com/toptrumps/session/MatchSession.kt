@@ -1,8 +1,10 @@
 package com.toptrumps.session
 
+import com.toptrumps.rules.Card
 import com.toptrumps.rules.Deck
 import com.toptrumps.rules.MatchConfig
 import com.toptrumps.rules.MatchState
+import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.rules.RulesEngine
 import com.toptrumps.rules.Seat
@@ -46,10 +48,28 @@ public class HostMatchSession(
     override val view: StateFlow<MatchView?> = _view.asStateFlow()
 
     init {
-        scope.launch { pushGuestView() }
+        scope.launch {
+            // Discrete and first, ahead of any View — the guest's unambiguous "you have been
+            // dealt in" trigger (TDD §5), sent before the round's actual first View.
+            val guestHand = state.hands.getValue(Seat.GUEST).map { it.toRemote() }
+            transport.send(ProtocolCodec.encodeHostToGuest(HostToGuest.MatchStart(guestHand, state.totalRounds)))
+            pushGuestView()
+        }
         scope.launch {
             transport.incoming.collect { bytes ->
-                applyIntent(Seat.GUEST, ProtocolCodec.decodeIntent(bytes))
+                // The socket is real and unauthenticated once this is a two-device match — a
+                // corrupt frame or a build mismatch that slipped past the handshake must not crash
+                // the host's coroutine, so a bad frame is dropped rather than decoded unguarded.
+                val message = runCatching { ProtocolCodec.decodeGuestToHost(bytes) }.getOrNull() ?: return@collect
+                when (message) {
+                    is GuestToHost.ChooseMetric -> applyIntent(Seat.GUEST, PlayerIntent.ChooseMetric(MetricKey(message.metricKey)))
+                    is GuestToHost.AdvanceRound -> applyIntent(Seat.GUEST, PlayerIntent.AdvanceRound)
+                    // Handled during the pre-match handshake (MatchHandshake.kt) and never
+                    // legitimately recur once a HostMatchSession exists.
+                    is GuestToHost.Hello, is GuestToHost.DeckMismatch -> Unit
+                    // Slice 6 surfaces this to the host's own UI once the abandon/countdown story lands.
+                    is GuestToHost.Leave -> Unit
+                }
             }
         }
     }
@@ -75,7 +95,7 @@ public class HostMatchSession(
 
     private suspend fun pushGuestView() {
         val guestView = RulesEngine.project(state, Seat.GUEST).toMatchView()
-        transport.send(ProtocolCodec.encodeView(guestView))
+        transport.send(ProtocolCodec.encodeHostToGuest(HostToGuest.View(guestView)))
     }
 
     override fun close() {
@@ -95,16 +115,33 @@ public class GuestMatchSession(
     init {
         scope.launch {
             transport.incoming.collect { bytes ->
-                _view.value = ProtocolCodec.decodeView(bytes)
+                val message = runCatching { ProtocolCodec.decodeHostToGuest(bytes) }.getOrNull() ?: return@collect
+                when (message) {
+                    is HostToGuest.View -> _view.value = message.view
+                    // Already consumed during the pre-match handshake for a two-device guest
+                    // (MatchHandshake.kt); solo's guest sees it here since it has no separate
+                    // handshake phase, and it's a pure no-op — the deal animation it exists to
+                    // trigger is slice 7's job.
+                    is HostToGuest.MatchStart -> Unit
+                    is HostToGuest.HelloAck, is HostToGuest.VersionMismatch, is HostToGuest.DeckChosen -> Unit
+                    // Slice 6 surfaces this to the guest's own UI once the abandon/countdown story lands.
+                    is HostToGuest.Abandoned -> Unit
+                }
             }
         }
     }
 
     override fun submit(intent: PlayerIntent) {
-        scope.launch { transport.send(ProtocolCodec.encodeIntent(intent)) }
+        val message: GuestToHost = when (intent) {
+            is PlayerIntent.ChooseMetric -> GuestToHost.ChooseMetric(intent.metric.id)
+            is PlayerIntent.AdvanceRound -> GuestToHost.AdvanceRound
+        }
+        scope.launch { transport.send(ProtocolCodec.encodeGuestToHost(message)) }
     }
 
     override fun close() {
         transport.close()
     }
 }
+
+private fun Card.toRemote(): RemoteCardFace = RemoteCardFace(id, name, stats.toRemoteStats(), image.file)

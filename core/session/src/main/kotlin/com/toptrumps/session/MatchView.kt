@@ -1,9 +1,11 @@
 package com.toptrumps.session
 
 import com.toptrumps.rules.CardFace
+import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.OpponentCardView
 import com.toptrumps.rules.PlayerView
 import com.toptrumps.rules.RoundState
+import com.toptrumps.rules.StatValue
 import com.toptrumps.rules.displayDirection
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -107,8 +109,11 @@ public sealed interface MatchView {
     ) : MatchView
 }
 
-private fun CardFace.toRemote(): RemoteCardFace =
-    RemoteCardFace(id, name, stats.mapKeys { it.key.id }.mapValues { it.value.raw }, imageFile)
+/** Shared by every `-> RemoteCardFace` mapper, in this file and [HostMatchSession]'s guest-hand one — the wire's stat-map shape in one place. */
+internal fun Map<MetricKey, StatValue>.toRemoteStats(): Map<String, Double> =
+    mapKeys { it.key.id }.mapValues { it.value.raw }
+
+private fun CardFace.toRemote(): RemoteCardFace = RemoteCardFace(id, name, stats.toRemoteStats(), imageFile)
 
 public fun PlayerView.toMatchView(): MatchView = when (this) {
     is PlayerView.Finished -> MatchView.Finished(

@@ -54,10 +54,13 @@ class RulesEngineTest {
 
     @Test
     fun `deal splits the deck evenly between host and guest and sets up the first round`() {
-        val state = RulesEngine.deal(testDeck(), MatchConfig("test-deck"), Random(1))
+        val deck = testDeck()
+        val state = RulesEngine.deal(deck, MatchConfig("test-deck"), Random(1))
+        val hostIds = state.hands.getValue(Seat.HOST).map { it.id }
+        val guestIds = state.hands.getValue(Seat.GUEST).map { it.id }
 
-        assertEquals(3, state.hands.getValue(Seat.HOST).size)
-        assertEquals(3, state.hands.getValue(Seat.GUEST).size)
+        assertEquals(3, hostIds.size)
+        assertEquals(3, guestIds.size)
         assertEquals(3, state.totalRounds)
         assertEquals(1, state.roundNumber)
         assertEquals(0, state.piles.getValue(Seat.HOST).size)
@@ -65,6 +68,10 @@ class RulesEngineTest {
         assertNull(state.outcome)
         assertTrue(state.round is RoundState.AwaitingChoice)
         assertEquals(allMetrics.toSet(), (state.round as RoundState.AwaitingChoice).remainingMetrics.toSet())
+
+        // A partition, not just two correctly-sized hands: no card dealt to both seats, and none omitted.
+        assertTrue(hostIds.intersect(guestIds.toSet()).isEmpty(), "host and guest hands must not overlap")
+        assertEquals(deck.cards.map { it.id }.toSet(), (hostIds + guestIds).toSet(), "every deck card must be dealt to exactly one seat")
     }
 
     @Test

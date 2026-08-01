@@ -43,12 +43,21 @@ import kotlinx.datetime.Clock
  * Deliberately plain — no theme, no animation. Slice 3 adds real card art via Coil; visual polish
  * beyond that is slice 7.
  *
- * Solo-only for now: [AppGraph.startSoloMatch] always seats the local human as [com.toptrumps.rules.Seat.HOST]
- * and the AI as guest, which is why this screen compares wire-level seat strings against the
- * literal `"HOST"` below rather than taking "which seat is local" as a parameter.
+ * [localSeat] is the wire-level seat string ("HOST"/"GUEST") the local player occupies — solo
+ * mode always seats the human as [com.toptrumps.rules.Seat.HOST] (the default), so its call site
+ * is unchanged; a two-device guest passes `"GUEST"` so `round.chooser`/`round.winner` are read
+ * relative to the right side. [rematchLabel] lets a two-device match relabel the result screen's
+ * button, since a real two-device rematch flow doesn't exist yet (tracked as a follow-up).
  */
 @Composable
-public fun MatchScreen(session: MatchSession, deckId: String, onRematch: () -> Unit, modifier: Modifier = Modifier) {
+public fun MatchScreen(
+    session: MatchSession,
+    deckId: String,
+    onRematch: () -> Unit,
+    modifier: Modifier = Modifier,
+    localSeat: String = "HOST",
+    rematchLabel: String = "Rematch",
+) {
     val view by session.view.collectAsStateWithLifecycle()
 
     // Disk cache disabled — the source is already local asset storage (TDD §7) — and shared for
@@ -59,8 +68,8 @@ public fun MatchScreen(session: MatchSession, deckId: String, onRematch: () -> U
 
     when (val current = view) {
         null -> Column(modifier = modifier.fillMaxSize().padding(16.dp)) { Text("Connecting…") }
-        is MatchView.Finished -> ResultScreen(current, deckId, imageLoader, onRematch, modifier)
-        is MatchView.InProgress -> InProgressScreen(session, current, deckId, imageLoader, modifier)
+        is MatchView.Finished -> ResultScreen(current, deckId, imageLoader, localSeat, rematchLabel, onRematch, modifier)
+        is MatchView.InProgress -> InProgressScreen(session, current, deckId, localSeat, imageLoader, modifier)
     }
 }
 
@@ -69,6 +78,7 @@ private fun InProgressScreen(
     session: MatchSession,
     view: MatchView.InProgress,
     deckId: String,
+    localSeat: String,
     imageLoader: ImageLoader,
     modifier: Modifier = Modifier,
 ) {
@@ -91,8 +101,8 @@ private fun InProgressScreen(
         CardImage(deckId, view.self.imageFile, view.self.name, imageLoader, size = 220.dp)
 
         when (val round = view.round) {
-            is RemoteRoundState.AwaitingChoice -> AwaitingChoiceContent(session, view, round)
-            is RemoteRoundState.Resolved -> ResolvedContent(session, view, round, deckId, imageLoader)
+            is RemoteRoundState.AwaitingChoice -> AwaitingChoiceContent(session, view, round, localSeat)
+            is RemoteRoundState.Resolved -> ResolvedContent(session, view, round, deckId, localSeat, imageLoader)
         }
     }
 }
@@ -111,8 +121,9 @@ private fun AwaitingChoiceContent(
     session: MatchSession,
     view: MatchView.InProgress,
     round: RemoteRoundState.AwaitingChoice,
+    localSeat: String,
 ) {
-    if (round.chooser != "HOST") {
+    if (round.chooser != localSeat) {
         Text("Opponent is choosing…")
         return
     }
@@ -150,6 +161,7 @@ private fun ResolvedContent(
     view: MatchView.InProgress,
     round: RemoteRoundState.Resolved,
     deckId: String,
+    localSeat: String,
     imageLoader: ImageLoader,
 ) {
     val spec = view.metrics.first { it.key == round.decidingMetric }
@@ -167,9 +179,9 @@ private fun ResolvedContent(
 
     Text(
         when (round.winner) {
-            "HOST" -> "You win this round!"
-            "GUEST" -> "Opponent wins this round."
-            else -> "You each keep your own card."
+            null -> "You each keep your own card."
+            localSeat -> "You win this round!"
+            else -> "Opponent wins this round."
         },
     )
 
@@ -213,19 +225,21 @@ private fun ResultScreen(
     view: MatchView.Finished,
     deckId: String,
     imageLoader: ImageLoader,
+    localSeat: String,
+    rematchLabel: String,
     onRematch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             when (view.winner) {
-                "HOST" -> "Victory!"
-                "GUEST" -> "Defeat."
-                else -> "It's a draw."
+                null -> "It's a draw."
+                localSeat -> "Victory!"
+                else -> "Defeat."
             },
         )
         Text("Final score — you: ${view.myScore}, opponent: ${view.opponentScore}")
-        Button(onClick = onRematch) { Text("Rematch") }
+        Button(onClick = onRematch) { Text(rematchLabel) }
     }
 }
 

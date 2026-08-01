@@ -10,6 +10,7 @@ import com.toptrumps.rules.MetricSpec
 import com.toptrumps.rules.StatValue
 import kotlinx.serialization.json.Json
 import java.io.IOException
+import java.security.MessageDigest
 
 public sealed interface DeckValidationResult {
     public data class Valid(val deck: Deck) : DeckValidationResult
@@ -44,6 +45,33 @@ public object DeckLoader {
             }
         }
         return if (imageErrors.isEmpty()) result else DeckValidationResult.Invalid(imageErrors)
+    }
+
+    /**
+     * [load], but for the common call site where [deckId] came from [DeckSource.listDecks] and
+     * therefore failing validation would mean the deck folder rotted out from under a running app
+     * rather than anything a caller can meaningfully recover from.
+     */
+    public fun loadOrThrow(source: DeckSource, deckId: String): Deck =
+        when (val result = load(source, deckId)) {
+            is DeckValidationResult.Valid -> result.deck
+            is DeckValidationResult.Invalid -> error("deck '$deckId' failed validation: ${result.errors}")
+        }
+
+    /**
+     * Hex SHA-256 of `manifest.json`'s raw bytes — covers the manifest only, not the (much
+     * larger) images, since this guards against version skew between two copies of our own app
+     * rather than tampering (TDD §7). `null` if the manifest can't be read at all, which the
+     * two-device handshake treats the same as a mismatch.
+     */
+    public fun manifestHash(source: DeckSource, deckId: String): String? {
+        val bytes = try {
+            source.open(deckId, "manifest.json").use { it.readBytes() }
+        } catch (_: IOException) {
+            return null
+        }
+        val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     internal fun parse(deckId: String, manifestJson: String): DeckValidationResult {

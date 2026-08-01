@@ -18,6 +18,8 @@ import com.toptrumps.session.HostMatchSession
 import com.toptrumps.session.LoopbackTransport
 import com.toptrumps.session.MatchSession
 import com.toptrumps.session.MatchView
+import com.toptrumps.session.Role
+import com.toptrumps.session.Transport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -75,10 +77,7 @@ public class AppGraph(context: Context) {
      * previous match's guest session and AI coroutine parked forever on the shared graph scope).
      */
     public fun startSoloMatch(deckId: String): MatchSession {
-        val deck = when (val result = DeckLoader.load(deckSource, deckId)) {
-            is DeckValidationResult.Valid -> result.deck
-            is DeckValidationResult.Invalid -> error("deck '$deckId' failed validation: ${result.errors}")
-        }
+        val deck = DeckLoader.loadOrThrow(deckSource, deckId)
 
         // A child of `scope` rather than `scope` itself: every coroutine this match starts (both
         // sessions' collectors, the AI's) is cancelled together when the match ends, without
@@ -93,6 +92,24 @@ public class AppGraph(context: Context) {
         AiOpponentDriver(guest, seatName = "GUEST", deck = deck, scope = matchScope).start()
 
         return SoloMatchSession(host, matchScope)
+    }
+
+    /**
+     * A fresh [MatchController] for one visit to the connected screen — call [MatchController.close]
+     * on leaving it. [transport] is the same connected socket [LobbyController] handed over on
+     * [com.toptrumps.session.InvitationState.Connected]; this graph never dials or accepts one itself.
+     */
+    public fun createMatchController(transport: Transport, role: Role, displayName: String): MatchController {
+        val matchScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
+        return MatchController(
+            transport = transport,
+            role = role,
+            displayName = displayName,
+            instanceId = instanceId,
+            deckSource = deckSource,
+            listDecks = ::listDecks,
+            scope = matchScope,
+        )
     }
 
     /** A fresh [LobbyController] for one visit to the lobby screen — call [LobbyController.close] on leaving it. */
