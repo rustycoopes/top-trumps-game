@@ -66,6 +66,7 @@ private fun fakeSession(): MatchSession = object : MatchSession {
     override val view = MutableStateFlow<MatchView?>(null)
     override val connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
     override val hasPendingIntent = MutableStateFlow(false)
+    override val lastResync = MutableStateFlow<Long?>(null)
     override fun submit(intent: PlayerIntent) = Unit
     override fun leave() = Unit
     override fun close() = Unit

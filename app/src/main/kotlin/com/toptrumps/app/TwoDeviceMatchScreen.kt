@@ -25,6 +25,7 @@ public fun TwoDeviceMatchScreen(
     controller: MatchController,
     peerDisplayName: String,
     onLeave: () -> Unit,
+    soundEffects: SoundEffects,
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(controller) { controller.start() }
@@ -77,6 +78,7 @@ public fun TwoDeviceMatchScreen(
                         localSeat = current.localSeat,
                         rematchLabel = "Back to lobby",
                         onRematch = onLeave,
+                        soundEffects = soundEffects,
                         onLeaveMatch = { current.session.leave(); onLeave() },
                         modifier = modifier,
                     )

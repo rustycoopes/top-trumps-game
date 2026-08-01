@@ -65,6 +65,11 @@ public class AppGraph(context: Context) {
     // mutation be single-dispatcher-confined rather than guarded some other way.
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
 
+    // Constructed here, in the constructor [TopTrumpsApplication.onCreate] runs — "preloaded at
+    // app start" (WBS slice-7-polish), not lazily on the first match screen visit.
+    public val soundPreferences: SoundPreferences = SoundPreferences(appContext, scope)
+    public val soundEffects: SoundEffects = SoundEffects(appContext, soundPreferences.muted)
+
     /**
      * Every deck folder under `/decks` that actually validates, at launch — the picker's entire
      * data source, per the PRD's "adding a deck later needs no new UI" requirement (see the
@@ -225,6 +230,7 @@ public class AppGraph(context: Context) {
 
     /** Cancels every coroutine this graph started. Call from the owning component's teardown. */
     public fun close() {
+        soundEffects.release()
         scope.cancel()
     }
 }
@@ -237,6 +243,7 @@ private class SoloMatchSession(
     override val view: StateFlow<MatchView?> get() = host.view
     override val connectionState: StateFlow<ConnectionState> get() = host.connectionState
     override val hasPendingIntent: StateFlow<Boolean> get() = host.hasPendingIntent
+    override val lastResync: StateFlow<Long?> get() = host.lastResync
     override fun submit(intent: PlayerIntent): Unit = host.submit(intent)
 
     override fun leave() {

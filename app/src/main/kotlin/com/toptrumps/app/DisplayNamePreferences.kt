@@ -10,7 +10,11 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+// internal, not private: DataStore enforces exactly one open DataStore per on-disk file per
+// process (a second `preferencesDataStore(name = "settings")` delegate anywhere else in the
+// module throws "There are multiple DataStores active for the same file" at runtime) — so
+// [SoundPreferences] reuses this same property rather than declaring its own.
+internal val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 private val DISPLAY_NAME_KEY = stringPreferencesKey("display_name")
 
 /**
