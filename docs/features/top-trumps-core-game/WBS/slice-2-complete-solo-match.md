@@ -115,3 +115,7 @@ screenshots.
   `MatchDriver`. Code review found a third copy of the same dispatch logic had since arrived with
   Slice 6's `ConnectionResilienceTest.resolveOneRound` (added after #11 was filed, so out of its
   scope) — filed as [#23](https://github.com/rustycoopes/top-trumps-game/issues/23).
+  **#23 resolved 2026-08-01 too:** `resolveOneRound`'s five call sites migrated onto `MatchDriver`
+  the same way, and the helper deleted. Its "first metric in the view" pick collapsed to the
+  existing `speed` constant, since `ConnectionResilienceTest`'s fixture deck is single-metric —
+  behaviourally identical, not a change. No further duplicates of this shape found in `:core:*`.
