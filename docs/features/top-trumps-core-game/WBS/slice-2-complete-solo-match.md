@@ -111,3 +111,7 @@ screenshots.
 - A follow-up ([#11](https://github.com/rustycoopes/top-trumps-game/issues/11)) was filed for a
   minor test-helper duplication in `MatchSessionTest` (a standalone `chooseMetric` helper survives
   alongside the new `MatchDriver`) — low priority, not blocking.
+  **Resolved 2026-08-01:** the standalone helper was deleted and its four call sites migrated onto
+  `MatchDriver`. Code review found a third copy of the same dispatch logic had since arrived with
+  Slice 6's `ConnectionResilienceTest.resolveOneRound` (added after #11 was filed, so out of its
+  scope) — filed as [#23](https://github.com/rustycoopes/top-trumps-game/issues/23).
