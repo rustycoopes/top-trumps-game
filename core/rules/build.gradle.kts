@@ -3,5 +3,6 @@ plugins {
 }
 
 dependencies {
+    api(libs.kotlinx.datetime)
     testImplementation(libs.kotlinx.coroutines.test)
 }

@@ -1,0 +1,1064 @@
+{
+  "id": "motorcycles",
+  "name": "Motorcycles",
+  "metrics": [
+    {
+      "key": "engineCapacity",
+      "label": "Engine Capacity",
+      "unit": "cc",
+      "direction": "HIGH_WINS"
+    },
+    {
+      "key": "topSpeed",
+      "label": "Top Speed",
+      "unit": "mph",
+      "direction": "HIGH_WINS"
+    },
+    {
+      "key": "year",
+      "label": "Age",
+      "unit": "years",
+      "direction": "LOW_WINS",
+      "display": "YEARS_SINCE_VALUE"
+    },
+    {
+      "key": "weight",
+      "label": "Dry Weight",
+      "unit": "kg",
+      "direction": "LOW_WINS"
+    },
+    {
+      "key": "length",
+      "label": "Length",
+      "unit": "mm",
+      "direction": "LOW_WINS"
+    }
+  ],
+  "cards": [
+    {
+      "id": "bmw-r32",
+      "name": "BMW R32",
+      "stats": {
+        "engineCapacity": 494,
+        "topSpeed": 59,
+        "year": 1923,
+        "weight": 122,
+        "length": 2100
+      },
+      "image": {
+        "file": "images/bmw-r32.webp",
+        "licence": "CC BY 2.0",
+        "author": "Daniel Hartwig",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1923_BMW_R32_(1)_-_The_Art_of_the_Motorcycle_-_Memphis.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/BMW_R32",
+        "topSpeed": {
+          "value": 59,
+          "note": "manufacturer/period claimed figure (95 km/h per Wikipedia infobox)",
+          "source": "https://en.wikipedia.org/wiki/BMW_R32"
+        },
+        "weight": {
+          "note": "Sources conflict on labeling of this identical figure: Wikipedia's infobox labels 122 kg as WET weight, while mcnews.com.au labels the same 122 kg as DRY weight. It is the figure most consistently cited for the R32 either way, so it is used here, but the wet/dry label should be treated as unresolved.",
+          "source": "https://en.wikipedia.org/wiki/BMW_R32"
+        },
+        "length": {
+          "note": "",
+          "source": "https://en.wikipedia.org/wiki/BMW_R32",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "brough-superior-ss100",
+      "name": "Brough Superior SS100",
+      "stats": {
+        "engineCapacity": 981,
+        "topSpeed": 100,
+        "year": 1925,
+        "weight": 154,
+        "length": 1500
+      },
+      "image": {
+        "file": "images/brough-superior-ss100.webp",
+        "licence": "CC BY-SA 4.0 (multi-licensed, also available under CC BY-SA 3.0/2.5/2.0/1.0 and GFDL)",
+        "author": "Lars-G\u00f6ran Lindgren (Sweden)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Brough_Superior_SS_1000_1925.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://cars.bonhams.com/auction/24885/lot/422/the-ex-c-f-edwards-1925-brough-superior-981cc-ss100-sand-racer-project-frame-no-300-engine-no-ktora-36776/",
+        "topSpeed": {
+          "value": 100,
+          "note": "manufacturer guarantee \u2014 every SS100 was individually road-tested and issued a signed certificate guaranteeing it had been timed at 100 mph before sale",
+          "source": "https://broughsuperiorclub.com/history/models-produced/production-specifications-1925/"
+        },
+        "weight": {
+          "note": "no dry weight found anywhere after extensive research (Wikipedia, the Brough Superior Club's own 1925 production-specification page, multiple Bonhams auction listings, specialist press). The only real published figure found anywhere is a WET weight from a lower-tier spec aggregator (philharmonicmoto.com) \u2014 used here as a documented fallback, not an invented dry figure",
+          "source": "https://philharmonicmoto.com/product/brough-superior-ss100-1924-1940/"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://en.wikipedia.org/wiki/Brough_Superior_SS100",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "triumph-speed-twin",
+      "name": "Triumph Speed Twin",
+      "stats": {
+        "engineCapacity": 498,
+        "topSpeed": 94,
+        "year": 1938,
+        "weight": 166,
+        "length": 1400
+      },
+      "image": {
+        "file": "images/triumph-speed-twin.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Yesterdays Antique Motorcycles",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1937_Triumph_Speed_Twin_5T_right_side.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Triumph_Speed_Twin",
+        "topSpeed": {
+          "value": 94,
+          "note": "period road test (The Motor Cycle, testing from October 1937 on pre-production/early machines, recorded 93.75 mph); factory-claimed figure was 90 mph",
+          "source": "https://www.oldbikemag.com.au/1938-triumph-speed-twin-masterpiece-amaranth-red/"
+        },
+        "weight": {
+          "note": "365 lb (166 kg) dry, agreed independently by Wikipedia and the National Motorcycle Museum. Conflicting figures exist elsewhere: motorcyclespecs.co.za gives 182 kg/401 lb, and oldbikemag.com.au gives 162 kg \u2014 the two-source-agreed 166 kg figure is used.",
+          "source": "https://en.wikipedia.org/wiki/Triumph_Speed_Twin"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://en.wikipedia.org/wiki/Triumph_Speed_Twin",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "vincent-black-shadow",
+      "name": "Vincent Black Shadow",
+      "stats": {
+        "engineCapacity": 998,
+        "topSpeed": 125,
+        "year": 1948,
+        "weight": 208,
+        "length": 1435
+      },
+      "image": {
+        "file": "images/vincent-black-shadow.webp",
+        "licence": "CC BY-SA 3.0 / CC BY 2.5 (dual-licensed, also GFDL v1.2+)",
+        "author": "Yesterdays Antique Motorcycles en Classic Motorcycle Archive",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Vincent_Series_C_Black_Shadow_1950.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Vincent_Black_Shadow",
+        "topSpeed": {
+          "value": 125,
+          "note": "manufacturer claimed figure \u2014 the famous '2 miles a minute' figure, consistent across every source checked",
+          "source": "https://en.wikipedia.org/wiki/Vincent_Black_Shadow"
+        },
+        "weight": {
+          "note": "458 lb (207.7 kg, rounded to 208) dry per Wikipedia and autoevolution; motorcyclespecs.co.za gives a close 455 lb (206 kg) dry and 500 lb (227 kg) wet, consistent with this figure.",
+          "source": "https://en.wikipedia.org/wiki/Vincent_Black_Shadow"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://en.wikipedia.org/wiki/Vincent_Black_Shadow",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "triumph-thunderbird-6t",
+      "name": "Triumph Thunderbird 6T",
+      "stats": {
+        "engineCapacity": 649,
+        "topSpeed": 104,
+        "year": 1949,
+        "weight": 175,
+        "length": 1397
+      },
+      "image": {
+        "file": "images/triumph-thunderbird-6t.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Yesterdays Antique Motorcycles",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1950_Triumph_6T_Thunderbird_front_right.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Triumph_Thunderbird",
+        "topSpeed": {
+          "value": 104,
+          "note": "period road test figure (The Motor Cycle); separately, the famous 1949 Montlh\u00e9ry factory demonstration saw three production machines average 90 mph over 500 miles with a top speed described as 'in excess of 100 mph'",
+          "source": "https://www.classicmotorcycle.co.uk/triumph-6t-thunderbird/"
+        },
+        "weight": {
+          "note": "385 lb (175 kg) dry per Wikipedia (397 lb/180 kg wet also given). motorcyclespecifications.com gives a close 370 lb (168 kg) \u2014 used Wikipedia's figure.",
+          "source": "https://en.wikipedia.org/wiki/Triumph_Thunderbird"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://en.wikipedia.org/wiki/Triumph_Thunderbird",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "bsa-gold-star-dbd34",
+      "name": "BSA Gold Star DBD34",
+      "stats": {
+        "engineCapacity": 499,
+        "topSpeed": 110,
+        "year": 1956,
+        "weight": 172,
+        "length": 1400
+      },
+      "image": {
+        "file": "images/bsa-gold-star-dbd34.webp",
+        "licence": "CC BY 2.0",
+        "author": "SG2012 (Steve Glover)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:BSA_Gold_Star_500cc_(1956).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/BSA_Gold_Star",
+        "topSpeed": {
+          "value": 110,
+          "note": "manufacturer/commonly cited figure, explicitly attributed to the DBD34 by name in Wikipedia's text",
+          "source": "https://en.wikipedia.org/wiki/BSA_Gold_Star"
+        },
+        "weight": {
+          "note": "172 kg (380 lb) dry per motorcyclespecs.co.za; Wikipedia rounds the same 380 lb figure to 170 kg; sump-publishing.co.uk gives a close 384 lb. Used the more precise 172 kg conversion.",
+          "source": "https://www.motorcyclespecs.co.za/model/BSA/BSA%20DBD34%20GS.htm"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://en.wikipedia.org/wiki/BSA_Gold_Star",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "velocette-venom",
+      "name": "Velocette Venom",
+      "stats": {
+        "engineCapacity": 499,
+        "topSpeed": 100,
+        "year": 1956,
+        "weight": 177,
+        "length": 1365
+      },
+      "image": {
+        "file": "images/velocette-venom.webp",
+        "licence": "CC BY 2.0",
+        "author": "SG2012 (Steve Glover)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Velocette_Venom_Clubman_500cc_(1957).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Velocette_Venom",
+        "topSpeed": {
+          "value": 100,
+          "note": "manufacturer/commonly cited claimed figure, consistent across Wikipedia and specialist spec sites",
+          "source": "https://en.wikipedia.org/wiki/Velocette_Venom"
+        },
+        "weight": {
+          "note": "390 lb (177 kg) dry, confirmed consistently across Wikipedia and motorcyclespecs.co.za.",
+          "source": "https://en.wikipedia.org/wiki/Velocette_Venom"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://motorcyclespecifications.com/velocette-venom-1955-70-specs/",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "harley-davidson-sportster-xl",
+      "name": "Harley-Davidson Sportster XL",
+      "stats": {
+        "engineCapacity": 883,
+        "topSpeed": 100,
+        "year": 1957,
+        "weight": 225,
+        "length": 2210
+      },
+      "image": {
+        "file": "images/harley-davidson-sportster-xl.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Michael Barera",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Harley-Davidson_Museum_May_2024_05_(Challenge_and_Opportunity--1957_XL_Sportster--OHV_V-Twin).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "http://sportsterpedia.com/doku.php/sportster_history:1957_sportster",
+        "topSpeed": {
+          "value": 100,
+          "note": "commonly cited period-estimated figure (explicitly labelled 'est.' by Motorcycle Classics); a modern secondary aggregator (bikez.com) independently gives a close 100.7 mph",
+          "source": "https://www.motorcycleclassics.com/classic-american-motorcycles/1957-harley-davidson-sportster-2/"
+        },
+        "weight": {
+          "note": "495 lb (225 kg) dry, per Motorcycle Classics; consistent with other secondary sources found during research.",
+          "source": "https://www.motorcycleclassics.com/classic-american-motorcycles/1957-harley-davidson-sportster-2/"
+        },
+        "length": {
+          "note": "Converted from 87 in as published by Sportsterpedia (87 in x 25.4 mm = 2209.8 mm, rounded to 2210 mm).",
+          "source": "http://sportsterpedia.com/doku.php/sportster_history:1957_sportster",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "triumph-bonneville-t120",
+      "name": "Triumph Bonneville T120",
+      "stats": {
+        "engineCapacity": 649,
+        "topSpeed": 108,
+        "year": 1959,
+        "weight": 166,
+        "length": 2135
+      },
+      "image": {
+        "file": "images/triumph-bonneville-t120.webp",
+        "licence": "CC BY 2.0",
+        "author": "SG2012 (Steve Glover)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Triumph_Bonneville_T120_(1960).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Triumph_Bonneville_T120",
+        "topSpeed": {
+          "value": 108,
+          "note": "commonly cited figure per Wikipedia's infobox; motoplanete.us gives a higher 117 mph for the same 1959 model \u2014 used Wikipedia's more conservatively-sourced figure",
+          "source": "https://en.wikipedia.org/wiki/Triumph_Bonneville_T120"
+        },
+        "weight": {
+          "note": "Wikipedia gives 402 lb (182 kg) wet and 366 lb (166 kg) dry; motoplanete.us independently confirms 166 kg (366 lb) dry.",
+          "source": "https://en.wikipedia.org/wiki/Triumph_Bonneville_T120"
+        },
+        "length": {
+          "note": "From motoplanete.us, specific to the 1959 model (2135mm/84.06in). This spec-aggregator site's independent reliability is unconfirmed, but no conflicting period-specific figure was found; other length figures turned up in general search (2120-2230mm) refer to the unrelated modern (2016+) T120 reissue, not the 1959 original, and were discarded.",
+          "source": "https://www.motoplanete.us/triumph/11173/650-Bonneville-T-120-1959/contact.html",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "norton-commando-750",
+      "name": "Norton Commando 750",
+      "stats": {
+        "engineCapacity": 745,
+        "topSpeed": 115,
+        "year": 1968,
+        "weight": 190,
+        "length": 2220
+      },
+      "image": {
+        "file": "images/norton-commando-750.webp",
+        "licence": "CC BY-SA 3.0 (multi-licensed, also CC BY-SA 2.5 and GFDL v1.2+)",
+        "author": "Yesterdays Antique Motorcycles en Classic Motorcycle Archive",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Norton_Commando_750_Fastback_1969.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Norton_Commando",
+        "topSpeed": {
+          "value": 115,
+          "note": "per Wikipedia's infobox for the 750 Commando; a secondary source (motorcyclespecifications.com) cites a close 117 mph for the same Fastback model",
+          "source": "https://en.wikipedia.org/wiki/Norton_Commando"
+        },
+        "weight": {
+          "note": "420 lb (190 kg) dry per Wikipedia; a secondary source (motorcyclespecifications.com) gives a close 418 lb.",
+          "source": "https://en.wikipedia.org/wiki/Norton_Commando"
+        },
+        "length": {
+          "note": "87.5 in as published in Wikipedia's infobox (87.5 in x 25.4 mm = 2222.5 mm; Wikipedia itself states 2220 mm as the rounded metric conversion, used here).",
+          "source": "https://en.wikipedia.org/wiki/Norton_Commando",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "honda-cb750-four",
+      "name": "Honda CB750 Four",
+      "stats": {
+        "engineCapacity": 736,
+        "topSpeed": 125,
+        "year": 1969,
+        "weight": 218,
+        "length": 2200
+      },
+      "image": {
+        "file": "images/honda-cb750-four.webp",
+        "licence": "CC BY 2.0",
+        "author": "SG2012 (Steve Glover)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Honda_CB750_(1969)_-_15858705015.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Honda_CB750_and_CR750",
+        "topSpeed": {
+          "value": 125,
+          "note": "manufacturer/period figure per Wikipedia infobox; a contemporary Cycle World road test (cited in the same article) recorded 124 mph",
+          "source": "https://en.wikipedia.org/wiki/Honda_CB750_and_CR750"
+        },
+        "weight": {
+          "note": "dry weight as published (Honda's own quoted wet/kerb weight for this model is 226 kg per motorcyclespecs.co.za)",
+          "source": "https://en.wikipedia.org/wiki/Honda_CB750_and_CR750"
+        },
+        "length": {
+          "note": "",
+          "source": "https://en.wikipedia.org/wiki/Honda_CB750_and_CR750",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "kawasaki-h2-mach-iv-750",
+      "name": "Kawasaki H2 Mach IV 750",
+      "stats": {
+        "engineCapacity": 748,
+        "topSpeed": 120,
+        "year": 1972,
+        "weight": 205,
+        "length": 1410
+      },
+      "image": {
+        "file": "images/kawasaki-h2-mach-iv-750.webp",
+        "licence": "CC BY 2.0",
+        "author": "SG2012 (Steve Glover)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kawasaki_H2_Mach_IV_750cc_(1972).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Kawasaki_H2_Mach_IV",
+        "topSpeed": {
+          "value": 120,
+          "note": "period claimed/test figure per Wikipedia infobox (190 km/h); other contemporary sources cite up to 126 mph for the same model",
+          "source": "https://en.wikipedia.org/wiki/Kawasaki_H2_Mach_IV"
+        },
+        "weight": {
+          "note": "dry weight as explicitly labeled in Wikipedia infobox",
+          "source": "https://en.wikipedia.org/wiki/Kawasaki_H2_Mach_IV"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://en.wikipedia.org/wiki/Kawasaki_H2_Mach_IV",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "kawasaki-z1-900",
+      "name": "Kawasaki Z1 900",
+      "stats": {
+        "engineCapacity": 903,
+        "topSpeed": 130,
+        "year": 1972,
+        "weight": 230,
+        "length": 2200
+      },
+      "image": {
+        "file": "images/kawasaki-z1-900.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Rainmaker47",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1972_Kawasaki_Z1_KGTW.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Kawasaki_Z1",
+        "topSpeed": {
+          "value": 130,
+          "note": "period road test figure (Wikipedia infobox cites 130-132 mph from multiple contemporary magazine tests, not a manufacturer claim)",
+          "source": "https://en.wikipedia.org/wiki/Kawasaki_Z1"
+        },
+        "weight": {
+          "note": "dry weight as published",
+          "source": "https://en.wikipedia.org/wiki/Kawasaki_Z1"
+        },
+        "length": {
+          "note": "",
+          "source": "https://en.wikipedia.org/wiki/Kawasaki_Z1",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "ducati-750-ss",
+      "name": "Ducati 750 SS",
+      "stats": {
+        "engineCapacity": 748,
+        "topSpeed": 143,
+        "year": 1974,
+        "weight": 180,
+        "length": 2200
+      },
+      "image": {
+        "file": "images/ducati-750-ss.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Calreyn88",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1974_Ducati_750_Super_Sport.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/ducati/ducati_750ss%2074.htm",
+        "topSpeed": {
+          "value": 143,
+          "note": "manufacturer claimed (230 km/h); figure is consistent between motorcyclespecs.co.za and ultimatespecs.com",
+          "source": "https://www.motorcyclespecs.co.za/model/ducati/ducati_750ss%2074.htm"
+        },
+        "weight": {
+          "note": "dry weight as published",
+          "source": "https://www.motorcyclespecs.co.za/model/ducati/ducati_750ss%2074.htm"
+        },
+        "length": {
+          "note": "",
+          "source": "https://www.motorcyclespecs.co.za/model/ducati/ducati_750ss%2074.htm",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "moto-guzzi-850-le-mans",
+      "name": "Moto Guzzi 850 Le Mans",
+      "stats": {
+        "engineCapacity": 844,
+        "topSpeed": 130,
+        "year": 1976,
+        "weight": 198,
+        "length": 2190
+      },
+      "image": {
+        "file": "images/moto-guzzi-850-le-mans.webp",
+        "licence": "CC BY 2.0",
+        "author": "SG2012 (Steve Glover)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Moto_Guzzi_850_Le_Mans_(1976).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/moto%20guzzi/moto_guzzi_850_le_mans_mark_76.html",
+        "topSpeed": {
+          "value": 130,
+          "note": "revised from the original 126 mph after a gap-fill pass found period road tests (Cycle World, 1977) recorded 132-134 mph for the mechanically identical Mark I \u2014 130 mph, Wikipedia's Le Mans figure, is the more conservative and better-corroborated of the two original candidates",
+          "source": "https://en.wikipedia.org/wiki/Moto_Guzzi_Le_Mans"
+        },
+        "weight": {
+          "note": "dry weight as published; a separate database (bikez.com) lists 225 kg but labels it explicitly as wet weight ('incl. oil, gas, etc'), consistent with 198 kg being the dry figure",
+          "source": "https://www.motorcyclespecs.co.za/model/moto%20guzzi/moto_guzzi_850_le_mans_mark_76.html"
+        },
+        "length": {
+          "note": "VERIFIED, with one caveat noted below. Source is the official Moto Guzzi 850 Le Mans owner's manual (the original Mark 1/850 Le Mans manual, confirmed by its engine spec page matching the 1976 model exactly: 844cc, 83x78mm bore/stroke, '80 SAE at 7.300 r.p.m.' claimed output - the same 'optimistic' 80hp claim referenced by Guzzi historian Ian Falloon for the 1976 launch bike). Page 9 ('Dimensions and weights' section) literally reads: 'Wheelbase: 1.470 m / Max. width: 2.190 m / Max. length: 0.720 m'. As printed this is physically impossible (a max length shorter than the wheelbase, and a width wider than the whole bike), so the length/width labels and values have clearly been transposed somewhere in the original manual's translation/typesetting or in the scan-to-text extraction. The wheelbase value (1.470 m) matches independent sources almost exactly (bikez.com and others give 1470-1473 mm), which increases confidence the two mislabelled figures are also genuine factory values, just swapped. Corrected pairing (length=2.190 m/2190 mm, width=0.720 m/720 mm) is corroborated independently by the closely related later Le Mans IV (1993), whose documented dimensions are 2190 x 610 x 1210 mm (autoevolution) - i.e. the same ~2190 mm overall length recurs across the Le Mans lineage. Recommend treating 2190 mm as the length with this transposition explained, rather than shipping it as a clean, unqualified figure.",
+          "source": "https://www.manualslib.com/manual/964038/Moto-Guzzi-850-Le-Mans.html?page=9",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "honda-cbx1000",
+      "name": "Honda CBX1000",
+      "stats": {
+        "engineCapacity": 1047,
+        "topSpeed": 135,
+        "year": 1978,
+        "weight": 247,
+        "length": 2220
+      },
+      "image": {
+        "file": "images/honda-cbx1000.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Calreyn88",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1978_Honda_CBX_1047cc.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Honda_CBX",
+        "topSpeed": {
+          "value": 135,
+          "note": "manufacturer claimed; Wikipedia infobox cites a range of 134-140 mph across the 1978-1980 model years, explicitly labeled as claimed rather than road-test figures",
+          "source": "https://en.wikipedia.org/wiki/Honda_CBX"
+        },
+        "weight": {
+          "note": "dry weight as published (246.7 kg rounded)",
+          "source": "https://en.wikipedia.org/wiki/Honda_CBX"
+        },
+        "length": {
+          "note": "",
+          "source": "https://en.wikipedia.org/wiki/Honda_CBX",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "yamaha-rd350-lc",
+      "name": "Yamaha RD350 LC",
+      "stats": {
+        "engineCapacity": 347,
+        "topSpeed": 114,
+        "year": 1980,
+        "weight": 143,
+        "length": 2080
+      },
+      "image": {
+        "file": "images/yamaha-rd350-lc.webp",
+        "licence": "CC BY 2.0",
+        "author": "Reg Mckenna",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Yamaha_RD350LC_01.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/yamaha/yamaha_rd350lc%2080.htm",
+        "topSpeed": {
+          "value": 114,
+          "note": "period claimed/test figure per motorcyclespecs.co.za (183 km/h)",
+          "source": "https://www.motorcyclespecs.co.za/model/yamaha/yamaha_rd350lc%2080.htm"
+        },
+        "weight": {
+          "note": "dry weight as published",
+          "source": "https://www.motorcyclespecs.co.za/model/yamaha/yamaha_rd350lc%2080.htm"
+        },
+        "length": {
+          "note": "",
+          "source": "https://www.motorcyclespecs.co.za/model/yamaha/yamaha_rd350lc%2080.htm",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "suzuki-katana-gsx1100s",
+      "name": "Suzuki Katana GSX1100S",
+      "stats": {
+        "engineCapacity": 1074,
+        "topSpeed": 136,
+        "year": 1981,
+        "weight": 232,
+        "length": 2260
+      },
+      "image": {
+        "file": "images/suzuki-katana-gsx1100s.webp",
+        "licence": "CC BY-SA 3.0",
+        "author": "Rainmaker47",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Suzuki_GSX-1100S_Katana.JPG"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/suzu/suzuki_gsx1100s_katana%2081.htm",
+        "topSpeed": {
+          "value": 136,
+          "note": "manufacturer claimed (220 km/h); the same source notes a period road test recorded a higher 141.5 mph",
+          "source": "https://www.motorcyclespecs.co.za/model/suzu/suzuki_gsx1100s_katana%2081.htm"
+        },
+        "weight": {
+          "note": "dry weight as published",
+          "source": "https://www.motorcyclespecs.co.za/model/suzu/suzuki_gsx1100s_katana%2081.htm"
+        },
+        "length": {
+          "note": "",
+          "source": "https://www.motorcyclespecs.co.za/model/suzu/suzuki_gsx1100s_katana%2081.htm",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "suzuki-gsx-r750",
+      "name": "Suzuki GSX-R750",
+      "stats": {
+        "engineCapacity": 749,
+        "topSpeed": 150,
+        "year": 1985,
+        "weight": 176,
+        "length": 2130
+      },
+      "image": {
+        "file": "images/suzuki-gsx-r750.webp",
+        "licence": "CC BY-SA 3.0",
+        "author": "Loren11",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:GSX-R_750_1985_%26_GSX-R_750_R_1989.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Suzuki_GSX-R750",
+        "topSpeed": {
+          "value": 150,
+          "note": "manufacturer claimed (240 km/h) per Wikipedia infobox; a period road test (classic-motorbikes.net) recorded 145 mph",
+          "source": "https://en.wikipedia.org/wiki/Suzuki_GSX-R750"
+        },
+        "weight": {
+          "note": "dry weight as published; consistent between Wikipedia and suzukicycles.org (an independent Suzuki enthusiast archive)",
+          "source": "https://en.wikipedia.org/wiki/Suzuki_GSX-R750"
+        },
+        "length": {
+          "note": "",
+          "source": "http://www.suzukicycles.org/GSX-R-series/GSX-R750_a.shtml",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "yamaha-vmax",
+      "name": "Yamaha VMAX",
+      "stats": {
+        "engineCapacity": 1198,
+        "topSpeed": 150,
+        "year": 1985,
+        "weight": 271,
+        "length": 2300
+      },
+      "image": {
+        "file": "images/yamaha-vmax.webp",
+        "licence": "CC BY-SA 3.0",
+        "author": "PekePON",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:YAMAHA_VMAX1200_1990_Yamaha_Communication_Plaza.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/yamaha/yamaha_v%20max%2084.htm",
+        "topSpeed": {
+          "value": 150,
+          "note": "period claimed figure (240 km/h) per Wikipedia infobox, which cites Motorcycle Classics magazine; motorcyclespecs.co.za independently gives a close 146 mph (235 km/h)",
+          "source": "https://en.wikipedia.org/wiki/Yamaha_VMAX"
+        },
+        "weight": {
+          "note": "Wikipedia infobox figure (271 kg); motorcyclespecs.co.za lists a notably lower 254 kg dry weight for the same 1985-86 model - conflicting sources, flagged rather than silently picking one",
+          "source": "https://en.wikipedia.org/wiki/Yamaha_VMAX"
+        },
+        "length": {
+          "note": "",
+          "source": "https://en.wikipedia.org/wiki/Yamaha_VMAX",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "honda-vfr750r-rc30",
+      "name": "Honda VFR750R RC30",
+      "stats": {
+        "engineCapacity": 748,
+        "topSpeed": 153,
+        "year": 1987,
+        "weight": 185,
+        "length": 2045
+      },
+      "image": {
+        "file": "images/honda-vfr750r-rc30.webp",
+        "licence": "CC BY-SA 3.0",
+        "author": "Rainmaker47",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Honda_VFR750R_RC30.JPG"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/Honda/honda_vfr750rc30.html",
+        "topSpeed": {
+          "value": 153,
+          "note": "manufacturer claimed",
+          "source": "https://en.wikipedia.org/wiki/Honda_VFR750R"
+        },
+        "weight": {
+          "note": "dry weight as published on motorcyclespecs.co.za; Wikipedia's infobox instead cites 180 kg (400 lb) dry \u2014 the two commonly-cited figures differ by 5 kg",
+          "source": "https://www.motorcyclespecs.co.za/model/Honda/honda_vfr750rc30.html"
+        },
+        "length": {
+          "note": "confirmed identical on both motorcyclespecs.co.za and Wikipedia",
+          "source": "https://www.motorcyclespecs.co.za/model/Honda/honda_vfr750rc30.html",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "honda-cbr900rr-fireblade",
+      "name": "Honda CBR900RR FireBlade",
+      "stats": {
+        "engineCapacity": 893,
+        "topSpeed": 160,
+        "year": 1992,
+        "weight": 185,
+        "length": 2055
+      },
+      "image": {
+        "file": "images/honda-cbr900rr-fireblade.webp",
+        "licence": "CC BY-SA 3.0 (dual-licensed with GFDL 1.2+)",
+        "author": "PekePON",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Honda_CBR900RR_Fireblade_1992,jpg.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://global.honda/en/CBR/models/1992_cbr900rr/",
+        "topSpeed": {
+          "value": 160,
+          "note": "period road test / review (Motorcycle News retrospective review)",
+          "source": "https://www.motorcyclenews.com/bike-reviews/honda/cbr900rr-fireblade/1992/"
+        },
+        "weight": {
+          "note": "dry weight as published by Honda's own official history page and corroborated by Wikipedia and totalmotorcycle.com",
+          "source": "https://global.honda/en/CBR/models/1992_cbr900rr/"
+        },
+        "length": {
+          "note": "only one source found with a length figure for this exact model year",
+          "source": "https://www.totalmotorcycle.com/motorcyclespecshandbook/honda/1992-honda-CBR900RRFireblade",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "ducati-916",
+      "name": "Ducati 916",
+      "stats": {
+        "engineCapacity": 916,
+        "topSpeed": 159,
+        "year": 1994,
+        "weight": 198,
+        "length": 2050
+      },
+      "image": {
+        "file": "images/ducati-916.webp",
+        "licence": "Public Domain",
+        "author": "Przemys\u0142aw Jahr",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ducati_916.JPG"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/ducati/ducati_916.htm",
+        "topSpeed": {
+          "value": 159,
+          "note": "manufacturer claimed (motorcyclespecs.co.za gives 158.5 mph; Wikipedia's infobox cites a range of 159.7-161.6 mph depending on source)",
+          "source": "https://www.motorcyclespecs.co.za/model/ducati/ducati_916.htm"
+        },
+        "weight": {
+          "note": "dry weight as published on motorcyclespecs.co.za; Wikipedia's infobox instead cites 194.5 kg (429 lb)",
+          "source": "https://www.motorcyclespecs.co.za/model/ducati/ducati_916.htm"
+        },
+        "length": {
+          "note": "confirmed identical on both motorcyclespecs.co.za and Wikipedia",
+          "source": "https://www.motorcyclespecs.co.za/model/ducati/ducati_916.htm",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "yamaha-yzf-r1",
+      "name": "Yamaha YZF-R1",
+      "stats": {
+        "engineCapacity": 998,
+        "topSpeed": 168,
+        "year": 1998,
+        "weight": 177,
+        "length": 2035
+      },
+      "image": {
+        "file": "images/yamaha-yzf-r1.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Rainmaker47",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1998_Yamaha_YZF-R1_in_the_Yamaha_Communication_Plaza.JPG"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Yamaha_YZF-R1",
+        "topSpeed": {
+          "value": 168,
+          "note": "period road test (Motorcycle Consumer News, 1998), as cited by Wikipedia",
+          "source": "https://en.wikipedia.org/wiki/Yamaha_YZF-R1"
+        },
+        "weight": {
+          "note": "dry weight as published on motorcyclespecs.co.za; this is the widely-cited figure that made the original R1 famous for its power-to-weight ratio. Wikipedia's infobox instead lists 190.1 kg (419 lb), which looks anomalous against contemporary reporting but is recorded here as a flagged discrepancy",
+          "source": "https://www.motorcyclespecs.co.za/model/yamaha/yamaha_r1%2098.htm"
+        },
+        "length": {
+          "note": "confirmed identical on both motorcyclespecs.co.za and Wikipedia",
+          "source": "https://www.motorcyclespecs.co.za/model/yamaha/yamaha_r1%2098.htm",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "suzuki-hayabusa-gsx1300r",
+      "name": "Suzuki Hayabusa GSX1300R",
+      "stats": {
+        "engineCapacity": 1299,
+        "topSpeed": 190,
+        "year": 1999,
+        "weight": 217,
+        "length": 2140
+      },
+      "image": {
+        "file": "images/suzuki-hayabusa-gsx1300r.webp",
+        "licence": "Public Domain",
+        "author": "FlyboyHCH",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:1999introkleur.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Suzuki_Hayabusa",
+        "topSpeed": {
+          "value": 190,
+          "note": "manufacturer claimed / commonly cited figure (the 1999 Hayabusa launched as the world's fastest production motorcycle; some sources cite up to 194 mph)",
+          "source": "https://www.motorcyclespecs.co.za/model/suzu/suzuki_gsxr1300.htm"
+        },
+        "weight": {
+          "note": "dry weight as published on motorcyclespecs.co.za; Wikipedia's infobox instead cites 215 kg (473 lb) dry",
+          "source": "https://www.motorcyclespecs.co.za/model/suzu/suzuki_gsxr1300.htm"
+        },
+        "length": {
+          "note": "confirmed identical on both motorcyclespecs.co.za and Wikipedia",
+          "source": "https://www.motorcyclespecs.co.za/model/suzu/suzuki_gsxr1300.htm",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "honda-gold-wing-gl1800",
+      "name": "Honda Gold Wing GL1800",
+      "stats": {
+        "engineCapacity": 1832,
+        "topSpeed": 120,
+        "year": 2001,
+        "weight": 362,
+        "length": 2630
+      },
+      "image": {
+        "file": "images/honda-gold-wing-gl1800.webp",
+        "licence": "CC BY-SA 3.0",
+        "author": "Cjp24",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Honda_Goldwing_2003.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/Honda/honda_glx1800_01.htm",
+        "topSpeed": {
+          "value": 120,
+          "note": "period road test / review (Motorcycle News); other period tests (Motorcycle Consumer News, Motorcyclist) reported figures ranging roughly 123-130 mph for this touring model",
+          "source": "https://www.motorcyclenews.com/bike-reviews/honda/gl1800-goldwing/2001/"
+        },
+        "weight": {
+          "note": "dry weight as published; confirmed identically on motorcyclespecs.co.za (362 kg / 799 lb) and Wikipedia",
+          "source": "https://www.motorcyclespecs.co.za/model/Honda/honda_glx1800_01.htm"
+        },
+        "length": {
+          "note": "motorcyclespecs.co.za gives 2630 mm; Wikipedia gives a very close 2635 mm",
+          "source": "https://www.motorcyclespecs.co.za/model/Honda/honda_glx1800_01.htm",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "bmw-r1200gs",
+      "name": "BMW R1200GS",
+      "stats": {
+        "engineCapacity": 1170,
+        "topSpeed": 131,
+        "year": 2004,
+        "weight": 199,
+        "length": 2210
+      },
+      "image": {
+        "file": "images/bmw-r1200gs.webp",
+        "licence": "CC BY 3.0 (dual-licensed with GFDL 1.2+)",
+        "author": "User:Gsmonkey",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:R1200GS_2004.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.ultimatespecs.com/motorcycles-specs/bmw/bmw-r-1200-gs-2004",
+        "topSpeed": {
+          "value": 131,
+          "note": "manufacturer claimed / commonly cited figure",
+          "source": "https://en.wikipedia.org/wiki/BMW_R1200GS"
+        },
+        "weight": {
+          "note": "dry weight as published; confirmed on ultimatespecs.com and corroborated by Wikipedia's infobox range (199-203 kg) and multiple other spec aggregators",
+          "source": "https://www.ultimatespecs.com/motorcycles-specs/bmw/bmw-r-1200-gs-2004"
+        },
+        "length": {
+          "note": "confirmed identically on ultimatespecs.com, totalmotorcycle.com and Wikipedia",
+          "source": "https://www.ultimatespecs.com/motorcycles-specs/bmw/bmw-r-1200-gs-2004",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "ktm-1290-super-duke-r",
+      "name": "KTM 1290 Super Duke R",
+      "stats": {
+        "engineCapacity": 1301,
+        "topSpeed": 159,
+        "year": 2014,
+        "weight": 189,
+        "length": 1482
+      },
+      "image": {
+        "file": "images/ktm-1290-super-duke-r.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Cjp24",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:KTM_1290_Super_Duke_R.jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/KTM_1290_Super_Duke_R",
+        "topSpeed": {
+          "value": 159,
+          "note": "revised from 180 mph: that figure's trail leads to an unsourced spec-aggregator, not KTM press material \u2014 KTM's own manuals and spec pages publish no top speed at all for this model. 159 mph (MotorcycleNews's spec table for the 2013-2016 generation) is the best-attested independent figure, though it is itself a claimed/compiled spec rather than a confirmed timed test",
+          "source": "https://www.motorcyclenews.com/bike-reviews/ktm/1290-super-duke-r/2014/"
+        },
+        "weight": {
+          "note": "dry weight as published; consistently confirmed across ultimatespecs.com, motorcycle.com, bikez.com and MotorBeam's contemporary review",
+          "source": "https://www.ultimatespecs.com/motorcycles-specs/ktm/ktm-1290-super-duke-r-2014"
+        },
+        "length": {
+          "note": "No overall-length figure is publicly available for this model after three independent research passes (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals all checked). Wheelbase is used as a documented fallback per the deck's length convention \u2014 this is NOT overall length.",
+          "source": "https://en.wikipedia.org/wiki/KTM_1290_Super_Duke_R",
+          "isWheelbaseFallback": true
+        }
+      }
+    },
+    {
+      "id": "kawasaki-ninja-h2",
+      "name": "Kawasaki Ninja H2",
+      "stats": {
+        "engineCapacity": 998,
+        "topSpeed": 184,
+        "year": 2015,
+        "weight": 238,
+        "length": 2083
+      },
+      "image": {
+        "file": "images/kawasaki-ninja-h2.webp",
+        "licence": "CC BY 2.0",
+        "author": "Daniel Hartwig (San Mateo, CA)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:2015_Kawasaki_Ninja_H2_(17568166468).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://www.motorcyclespecs.co.za/model/kawasaki/Kawasaki_H2_15.html",
+        "topSpeed": {
+          "value": 184,
+          "note": "manufacturer claimed, standard road-going H2 (NOT the ram-air H2R track bike, which is claimed at 205+ mph)",
+          "source": "https://en.wikipedia.org/wiki/Kawasaki_Ninja_H2"
+        },
+        "weight": {
+          "note": "Kawasaki does not publish a dry weight for this model \u2014 this is kerb/wet weight (with fluids), used as a documented fallback per instructions. motorcyclespecs.co.za gives 238 kg; Wikipedia's infobox gives a very close 240 kg wet weight",
+          "source": "https://www.motorcyclespecs.co.za/model/kawasaki/Kawasaki_H2_15.html"
+        },
+        "length": {
+          "note": "motorcyclespecs.co.za gives 2083 mm; Wikipedia gives a very close 2090 mm",
+          "source": "https://www.motorcyclespecs.co.za/model/kawasaki/Kawasaki_H2_15.html",
+          "isWheelbaseFallback": false
+        }
+      }
+    },
+    {
+      "id": "ducati-panigale-v4",
+      "name": "Ducati Panigale V4",
+      "stats": {
+        "engineCapacity": 1103,
+        "topSpeed": 191,
+        "year": 2018,
+        "weight": 174,
+        "length": 2100
+      },
+      "image": {
+        "file": "images/ducati-panigale-v4.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Matti Blume (MB-one)",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ducati_Panigale_V4_-_Tuning_World_Bodensee_2018,_Friedrichshafen_(OW1A0484).jpg"
+      },
+      "_sources": {
+        "engineCapacity": "https://en.wikipedia.org/wiki/Ducati_Panigale_V4",
+        "topSpeed": {
+          "value": 191,
+          "note": "period road test (Motorcycle News, GPS-verified at Bruntingthorpe Proving Ground); note the MCN test was run on the V4 S variant \u2014 the base V4 shares the identical engine/gearing and is generally credited with a comparable top speed, but this exact figure is not confirmed on the base model specifically",
+          "source": "https://www.motorcyclenews.com/bike-reviews/ducati/panigale-v4s/2018/"
+        },
+        "weight": {
+          "note": "dry weight as published on moto-data.net for the base V4; other sources give very close figures for this or the closely related V4 S variant (173 kg per Wikipedia and motorcyclespecs.co.za's V4 S page, 175 kg per ultimatespecs.com)",
+          "source": "https://www.moto-data.net/ducati/panigale-v4-2018"
+        },
+        "length": {
+          "note": "VERIFIED. Found in the official Ducati Panigale V4 owner's manual, in its overall-dimensions section (page 312 of the manual as hosted on ManualsLib): 'length 2100 mm / 82.68 in, height 1132 mm / 44.57 in, and width 805 mm / 31.69 in.' This is Ducati's own published figure for the base Panigale V4 (the 2018 model this manual covers), phrased as 'length' (not wheelbase), and is internally consistent with the separately-documented wheelbase of 1469-1471 mm (length is longer than wheelbase, as expected).",
+          "source": "https://www.manualslib.com/manual/1804729/Ducati-Panigale-V4.html",
+          "isWheelbaseFallback": false
+        }
+      }
+    }
+  ],
+  "conventions": {
+    "weight": "Manufacturer-published dry/unladen weight (no fuel or fluids) is used wherever a source publishes one. For models where no manufacturer dry figure could be found (mostly modern bikes that only publish kerb/wet weight), the kerb or wet weight is used as a documented fallback, flagged per card below.",
+    "topSpeed": "The manufacturer's claimed top speed is used wherever published. Where no claimed figure exists, the top speed recorded in a contemporary or well-corroborated independent road test is used instead, as noted per card below.",
+    "length": "Overall (bumper-to-bumper) length is used wherever a genuine published figure exists. For eight models \u2014 mostly pre-1970s British bikes \u2014 no source (manufacturer literature, owners' clubs, museums, auction houses, workshop manuals) publishes an overall length figure at all, only wheelbase. For those eight cards only, wheelbase is used as a documented, clearly flagged fallback rather than an invented figure; every other card's length is genuine overall length. See each affected card's _sources.length.note below."
+  }
+}

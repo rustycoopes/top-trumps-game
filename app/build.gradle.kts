@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId = "com.toptrumps.app"
         versionCode = 1
-        versionName = "0.2.0-slice2"
+        versionName = "0.3.0-slice3"
     }
 
     buildFeatures {
@@ -45,4 +45,6 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
+
+    implementation(libs.coil.compose)
 }

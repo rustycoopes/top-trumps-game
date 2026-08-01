@@ -21,6 +21,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.random.Random
 
+/** A deck folder available in the picker — id is the asset folder name, name is its manifest label. */
+public data class DeckSummary(val id: String, val name: String)
+
 /**
  * A hand-written dependency graph — no DI framework, per the module-structure ADR. Solo mode is
  * two real [MatchSession]s wired over a [LoopbackTransport]: the human plays the host, an
@@ -36,16 +39,29 @@ public class AppGraph(assets: AssetManager) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
 
     /**
-     * The human's session for a fresh solo match. Callable again for a rematch — the returned
-     * [MatchSession.close] tears down everything this match started, including the guest side
-     * and its [AiOpponentDriver] collector, which otherwise outlive the human's own session (see
-     * slice 2's code review: closing only the host's transport left the previous match's guest
-     * session and AI coroutine parked forever on the shared graph scope).
+     * Every deck folder under `/decks` that actually validates, at launch — the picker's entire
+     * data source, per the PRD's "adding a deck later needs no new UI" requirement (see the
+     * deck-storage ADR). A folder whose manifest fails validation is excluded rather than shown
+     * broken; [DeckLoader] already refuses it loudly via its own validation errors.
      */
-    public fun startSoloMatch(): MatchSession {
-        val deck = when (val result = DeckLoader.load(deckSource, "test-deck")) {
+    public fun listDecks(): List<DeckSummary> = deckSource.listDecks().mapNotNull { id ->
+        when (val result = DeckLoader.load(deckSource, id)) {
+            is DeckValidationResult.Valid -> DeckSummary(id, result.deck.name)
+            is DeckValidationResult.Invalid -> null
+        }
+    }
+
+    /**
+     * The human's session for a fresh solo match against the chosen deck. Callable again for a
+     * rematch — the returned [MatchSession.close] tears down everything this match started,
+     * including the guest side and its [AiOpponentDriver] collector, which otherwise outlive the
+     * human's own session (see slice 2's code review: closing only the host's transport left the
+     * previous match's guest session and AI coroutine parked forever on the shared graph scope).
+     */
+    public fun startSoloMatch(deckId: String): MatchSession {
+        val deck = when (val result = DeckLoader.load(deckSource, deckId)) {
             is DeckValidationResult.Valid -> result.deck
-            is DeckValidationResult.Invalid -> error("test-deck failed validation: ${result.errors}")
+            is DeckValidationResult.Invalid -> error("deck '$deckId' failed validation: ${result.errors}")
         }
 
         // A child of `scope` rather than `scope` itself: every coroutine this match starts (both

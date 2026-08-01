@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,55 +20,79 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
 import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.PlayerIntent
+import com.toptrumps.rules.yearsSince
 import com.toptrumps.session.MatchSession
 import com.toptrumps.session.MatchView
 import com.toptrumps.session.RemoteCardFace
+import com.toptrumps.session.RemoteMetricSpec
 import com.toptrumps.session.RemoteOpponentView
 import com.toptrumps.session.RemoteRoundState
+import kotlinx.datetime.Clock
 
 /**
- * Deliberately plain — no theme, no images, no animation. Slice 2's job is the full match loop
- * being correct (turn alternation, tiebreaks, piles, reveal, result); visual polish is slice 7.
+ * Deliberately plain — no theme, no animation. Slice 3 adds real card art via Coil; visual polish
+ * beyond that is slice 7.
  *
  * Solo-only for now: [AppGraph.startSoloMatch] always seats the local human as [com.toptrumps.rules.Seat.HOST]
  * and the AI as guest, which is why this screen compares wire-level seat strings against the
  * literal `"HOST"` below rather than taking "which seat is local" as a parameter.
  */
 @Composable
-public fun MatchScreen(session: MatchSession, onRematch: () -> Unit, modifier: Modifier = Modifier) {
+public fun MatchScreen(session: MatchSession, deckId: String, onRematch: () -> Unit, modifier: Modifier = Modifier) {
     val view by session.view.collectAsStateWithLifecycle()
+
+    // Disk cache disabled — the source is already local asset storage (TDD §7) — and shared for
+    // the lifetime of the screen rather than rebuilt per image.
+    val context = LocalContext.current
+    val imageLoader = remember(context) { ImageLoader.Builder(context).diskCache(null).build() }
+    DisposableEffect(imageLoader) { onDispose { imageLoader.shutdown() } }
 
     when (val current = view) {
         null -> Column(modifier = modifier.fillMaxSize().padding(16.dp)) { Text("Connecting…") }
-        is MatchView.Finished -> ResultScreen(current, onRematch, modifier)
-        is MatchView.InProgress -> InProgressScreen(session, current, modifier)
+        is MatchView.Finished -> ResultScreen(current, deckId, imageLoader, onRematch, modifier)
+        is MatchView.InProgress -> InProgressScreen(session, current, deckId, imageLoader, modifier)
     }
 }
 
 @Composable
-private fun InProgressScreen(session: MatchSession, view: MatchView.InProgress, modifier: Modifier = Modifier) {
+private fun InProgressScreen(
+    session: MatchSession,
+    view: MatchView.InProgress,
+    deckId: String,
+    imageLoader: ImageLoader,
+    modifier: Modifier = Modifier,
+) {
     // The win-pile browser is a state within the match, not a navigation destination — returning
     // must restore the live round exactly as it was, and this local flag does that for free
     // since `view` keeps updating underneath it regardless of which branch is showing.
     var showingPile by remember { mutableStateOf(false) }
 
     if (showingPile) {
-        WinPileGrid(pile = view.myPile, onBack = { showingPile = false }, modifier = modifier)
+        WinPileGrid(pile = view.myPile, deckId = deckId, imageLoader = imageLoader, onBack = { showingPile = false }, modifier = modifier)
         return
     }
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         ScoreBar(view = view, onTapMyPile = { showingPile = true })
         Text("Your card: ${view.self.name}")
+        CardImage(deckId, view.self.imageFile, view.self.name, imageLoader, size = 220.dp)
 
         when (val round = view.round) {
             is RemoteRoundState.AwaitingChoice -> AwaitingChoiceContent(session, view, round)
-            is RemoteRoundState.Resolved -> ResolvedContent(session, view, round)
+            is RemoteRoundState.Resolved -> ResolvedContent(session, view, round, deckId, imageLoader)
         }
     }
 }
@@ -96,7 +123,7 @@ private fun AwaitingChoiceContent(
         opponent.revealed.forEach { revealed ->
             val spec = view.metrics.first { it.key == revealed.metric }
             val selfValue = view.self.stats.getValue(revealed.metric)
-            Text("  ${spec.label}: you $selfValue ${spec.unit} — opponent ${revealed.value} ${spec.unit} (tied)")
+            Text("  ${spec.label}: you ${formatStat(spec, selfValue)} ${spec.unit} — opponent ${formatStat(spec, revealed.value)} ${spec.unit} (tied)")
         }
     } else {
         Text("Choose a stat:")
@@ -109,13 +136,22 @@ private fun AwaitingChoiceContent(
             onClick = { session.submit(PlayerIntent.ChooseMetric(MetricKey(spec.key))) },
             enabled = available,
         ) {
-            Text("${spec.label}: $value ${spec.unit}" + if (available) "" else " (tied — unavailable)")
+            Text(
+                "${spec.label}: ${formatStat(spec, value)} ${spec.unit} (${spec.winDirectionLabel()})" +
+                    if (available) "" else " (tied — unavailable)",
+            )
         }
     }
 }
 
 @Composable
-private fun ResolvedContent(session: MatchSession, view: MatchView.InProgress, round: RemoteRoundState.Resolved) {
+private fun ResolvedContent(
+    session: MatchSession,
+    view: MatchView.InProgress,
+    round: RemoteRoundState.Resolved,
+    deckId: String,
+    imageLoader: ImageLoader,
+) {
     val spec = view.metrics.first { it.key == round.decidingMetric }
     val selfValue = view.self.stats.getValue(spec.key)
     val opponentCard = (view.opponent as? RemoteOpponentView.Revealed)?.card
@@ -124,8 +160,9 @@ private fun ResolvedContent(session: MatchSession, view: MatchView.InProgress, r
         Text("Every stat tied on ${spec.label}!")
     } else {
         Text("Settled on ${spec.label}")
-        Text("You: $selfValue ${spec.unit}")
-        Text("Opponent: ${opponentCard?.stats?.get(spec.key) ?: "?"} ${spec.unit}")
+        Text("You: ${formatStat(spec, selfValue)} ${spec.unit}")
+        val opponentValue = opponentCard?.stats?.get(spec.key)
+        Text("Opponent: ${opponentValue?.let { formatStat(spec, it) } ?: "?"} ${spec.unit}")
     }
 
     Text(
@@ -138,7 +175,8 @@ private fun ResolvedContent(session: MatchSession, view: MatchView.InProgress, r
 
     if (opponentCard != null) {
         Text("Opponent's card, fully revealed: ${opponentCard.name}")
-        view.metrics.forEach { m -> Text("  ${m.label}: ${opponentCard.stats.getValue(m.key)} ${m.unit}") }
+        CardImage(deckId, opponentCard.imageFile, opponentCard.name, imageLoader, size = 220.dp)
+        view.metrics.forEach { m -> Text("  ${m.label}: ${formatStat(m, opponentCard.stats.getValue(m.key))} ${m.unit}") }
     }
 
     Button(onClick = { session.submit(PlayerIntent.AdvanceRound) }) {
@@ -147,18 +185,37 @@ private fun ResolvedContent(session: MatchSession, view: MatchView.InProgress, r
 }
 
 @Composable
-private fun WinPileGrid(pile: List<RemoteCardFace>, onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun WinPileGrid(
+    pile: List<RemoteCardFace>,
+    deckId: String,
+    imageLoader: ImageLoader,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = onBack) { Text("Back to match") }
         Text("Your pile (${pile.size} cards)")
         LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.fillMaxSize()) {
-            items(pile) { card -> Text(card.name, modifier = Modifier.padding(4.dp)) }
+            items(pile) { card ->
+                Column(modifier = Modifier.padding(4.dp)) {
+                    // A small, explicit thumbnail size — thirty full-resolution bitmaps in this
+                    // grid would be ~3.5MB each in memory and OOM a mid-range phone (TDD §7).
+                    CardImage(deckId, card.imageFile, card.name, imageLoader, size = 96.dp)
+                    Text(card.name)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun ResultScreen(view: MatchView.Finished, onRematch: () -> Unit, modifier: Modifier = Modifier) {
+private fun ResultScreen(
+    view: MatchView.Finished,
+    deckId: String,
+    imageLoader: ImageLoader,
+    onRematch: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             when (view.winner) {
@@ -171,3 +228,36 @@ private fun ResultScreen(view: MatchView.Finished, onRematch: () -> Unit, modifi
         Button(onClick = onRematch) { Text("Rematch") }
     }
 }
+
+/**
+ * Renders a card's photo from the deck's own asset folder — `file:///android_asset/<deckId>/<imageFile>`,
+ * per the deck-storage ADR. [imageLoader] has its disk cache disabled (the source is already local
+ * storage) and [size] gives Coil an explicit decode target for every call site, rather than ever
+ * decoding a full-resolution bitmap into a thumbnail.
+ */
+@Composable
+private fun CardImage(deckId: String, imageFile: String, contentDescription: String?, imageLoader: ImageLoader, size: Dp) {
+    AsyncImage(
+        model = "file:///android_asset/$deckId/$imageFile",
+        contentDescription = contentDescription,
+        imageLoader = imageLoader,
+        modifier = Modifier.size(size),
+    )
+}
+
+/**
+ * A metric's stored value, as a player should read it. [RemoteMetricSpec.display] of
+ * `YEARS_SINCE_VALUE` treats [raw] as a calendar year and shows "years since" it instead of the
+ * raw year (story 70) — the derivation happens here, at the UI layer, never inside the engine.
+ */
+private fun formatStat(spec: RemoteMetricSpec, raw: Double): String = when (spec.display) {
+    "YEARS_SINCE_VALUE" -> yearsSince(raw.toInt(), Clock.System).toString()
+    else -> if (raw == raw.toInt().toDouble()) raw.toInt().toString() else raw.toString()
+}
+
+/**
+ * Story 27: whether a stat is won by the higher or lower shown value. [RemoteMetricSpec.direction]
+ * is already the *displayed* direction (the host computes it via `MetricSpec.displayDirection()`
+ * before it ever reaches the wire), so this is a plain label, not a flip.
+ */
+private fun RemoteMetricSpec.winDirectionLabel(): String = if (direction == "HIGH_WINS") "higher wins" else "lower wins"

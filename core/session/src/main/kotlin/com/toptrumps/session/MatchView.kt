@@ -4,6 +4,7 @@ import com.toptrumps.rules.CardFace
 import com.toptrumps.rules.OpponentCardView
 import com.toptrumps.rules.PlayerView
 import com.toptrumps.rules.RoundState
+import com.toptrumps.rules.displayDirection
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -18,10 +19,21 @@ import kotlinx.serialization.Serializable
  * constructor does, since every legitimate value still traces back to a real [PlayerView].
  */
 @Serializable
-public data class RemoteMetricSpec(val key: String, val label: String, val unit: String, val direction: String)
+public data class RemoteMetricSpec(
+    val key: String,
+    val label: String,
+    val unit: String,
+    val direction: String,
+    val display: String = "RAW",
+)
 
 @Serializable
-public data class RemoteCardFace(val id: String, val name: String, val stats: Map<String, Double>)
+public data class RemoteCardFace(
+    val id: String,
+    val name: String,
+    val stats: Map<String, Double>,
+    val imageFile: String = "",
+)
 
 @Serializable
 public data class RemoteRevealedMetric(val metric: String, val value: Double)
@@ -96,7 +108,7 @@ public sealed interface MatchView {
 }
 
 private fun CardFace.toRemote(): RemoteCardFace =
-    RemoteCardFace(id, name, stats.mapKeys { it.key.id }.mapValues { it.value.raw })
+    RemoteCardFace(id, name, stats.mapKeys { it.key.id }.mapValues { it.value.raw }, imageFile)
 
 public fun PlayerView.toMatchView(): MatchView = when (this) {
     is PlayerView.Finished -> MatchView.Finished(
@@ -130,7 +142,11 @@ public fun PlayerView.toMatchView(): MatchView = when (this) {
                 revealedMetrics = roundState.revealedMetrics.map { it.id },
             )
         },
-        metrics = metrics.map { RemoteMetricSpec(it.key.id, it.label, it.unit, it.direction.name) },
+        // .direction here is the *displayed* win direction, not necessarily the raw stored-value
+        // direction — see MetricSpec.displayDirection(). YEARS_SINCE_VALUE is order-reversing, so
+        // a client rendering "(higher wins)"/"(lower wins)" next to the shown number needs this,
+        // not the engine's raw direction.
+        metrics = metrics.map { RemoteMetricSpec(it.key.id, it.label, it.unit, it.displayDirection().name, it.display.name) },
         myScore = myScore,
         opponentScore = opponentScore,
         roundNumber = roundNumber,

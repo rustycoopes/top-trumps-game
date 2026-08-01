@@ -4,6 +4,7 @@ public data class CardFace(
     val id: String,
     val name: String,
     val stats: Map<MetricKey, StatValue>,
+    val imageFile: String,
 )
 
 public data class RevealedMetric(val metric: MetricKey, val value: StatValue)
