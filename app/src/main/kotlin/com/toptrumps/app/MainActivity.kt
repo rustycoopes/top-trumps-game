@@ -15,9 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.toptrumps.session.InvitationState
-import com.toptrumps.session.Role
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -57,7 +55,7 @@ private data object Settings
 private data object ManualConnect
 
 @Serializable
-private data class Connected(val role: String, val peerName: String)
+private data object Connected
 
 @Serializable
 private data object Solo
@@ -125,8 +123,8 @@ private fun AppRoot(appGraph: AppGraph) {
                 onOpenSettings = { navController.navigate(Settings) },
                 onOpenManualConnect = { navController.navigate(ManualConnect) },
                 onPlaySolo = { navController.navigate(Solo) },
-                onConnected = { role, peerName ->
-                    navController.navigate(Connected(role.name, peerName)) { popUpTo(Lobby) }
+                onConnected = { _, _ ->
+                    navController.navigate(Connected) { popUpTo(Lobby) }
                 },
             )
         }
@@ -146,7 +144,7 @@ private fun AppRoot(appGraph: AppGraph) {
             LaunchedEffect(invitation) {
                 val state = invitation
                 if (state is InvitationState.Connected) {
-                    navController.navigate(Connected(state.role.name, state.peer.displayName)) {
+                    navController.navigate(Connected) {
                         popUpTo(ManualConnect) { inclusive = true }
                     }
                 }
@@ -159,16 +157,31 @@ private fun AppRoot(appGraph: AppGraph) {
             )
         }
 
-        composable<Connected> { backStackEntry ->
-            val args = backStackEntry.toRoute<Connected>()
-            ConnectedScreen(
-                role = Role.valueOf(args.role),
-                peerDisplayName = args.peerName,
+        composable<Connected> {
+            if (controller == null) return@composable
+
+            val invitationState by controller.invitation.collectAsStateWithLifecycle()
+            val connected = invitationState as? InvitationState.Connected
+            if (connected == null) {
+                // The socket closed out from under us (peer dropped before the match started, or
+                // we're mid-navigation away) — nothing left to drive a match over.
+                LaunchedEffect(Unit) { navController.navigate(Lobby) { popUpTo(Lobby) { inclusive = true } } }
+                return@composable
+            }
+
+            val matchController = remember(connected.transport) {
+                appGraph.createMatchController(connected.transport, connected.role, knownName.orEmpty())
+            }
+            DisposableEffect(matchController) { onDispose { matchController.close() } }
+
+            TwoDeviceMatchScreen(
+                controller = matchController,
+                peerDisplayName = connected.peer.displayName,
                 onLeave = {
                     // Closes the connected socket and returns the controller to Idle *before*
                     // navigating — Lobby's own `LaunchedEffect(invitation)` would otherwise see
                     // it still `Connected` on first composition and bounce straight back here.
-                    controller?.leave()
+                    controller.leave()
                     navController.navigate(Lobby) { popUpTo(Lobby) { inclusive = true } }
                 },
             )

@@ -2,6 +2,20 @@ package com.toptrumps.session
 
 import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.PlayerIntent
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onEach
+
+/**
+ * Records every frame that passes through [incoming] without altering behaviour — used to capture
+ * every frame the host sends to the guest across a full match, per the WBS's frame-level leak
+ * assertion. A test utility with no decision-making of its own, not a double.
+ */
+internal class RecordingTransport(private val delegate: Transport) : Transport {
+    val frames: MutableList<ByteArray> = mutableListOf()
+    override val incoming: Flow<ByteArray> = delegate.incoming.onEach { frames += it }
+    override suspend fun send(bytes: ByteArray) = delegate.send(bytes)
+    override fun close() = delegate.close()
+}
 
 /**
  * Sequences moves across a host/guest [MatchSession] pair for tests. A test utility containing

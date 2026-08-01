@@ -361,7 +361,7 @@ Confine all state mutation to a single dispatcher (`Dispatchers.Default.limitedP
 
 3. **The all-metrics-tie fallback is now decided as `CHOOSER_WINS` (§4) rather than the PRD's "each keeps their own card"**, because the PRD's version contradicts its own no-draw invariant. Worth your explicit sign-off, since it reverses a stated (if flagged) PRD decision. It remains config, so reversing costs one line — but reinstating `EACH_KEEPS_OWN` means accepting that 15–15 draws exist and building draw handling into the result screen.
 
-4. **Rematch role continuity is unspecified in the PRD.** Does the host stay host across a rematch (simplest — reuse the transport, fresh session token), or does Player One rotate for fairness? A product question, not an implementation detail.
+4. ~~**Rematch role continuity is unspecified in the PRD.**~~ **Resolved during Slice 5 (2026-08-01), with product sign-off: the host stays host.** Reuse the same transport, issue a fresh session token per rematch. Two-device rematch itself is not implemented by Slice 5 — its acceptance criteria don't call for it, and only solo's existing rematch is required to keep working — so this decision is recorded now for whichever follow-up issue builds the two-device `RematchOffer`/`RematchResponse` flow.
 
 5. **Should the choice UI be gated on local reveal-dismissal?** Since the host advances the round immediately with no wire ack, a fast player can commit their next choice before the opponent has dismissed the previous reveal. Not a correctness bug given the redaction model, but it needs a deliberate answer. Recommendation: gate it — it's cheap and client-only.
 

@@ -187,7 +187,7 @@ class MatchSessionTest {
             driver.choose(year) // ties again — two stats now legitimately visible
 
             val guestView = guest.view.value as MatchView.InProgress
-            val json = String(ProtocolCodec.encodeView(guestView))
+            val json = String(ProtocolCodec.encodeHostToGuest(HostToGuest.View(guestView)))
             val ownWeightValue = guestView.self.stats.getValue(weight.id)
 
             // Every card's weight value is distinct, and weight hasn't been played yet. The
@@ -288,6 +288,73 @@ class MatchSessionTest {
             assertNotNull(hostFinal.winner, "an odd round count can never draw under the default CHOOSER_WINS config")
             assertEquals(6, hostFinal.myScore + hostFinal.opponentScore)
             assertTrue(hostFinal.myScore % 2 == 0 && hostFinal.opponentScore % 2 == 0)
+
+            host.close()
+            guest.close()
+        }
+
+    @Test
+    fun `MatchStart carries a duplicate-free hand of the right size, reproducible from a seed`() =
+        runTest(UnconfinedTestDispatcher()) {
+            fun guestHandIds(seed: Long): List<String> {
+                val (hostTransport, guestTransportRaw) = LoopbackTransport.createPair()
+                val recording = RecordingTransport(guestTransportRaw)
+                HostMatchSession(sixCardDeck(), MatchConfig("six-card-deck"), Random(seed), hostTransport, backgroundScope)
+                GuestMatchSession(recording, backgroundScope)
+                val matchStart = recording.frames
+                    .map { ProtocolCodec.decodeHostToGuest(it) }
+                    .filterIsInstance<HostToGuest.MatchStart>()
+                    .single()
+                return matchStart.yourHand.map { it.id }
+            }
+
+            val dealtHand = guestHandIds(seed = 42)
+            assertEquals(3, dealtHand.size)
+            assertEquals(dealtHand.toSet().size, dealtHand.size, "no duplicate cards in the guest's dealt hand")
+            assertTrue(dealtHand.all { id -> sixCardDeck().cards.any { it.id == id } }, "every dealt card comes from the deck")
+            assertEquals(dealtHand, guestHandIds(seed = 42), "the same seed deals the same hand")
+        }
+
+    @Test
+    fun `no unplayed stat leaks in any frame sent across a full match, not just the final one`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val deck = tieableDeck()
+            val (hostTransport, guestTransportRaw) = LoopbackTransport.createPair()
+            val recording = RecordingTransport(guestTransportRaw)
+            val host = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, backgroundScope)
+            val guest = GuestMatchSession(recording, backgroundScope)
+            val driver = MatchDriver(host, guest)
+
+            driver.playMatch { _, round -> round.remainingMetrics.first() }
+
+            val allStatValues = deck.cards.flatMap { it.stats.values.map { value -> value.raw } }.toSet()
+            val inProgressFrames = recording.frames.filter {
+                (ProtocolCodec.decodeHostToGuest(it) as? HostToGuest.View)?.view is MatchView.InProgress
+            }
+            assertTrue(inProgressFrames.isNotEmpty(), "the match should have produced at least one in-progress view")
+
+            for (frame in inProgressFrames) {
+                val view = ((ProtocolCodec.decodeHostToGuest(frame) as HostToGuest.View).view as MatchView.InProgress)
+                // self, the whole pile (already permanently won, both cards from every settled
+                // round) and whatever's been revealed so far on the current opponent card are all
+                // legitimately visible; anything else from the deck must not appear.
+                val legitimatelyVisible = view.self.stats.values.toSet() +
+                    view.myPile.flatMap { it.stats.values }.toSet() +
+                    when (val opponent = view.opponent) {
+                        is RemoteOpponentView.FaceDown -> emptySet()
+                        is RemoteOpponentView.Contested -> opponent.revealed.map { it.value }.toSet()
+                        is RemoteOpponentView.Revealed -> opponent.card.stats.values.toSet()
+                    }
+                val json = String(frame)
+                for (value in allStatValues) {
+                    if (value in legitimatelyVisible) continue
+                    // A plain substring check, not JSON-token-aware — safe here because
+                    // tieableDeck()'s values (120.0, 1975.0, 180.0–210.0) are digit-disjoint. A
+                    // future fixture whose values are substrings of each other (e.g. 2.0 and
+                    // 12.0) would need a token-boundary-aware check instead.
+                    assertFalse(json.contains(value.toString()), "un-owned, unrevealed value $value leaked into: $json")
+                }
+            }
 
             host.close()
             guest.close()

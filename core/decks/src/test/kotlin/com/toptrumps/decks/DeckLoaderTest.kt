@@ -166,4 +166,20 @@ class DeckLoaderTest {
         assertTrue(result is DeckValidationResult.Invalid)
         assertTrue((result as DeckValidationResult.Invalid).errors.any { it.contains("direction") })
     }
+
+    @Test
+    fun `manifestHash is stable for the same deck and differs between decks`() {
+        val testDeckHash = DeckLoader.manifestHash(source, "test-deck")
+        val testDeckHashAgain = DeckLoader.manifestHash(source, "test-deck")
+        val motorcyclesHash = DeckLoader.manifestHash(source, "motorcycles")
+
+        assertTrue(testDeckHash != null && testDeckHash.isNotBlank())
+        assertEquals(testDeckHash, testDeckHashAgain, "hashing the same manifest twice must agree")
+        assertTrue(testDeckHash != motorcyclesHash, "two different manifests must not collide")
+    }
+
+    @Test
+    fun `manifestHash is null for a deck that does not exist`() {
+        assertEquals(null, DeckLoader.manifestHash(source, "does-not-exist"))
+    }
 }

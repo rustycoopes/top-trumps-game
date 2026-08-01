@@ -1,5 +1,13 @@
 package com.toptrumps.session
 
+import com.toptrumps.rules.Card
+import com.toptrumps.rules.Deck
+import com.toptrumps.rules.Direction
+import com.toptrumps.rules.MatchConfig
+import com.toptrumps.rules.MetricKey
+import com.toptrumps.rules.MetricSpec
+import com.toptrumps.rules.PlayerIntent
+import com.toptrumps.rules.StatValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -11,11 +19,14 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import java.io.DataOutputStream
 import java.net.Socket
 import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Real sockets on `127.0.0.1:0`, plain JVM — the framing bugs the TDD calls out (partial reads,
@@ -95,6 +106,73 @@ class TcpTransportTest {
             raw.close()
         }
     }
+
+    /**
+     * The WBS's own testing note: "extend the loopback TCP tests from slice 4 to cover a full
+     * match over a real socket on 127.0.0.1." One metric and two cards with distinct values —
+     * the round decides on the first pick with no tiebreak — so this stays a real end-to-end
+     * exercise of the handshake and a full match, rather than reimplementing [MatchDriver]'s
+     * tiebreak-walking against real network latency.
+     */
+    @Test
+    fun `the full handshake and a full match play out correctly over a real socket`() = runBlocking {
+        withConnectedPair { hostTransport, guestTransport ->
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            try {
+                val deck = tinyDeck()
+                val hash = "test-hash"
+
+                val guestHandshake = async {
+                    GuestHandshake.run(guestTransport, "Guest", "instance-id", localDeckHash = { hash })
+                }
+
+                assertEquals(HostHandshake.HelloResult.Ready, withTimeout(5_000) { HostHandshake.awaitHello(hostTransport) })
+                assertEquals(
+                    HostHandshake.DeckResult.Accepted,
+                    withTimeout(5_000) {
+                        HostHandshake.chooseDeck(hostTransport, deck.id, hash, WireMatchConfig(deck.id, "CHOOSER_WINS"), confirmWindow = 200.milliseconds)
+                    },
+                )
+
+                val hostSession = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, scope)
+                val handshakeResult = withTimeout(5_000) { guestHandshake.await() }
+                assertNotNull(handshakeResult as? GuestHandshake.Result.Ready)
+                val guestSession = GuestMatchSession(guestTransport, scope)
+
+                // Real sockets, unlike the in-memory seam tests, genuinely suspend between a
+                // submit() and its resolving View — the deal itself is the first such round trip.
+                val dealtView = withTimeout(5_000) { guestSession.view.first { it != null } } as MatchView.InProgress
+                val chooser = (dealtView.round as RemoteRoundState.AwaitingChoice).chooser
+                val chooserSession = if (chooser == "HOST") hostSession else guestSession
+                chooserSession.submit(PlayerIntent.ChooseMetric(MetricKey("speed")))
+
+                withTimeout(5_000) {
+                    hostSession.view.first { (it as? MatchView.InProgress)?.round is RemoteRoundState.Resolved }
+                }
+                hostSession.submit(PlayerIntent.AdvanceRound)
+
+                val hostFinal = withTimeout(5_000) { hostSession.view.first { it is MatchView.Finished } } as MatchView.Finished
+                val guestFinal = withTimeout(5_000) { guestSession.view.first { it is MatchView.Finished } } as MatchView.Finished
+
+                assertEquals(hostFinal.winner, guestFinal.winner)
+                assertEquals(2, hostFinal.myScore + hostFinal.opponentScore)
+
+                hostSession.close()
+                guestSession.close()
+            } finally {
+                scope.cancel()
+            }
+        }
+    }
+
+    private fun tinyDeck(): Deck = Deck(
+        id = "tiny-deck",
+        metrics = listOf(MetricSpec(MetricKey("speed"), "Speed", "mph", Direction.HIGH_WINS)),
+        cards = listOf(
+            Card("a", "Alpha", mapOf(MetricKey("speed") to StatValue(100.0))),
+            Card("b", "Bravo", mapOf(MetricKey("speed") to StatValue(50.0))),
+        ),
+    )
 
     private fun writeFrame(out: DataOutputStream, payload: ByteArray) {
         out.writeInt(payload.size)
