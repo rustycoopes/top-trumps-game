@@ -146,6 +146,38 @@ class ConnectionResilienceTest {
         }
 
     @Test
+    fun `the guest's lastResync flags exactly the view a resume delivered, never an organic one, and the host is never flagged`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val (hostTransport, guestTransport) = LoopbackTransport.createPair()
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+            assertEquals(null, guest.lastResync.value, "no resume has happened yet")
+
+            // An organic transition — resolving a round the ordinary way — must never set it.
+            resolveOneRound(host, guest)
+            assertEquals(null, guest.lastResync.value, "an organic view update is not a resync")
+            assertEquals(null, host.lastResync.value, "the host is never resynced")
+
+            hostTransport.dropConnection()
+            val (newHostTransport, newGuestTransport) = LoopbackTransport.createPair()
+            guest.reconnect(newGuestTransport)
+            val resume = ProtocolCodec.decodeGuestToHost(newHostTransport.incoming.first()) as GuestToHost.Resume
+            host.acceptResume(newHostTransport, resume)
+
+            val resumedView = guest.view.value as MatchView.InProgress
+            assertEquals(resumedView.revision, guest.lastResync.value, "lastResync must name the exact revision the resume delivered")
+            assertEquals(null, host.lastResync.value, "the host is still never resynced — it's the guest that dropped")
+
+            // The next organic transition after the resume must not still read as a resync —
+            // advance past the already-resolved round first, then resolve the next one.
+            host.submit(PlayerIntent.AdvanceRound)
+            resolveOneRound(host, guest)
+            val nextView = guest.view.value as MatchView.InProgress
+            assertTrue(nextView.revision > resumedView.revision)
+            assertEquals(resumedView.revision, guest.lastResync.value, "lastResync stays pinned to the resumed revision, not the one after it")
+        }
+
+    @Test
     fun `a guest intent the host already applied is not re-applied after a resume`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()

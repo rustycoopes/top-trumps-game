@@ -41,6 +41,18 @@ public interface MatchSession {
      * at-most-one-intent-in-flight invariant).
      */
     public val hasPendingIntent: StateFlow<Boolean>
+
+    /**
+     * The [MatchView.revision] of the most recent [view] update that arrived as a resume's
+     * hard-cut ([HostToGuest.ResumeAck]) rather than an organic transition — `null` until the
+     * first one. Always `null` for the host, which is never resynced. The UI (slice 7) compares
+     * this against the current [view]'s revision to `Animatable.snapTo` instead of animating a
+     * reveal/slide that already happened while disconnected; nothing about gameplay may ever
+     * branch on it, since a resync and an ordinary fast transition must be indistinguishable to
+     * the rules layer.
+     */
+    public val lastResync: StateFlow<Long?>
+
     public fun submit(intent: PlayerIntent)
 
     /** A deliberate quit — sends a courtesy notice before tearing down, so the peer shows "X left the game" rather than a countdown. */
@@ -156,6 +168,7 @@ public class HostMatchSession(
     private val watchdog = ConnectionWatchdog(scope) { send(ProtocolCodec.encodeHostToGuest(HostToGuest.Heartbeat)) }
     override val connectionState: StateFlow<ConnectionState> get() = watchdog.state
     override val hasPendingIntent: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
+    override val lastResync: StateFlow<Long?> = MutableStateFlow(null).asStateFlow()
 
     init {
         scope.launch {
@@ -320,6 +333,9 @@ public class GuestMatchSession(
     private val _hasPendingIntent = MutableStateFlow(false)
     override val hasPendingIntent: StateFlow<Boolean> = _hasPendingIntent.asStateFlow()
 
+    private val _lastResync = MutableStateFlow<Long?>(null)
+    override val lastResync: StateFlow<Long?> = _lastResync.asStateFlow()
+
     private val _view = MutableStateFlow<MatchView?>(null)
     override val view: StateFlow<MatchView?> = _view.asStateFlow()
 
@@ -399,6 +415,9 @@ public class GuestMatchSession(
                     // Liveness tracking above already covers it — nothing further to do.
                     is HostToGuest.Heartbeat -> Unit
                     is HostToGuest.ResumeAck -> {
+                        // Set before `_view` — a collector reading both must never observe the
+                        // new view without also being able to see that it was a resync.
+                        _lastResync.value = message.view.revision
                         _view.value = message.view
                         pendingIntent = null
                         watchdog.onResumeSettled()

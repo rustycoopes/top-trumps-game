@@ -4,17 +4,35 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+composeCompiler {
+    // compose-stability-config.conf declares com.toptrumps.rules.* and com.toptrumps.session.*
+    // stable: those modules compile without the Compose compiler (module-structure ADR), so every
+    // type they declare (PlayerView, MatchView, ConnectionState, ...) is inferred unstable by
+    // default even though every field is an immutable `val` — and the match screen would
+    // recompose in full on every state emission without this — TDD §10. The config file itself
+    // can't carry a comment (the compiler rejects `#` lines as an invalid pattern).
+    //
+    // The WBS's other half, strong skipping, needs no setting here: this compiler version enables
+    // it unconditionally (the toggle is deprecated and slated for removal) — it's what lets a
+    // composable taking one of those now-"stable" types skip on structural equality rather than
+    // refusing to skip an unstable-typed parameter outright.
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability-config.conf"))
+    metricsDestination = layout.buildDirectory.dir("compose_metrics")
+    reportsDestination = layout.buildDirectory.dir("compose_reports")
+}
+
 android {
     namespace = "com.toptrumps.app"
 
     defaultConfig {
         applicationId = "com.toptrumps.app"
         versionCode = 1
-        versionName = "0.5.0-slice6"
+        versionName = "0.6.0-slice7"
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     buildTypes {

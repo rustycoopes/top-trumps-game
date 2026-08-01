@@ -3,6 +3,9 @@ package com.toptrumps.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,6 +27,10 @@ public class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // targetSdk 35 already forces edge-to-edge regardless of this call (WBS slice-7-polish) —
+        // this is what additionally makes the system bar icon contrast follow the content instead
+        // of defaulting to a scrim.
+        enableEdgeToEdge()
         // Application-scoped, not created here — a two-device match's state (and the socket
         // underneath it) must not die just because this Activity was recreated. See
         // TopTrumpsApplication and the foreground-service ADR.
@@ -89,7 +97,16 @@ private fun AppRoot(appGraph: AppGraph) {
     val controller = knownName?.let { name -> remember(name) { appGraph.lobbyController(name) } }
     LaunchedEffect(controller) { controller?.start() }
 
-    NavHost(navController = navController, startDestination = Loading) {
+    // One inset-handling point for every screen (WBS slice-7-polish: "the layout handles system
+    // insets properly", and specifically the match screen's score bar/round counter clearing the
+    // status and navigation bars on a gesture-nav device) rather than each of the ~13 screens
+    // padding itself — `safeDrawingPadding` also covers the IME, which is a free keyboard-avoidance
+    // fix for NameEntry/Settings/ManualConnect's text fields.
+    NavHost(
+        navController = navController,
+        startDestination = Loading,
+        modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+    ) {
         composable<Loading> {
             LaunchedEffect(nameState) {
                 when (val state = nameState) {
@@ -135,10 +152,13 @@ private fun AppRoot(appGraph: AppGraph) {
         }
 
         composable<Settings> {
+            val muted by appGraph.soundPreferences.muted.collectAsStateWithLifecycle()
             SettingsScreen(
                 currentName = knownName.orEmpty(),
                 onSave = { name -> scope.launch { appGraph.displayNamePreferences.setDisplayName(name) } },
                 onBack = { navController.popBackStack() },
+                muted = muted,
+                onSetMuted = { value -> scope.launch { appGraph.soundPreferences.setMuted(value) } },
             )
         }
 
@@ -214,6 +234,7 @@ private fun AppRoot(appGraph: AppGraph) {
                 controller = matchController,
                 peerDisplayName = connected.peer.displayName,
                 onLeave = leaveMatch,
+                soundEffects = appGraph.soundEffects,
             )
         }
 
@@ -252,5 +273,6 @@ private fun SoloMatchHost(appGraph: AppGraph) {
             session.close()
             session = appGraph.startSoloMatch(deck.id)
         },
+        soundEffects = appGraph.soundEffects,
     )
 }
