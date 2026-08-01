@@ -10,6 +10,7 @@ import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.MetricSpec
 import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.rules.StatValue
+import com.toptrumps.session.ConnectionState
 import com.toptrumps.session.GuestMatchSession
 import com.toptrumps.session.HostMatchSession
 import com.toptrumps.session.LoopbackTransport
@@ -63,7 +64,10 @@ private fun rankingDeck(): Deck = Deck(
 
 private fun fakeSession(): MatchSession = object : MatchSession {
     override val view = MutableStateFlow<MatchView?>(null)
+    override val connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+    override val hasPendingIntent = MutableStateFlow(false)
     override fun submit(intent: PlayerIntent) = Unit
+    override fun leave() = Unit
     override fun close() = Unit
 }
 
@@ -74,8 +78,8 @@ class AiOpponentDriverTest {
         // Try enough seeds that at least one deals the AI (guest) the first choice.
         for (seed in 0 until 50) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(seed), hostTransport, backgroundScope)
-            val guest = GuestMatchSession(guestTransport, backgroundScope)
+            val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(seed), hostTransport, backgroundScope, "test-token")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, "test-token")
             val ai = AiOpponentDriver(guest, "GUEST", testDeck(), backgroundScope)
 
             val awaiting = (host.view.value as MatchView.InProgress).round as RemoteRoundState.AwaitingChoice

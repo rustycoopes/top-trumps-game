@@ -21,7 +21,9 @@ public object HostHandshake {
     public sealed interface HelloResult {
         /** The guest is running an incompatible build; the caller must not offer a deck to pick. */
         public data class Refused(val guestVersion: Int) : HelloResult
-        public data object Ready : HelloResult
+
+        /** [sessionToken] is what a later [GuestToHost.Resume] on this match must present — the caller hands it to [HostMatchSession]. */
+        public data class Ready(val sessionToken: String) : HelloResult
     }
 
     /** Gate 1: blocks deck selection until the guest's [GuestToHost.Hello] is seen and its protocol version matches ours. */
@@ -34,8 +36,9 @@ public object HostHandshake {
             transport.send(ProtocolCodec.encodeHostToGuest(HostToGuest.VersionMismatch(PROTOCOL_VERSION)))
             HelloResult.Refused(hello.protocolVersion)
         } else {
-            transport.send(ProtocolCodec.encodeHostToGuest(HostToGuest.HelloAck(sessionToken = UUID.randomUUID().toString())))
-            HelloResult.Ready
+            val sessionToken = UUID.randomUUID().toString()
+            transport.send(ProtocolCodec.encodeHostToGuest(HostToGuest.HelloAck(sessionToken)))
+            HelloResult.Ready(sessionToken)
         }
     }
 
@@ -79,7 +82,15 @@ public object GuestHandshake {
     public sealed interface Result {
         public data class VersionRefused(val hostVersion: Int) : Result
         public data class DeckRefused(val deckId: String) : Result
-        public data class Ready(val deckId: String, val config: WireMatchConfig, val yourHand: List<RemoteCardFace>, val roundCount: Int) : Result
+
+        /** [sessionToken] is what [GuestMatchSession] presents in a later [GuestToHost.Resume]. */
+        public data class Ready(
+            val deckId: String,
+            val config: WireMatchConfig,
+            val yourHand: List<RemoteCardFace>,
+            val roundCount: Int,
+            val sessionToken: String,
+        ) : Result
     }
 
     /**
@@ -101,6 +112,7 @@ public object GuestHandshake {
 
         val afterHello = messages.first { it is HostToGuest.VersionMismatch || it is HostToGuest.HelloAck }
         if (afterHello is HostToGuest.VersionMismatch) return Result.VersionRefused(afterHello.hostVersion)
+        val sessionToken = (afterHello as HostToGuest.HelloAck).sessionToken
 
         val deckChosen = messages.filterIsInstance<HostToGuest.DeckChosen>().first()
         val localHash = localDeckHash(deckChosen.deckId)
@@ -110,6 +122,6 @@ public object GuestHandshake {
         }
 
         val matchStart = messages.filterIsInstance<HostToGuest.MatchStart>().first()
-        return Result.Ready(deckChosen.deckId, deckChosen.config, matchStart.yourHand, matchStart.roundCount)
+        return Result.Ready(deckChosen.deckId, deckChosen.config, matchStart.yourHand, matchStart.roundCount, sessionToken)
     }
 }

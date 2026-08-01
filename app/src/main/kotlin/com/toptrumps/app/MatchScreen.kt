@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,6 +49,8 @@ import kotlinx.datetime.Clock
  * is unchanged; a two-device guest passes `"GUEST"` so `round.chooser`/`round.winner` are read
  * relative to the right side. [rematchLabel] lets a two-device match relabel the result screen's
  * button, since a real two-device rematch flow doesn't exist yet (tracked as a follow-up).
+ * [onLeaveMatch], when non-null, renders a deliberate-quit affordance during play — two-device
+ * only; solo has no peer to notify and no drop to distinguish from a quit.
  */
 @Composable
 public fun MatchScreen(
@@ -57,8 +60,17 @@ public fun MatchScreen(
     modifier: Modifier = Modifier,
     localSeat: String = "HOST",
     rematchLabel: String = "Rematch",
+    onLeaveMatch: (() -> Unit)? = null,
 ) {
     val view by session.view.collectAsStateWithLifecycle()
+
+    // Scoped to this screen via the ADR's `DisposableEffect` on `LocalView` rather than the whole
+    // Activity — released the moment the player leaves the match screen, not just the app.
+    val localView = LocalView.current
+    DisposableEffect(localView) {
+        localView.keepScreenOn = true
+        onDispose { localView.keepScreenOn = false }
+    }
 
     // Disk cache disabled — the source is already local asset storage (TDD §7) — and shared for
     // the lifetime of the screen rather than rebuilt per image.
@@ -69,7 +81,7 @@ public fun MatchScreen(
     when (val current = view) {
         null -> Column(modifier = modifier.fillMaxSize().padding(16.dp)) { Text("Connecting…") }
         is MatchView.Finished -> ResultScreen(current, deckId, imageLoader, localSeat, rematchLabel, onRematch, modifier)
-        is MatchView.InProgress -> InProgressScreen(session, current, deckId, localSeat, imageLoader, modifier)
+        is MatchView.InProgress -> InProgressScreen(session, current, deckId, localSeat, imageLoader, onLeaveMatch, modifier)
     }
 }
 
@@ -80,6 +92,7 @@ private fun InProgressScreen(
     deckId: String,
     localSeat: String,
     imageLoader: ImageLoader,
+    onLeaveMatch: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     // The win-pile browser is a state within the match, not a navigation destination — returning
@@ -103,6 +116,10 @@ private fun InProgressScreen(
         when (val round = view.round) {
             is RemoteRoundState.AwaitingChoice -> AwaitingChoiceContent(session, view, round, localSeat)
             is RemoteRoundState.Resolved -> ResolvedContent(session, view, round, deckId, localSeat, imageLoader)
+        }
+
+        if (onLeaveMatch != null) {
+            TextButton(onClick = onLeaveMatch) { Text("Leave match") }
         }
     }
 }
@@ -140,12 +157,16 @@ private fun AwaitingChoiceContent(
         Text("Choose a stat:")
     }
 
+    // Disabled while a choice is already in flight — a second tap wouldn't be resent anyway (the
+    // reconnect-resync ADR's at-most-one-intent invariant), but a disabled button says so.
+    val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
+
     view.metrics.forEach { spec ->
         val value = view.self.stats.getValue(spec.key)
         val available = spec.key in round.remainingMetrics
         Button(
             onClick = { session.submit(PlayerIntent.ChooseMetric(MetricKey(spec.key))) },
-            enabled = available,
+            enabled = available && !pending,
         ) {
             Text(
                 "${spec.label}: ${formatStat(spec, value)} ${spec.unit} (${spec.winDirectionLabel()})" +
@@ -167,6 +188,7 @@ private fun ResolvedContent(
     val spec = view.metrics.first { it.key == round.decidingMetric }
     val selfValue = view.self.stats.getValue(spec.key)
     val opponentCard = (view.opponent as? RemoteOpponentView.Revealed)?.card
+    val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
 
     if (round.resolution == "ALL_METRICS_TIED_FALLBACK") {
         Text("Every stat tied on ${spec.label}!")
@@ -191,7 +213,7 @@ private fun ResolvedContent(
         view.metrics.forEach { m -> Text("  ${m.label}: ${formatStat(m, opponentCard.stats.getValue(m.key))} ${m.unit}") }
     }
 
-    Button(onClick = { session.submit(PlayerIntent.AdvanceRound) }) {
+    Button(onClick = { session.submit(PlayerIntent.AdvanceRound) }, enabled = !pending) {
         Text("Continue")
     }
 }

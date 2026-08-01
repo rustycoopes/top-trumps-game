@@ -5,6 +5,7 @@ import com.toptrumps.platform.net.NsdLobbyDiscovery
 import com.toptrumps.platform.net.NsdLobbyRegistration
 import com.toptrumps.platform.net.WifiNetworkProvider
 import com.toptrumps.session.DiscoveryEvent
+import com.toptrumps.session.GuestToHost
 import com.toptrumps.session.InvitationEffect
 import com.toptrumps.session.InvitationEvent
 import com.toptrumps.session.InvitationResolver
@@ -48,6 +49,8 @@ public class LobbyController(
     private val registration: NsdLobbyRegistration,
     private val wifiNetworkProvider: WifiNetworkProvider,
     parentScope: CoroutineScope,
+    /** A fresh inbound connection whose first frame is a resume rather than a lobby message — see the reconnect-resync ADR. Default no-op so a caller with no live match never needs to care. */
+    private val onResumeAttempt: suspend (Transport, GuestToHost.Resume) -> Unit = { _, _ -> },
 ) {
     // A child of `parentScope` rather than `parentScope` itself, so closing this controller never
     // cancels the graph-wide scope other components share — matching `startSoloMatch`'s `matchScope`.
@@ -69,8 +72,21 @@ public class LobbyController(
     @Volatile
     private var socketFactory: SocketFactory? = null
 
-    /** Restarts registration, discovery and the listen socket on every Wi-Fi network change — roaming kills discovery with no callback (TDD §8). */
+    /** The socket factory bound to the current Wi-Fi network, if one is up — `null` between networks. Lets a guest's reconnect coordinator redial directly without duplicating [setupForNetwork]'s network tracking. */
+    public fun currentSocketFactory(): SocketFactory? = socketFactory
+
+    private var started = false
+
+    /**
+     * Restarts registration, discovery and the listen socket on every Wi-Fi network change —
+     * roaming kills discovery with no callback (TDD §8). Idempotent: this controller is now
+     * Application-scoped (see [AppGraph.lobbyController]) and re-fetched, not recreated, across
+     * an Activity recreation — a second `start()` from the new Activity's recomposition must not
+     * launch a second copy of every loop below.
+     */
     public fun start() {
+        if (started) return
+        started = true
         scope.launch {
             wifiNetworkProvider.observeWifiNetwork()
                 .catch { _error.value = it.message ?: "Could not observe the Wi-Fi network" }
@@ -207,7 +223,18 @@ public class LobbyController(
     private fun attachMessageListener(transport: Transport) {
         lobbyListeners[transport] = scope.launch {
             transport.incoming.collect { bytes ->
-                val message = runCatching { ProtocolCodec.decodeLobbyMessage(bytes) }.getOrNull() ?: return@collect
+                val message = runCatching { ProtocolCodec.decodeLobbyMessage(bytes) }.getOrNull()
+                if (message == null) {
+                    // Not a lobby message — the one other legitimate thing to arrive on a fresh
+                    // connection is a resume from a guest whose original socket died (the
+                    // reconnect-resync ADR); anything else is a corrupt or hostile frame, dropped.
+                    val resume = runCatching { ProtocolCodec.decodeGuestToHost(bytes) }.getOrNull() as? GuestToHost.Resume
+                    if (resume != null) {
+                        detachMessageListener(transport)
+                        onResumeAttempt(transport, resume)
+                    }
+                    return@collect
+                }
                 val event = when (message) {
                     is LobbyMessage.Invite -> InvitationEvent.InboundInviteArrived(
                         LobbyPeer(message.fromInstanceId, message.fromDisplayName, Clock.System.now()),

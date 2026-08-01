@@ -3,6 +3,7 @@ package com.toptrumps.app
 import com.toptrumps.decks.DeckLoader
 import com.toptrumps.decks.DeckSource
 import com.toptrumps.rules.MatchConfig
+import com.toptrumps.session.ConnectionState
 import com.toptrumps.session.GuestHandshake
 import com.toptrumps.session.GuestMatchSession
 import com.toptrumps.session.HostHandshake
@@ -14,11 +15,14 @@ import com.toptrumps.session.toWire
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Where a two-device match's setup currently stands — drives [TwoDeviceMatchScreen]. */
 public sealed interface MatchPhase {
@@ -49,12 +53,15 @@ public class MatchController(
     private val deckSource: DeckSource,
     private val listDecks: () -> List<DeckSummary>,
     private val scope: CoroutineScope,
+    /** Guest-only: dials a fresh [Transport] to the host, direct-redial first and NSD fallback second — see [AppGraph]. `null` for the host side, which has nothing to dial out to. */
+    private val reconnect: (suspend () -> Transport)? = null,
 ) {
     private val _phase = MutableStateFlow<MatchPhase>(MatchPhase.Handshaking)
     public val phase: StateFlow<MatchPhase> = _phase.asStateFlow()
 
     private var started = false
     private var pickingDeck = false
+    private var sessionToken: String? = null
 
     /**
      * Idempotent — only the first call does anything. This matters beyond tidiness: a second,
@@ -78,7 +85,10 @@ public class MatchController(
     private suspend fun runHost() {
         when (val result = HostHandshake.awaitHello(transport)) {
             is HostHandshake.HelloResult.Refused -> _phase.value = MatchPhase.VersionMismatch(result.guestVersion)
-            is HostHandshake.HelloResult.Ready -> _phase.value = MatchPhase.PickingDeck(listDecks())
+            is HostHandshake.HelloResult.Ready -> {
+                sessionToken = result.sessionToken
+                _phase.value = MatchPhase.PickingDeck(listDecks())
+            }
         }
     }
 
@@ -101,7 +111,8 @@ public class MatchController(
                 when (HostHandshake.chooseDeck(transport, deckId, hash, config.toWire())) {
                     HostHandshake.DeckResult.Refused -> _phase.value = MatchPhase.DeckMismatch(deckId)
                     HostHandshake.DeckResult.Accepted -> {
-                        val session = HostMatchSession(deck, config, Random(System.nanoTime()), transport, scope)
+                        val token = checkNotNull(sessionToken) { "chooseDeck accepted before awaitHello issued a token" }
+                        val session = HostMatchSession(deck, config, Random(System.nanoTime()), transport, scope, token)
                         _phase.value = MatchPhase.InMatch(session, deckId, role.name)
                     }
                 }
@@ -121,8 +132,33 @@ public class MatchController(
             is GuestHandshake.Result.VersionRefused -> _phase.value = MatchPhase.VersionMismatch(result.hostVersion)
             is GuestHandshake.Result.DeckRefused -> _phase.value = MatchPhase.DeckMismatch(result.deckId)
             is GuestHandshake.Result.Ready -> {
-                val session = GuestMatchSession(transport, scope)
+                val session = GuestMatchSession(transport, scope, result.sessionToken)
+                watchConnection(session)
                 _phase.value = MatchPhase.InMatch(session, result.deckId, role.name)
+            }
+        }
+    }
+
+    /**
+     * While the peer is unreachable, retries [reconnect] every 1.5s until it succeeds or the
+     * session gives up waiting (declares [ConnectionState.Abandoned]) or the peer reconnects on
+     * its own (a same-socket blip, [ConnectionState.Connected] with no resume needed) — either
+     * way [collectLatest] cancels the retry loop the moment [GuestMatchSession.connectionState]
+     * moves off [ConnectionState.PeerUnreachable].
+     */
+    private fun watchConnection(session: GuestMatchSession) {
+        val redial = reconnect ?: return
+        scope.launch {
+            session.connectionState.collectLatest { state ->
+                if (state !is ConnectionState.PeerUnreachable) return@collectLatest
+                while (true) {
+                    val newTransport = runCatching { redial() }.getOrNull()
+                    if (newTransport != null) {
+                        session.reconnect(newTransport)
+                        return@collectLatest
+                    }
+                    delay(1500.milliseconds)
+                }
             }
         }
     }
