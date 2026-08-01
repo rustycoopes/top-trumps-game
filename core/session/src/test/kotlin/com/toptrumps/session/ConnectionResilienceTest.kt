@@ -39,14 +39,6 @@ private fun sixCardDeck(): Deck = Deck(
     ),
 )
 
-/** Submits [PlayerIntent.ChooseMetric] from whichever side is actually this round's chooser — resolves it in one pick, since every card's speed is distinct. */
-private fun resolveOneRound(host: MatchSession, guest: MatchSession) {
-    val view = host.view.value as MatchView.InProgress
-    val chooser = (view.round as RemoteRoundState.AwaitingChoice).chooser
-    val intent = PlayerIntent.ChooseMetric(MetricKey(view.metrics.first().key))
-    if (chooser == "HOST") host.submit(intent) else guest.submit(intent)
-}
-
 private fun roundNumber(session: MatchSession): Int = (session.view.value as MatchView.InProgress).roundNumber
 
 /**
@@ -127,7 +119,7 @@ class ConnectionResilienceTest {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
             val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
             val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
-            resolveOneRound(host, guest)
+            MatchDriver(host, guest).choose(speed)
             val roundBefore = roundNumber(host)
 
             // The host never sees this at all — simulates the drop happening before the frame arrived.
@@ -152,9 +144,10 @@ class ConnectionResilienceTest {
             val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
             val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
             assertEquals(null, guest.lastResync.value, "no resume has happened yet")
+            val driver = MatchDriver(host, guest)
 
             // An organic transition — resolving a round the ordinary way — must never set it.
-            resolveOneRound(host, guest)
+            driver.choose(speed)
             assertEquals(null, guest.lastResync.value, "an organic view update is not a resync")
             assertEquals(null, host.lastResync.value, "the host is never resynced")
 
@@ -171,7 +164,7 @@ class ConnectionResilienceTest {
             // The next organic transition after the resume must not still read as a resync —
             // advance past the already-resolved round first, then resolve the next one.
             host.submit(PlayerIntent.AdvanceRound)
-            resolveOneRound(host, guest)
+            driver.choose(speed)
             val nextView = guest.view.value as MatchView.InProgress
             assertTrue(nextView.revision > resumedView.revision)
             assertEquals(resumedView.revision, guest.lastResync.value, "lastResync stays pinned to the resumed revision, not the one after it")
@@ -183,7 +176,7 @@ class ConnectionResilienceTest {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
             val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
             val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
-            resolveOneRound(host, guest)
+            MatchDriver(host, guest).choose(speed)
             val roundBefore = roundNumber(host)
 
             // The guest stops *hearing* the host, but can still send — so the host receives and
@@ -208,7 +201,7 @@ class ConnectionResilienceTest {
             val recordingHostTransport = RecordingTransport(hostTransportRaw)
             val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), recordingHostTransport, backgroundScope, TOKEN, "Opponent")
             val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
-            resolveOneRound(host, guest)
+            MatchDriver(host, guest).choose(speed)
             val roundBefore = roundNumber(host)
             assertFalse(guest.hasPendingIntent.value)
 
