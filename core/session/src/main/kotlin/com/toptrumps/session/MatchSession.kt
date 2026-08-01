@@ -4,6 +4,7 @@ import com.toptrumps.rules.Card
 import com.toptrumps.rules.Deck
 import com.toptrumps.rules.MatchConfig
 import com.toptrumps.rules.MatchState
+import com.toptrumps.rules.MatchSummary
 import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.rules.RulesEngine
@@ -17,12 +18,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 private val HEARTBEAT_INTERVAL = 2.seconds
 private const val HEARTBEAT_MISSES_TO_UNREACHABLE = 3
 private const val ABANDON_WINDOW_SECONDS = 60
+
+/**
+ * A [MatchSummary] decorated with what only the session knows — the opponent's display name and
+ * when the match actually finished (TDD §11: "the session decorates it with the opponent's
+ * display name and an injected clock"). `:app` is the sole consumer, translating this into a
+ * `:feature:history` record; neither `:core:rules` nor `:core:session` know that module exists.
+ */
+public data class RecordedMatch(
+    val timestamp: Instant,
+    val opponentName: String,
+    val summary: MatchSummary,
+)
 
 /**
  * A player's side of one match. No hardcoded `Dispatchers.*`: every implementation runs its
@@ -52,6 +67,15 @@ public interface MatchSession {
      * the rules layer.
      */
     public val lastResync: StateFlow<Long?>
+
+    /**
+     * `null` until this seat's own [view] reaches [MatchView.Finished], then set exactly once —
+     * the collector-not-dependency seam the match-history slice is built on (TDD §11).
+     * Deliberately never set on a quit or an abandon: those transitions never touch [view] itself,
+     * so a match that ends any other way than a genuine finish stays `null` forever and
+     * `:feature:history`'s collector (in `:app`) has nothing to record.
+     */
+    public val completedMatch: StateFlow<RecordedMatch?>
 
     public fun submit(intent: PlayerIntent)
 
@@ -146,7 +170,8 @@ private class ConnectionWatchdog(private val scope: CoroutineScope, private val 
  *
  * [sessionToken] is the value handed out in the pre-match handshake's `HelloAck` — the caller
  * (`:app`'s `MatchController`) is the one who ran that handshake, so it supplies the token here
- * rather than this class minting its own.
+ * rather than this class minting its own. [opponentName] and [clock] exist solely to decorate
+ * [completedMatch] (TDD §11) — nothing in the rules/session layer itself reads either.
  */
 public class HostMatchSession(
     deck: Deck,
@@ -155,6 +180,8 @@ public class HostMatchSession(
     initialTransport: Transport,
     private val scope: CoroutineScope,
     private val sessionToken: String,
+    private val opponentName: String,
+    private val clock: Clock = Clock.System,
 ) : MatchSession {
 
     private var transport: Transport = initialTransport
@@ -164,6 +191,9 @@ public class HostMatchSession(
 
     private val _view = MutableStateFlow(RulesEngine.project(state, Seat.HOST).toMatchView())
     override val view: StateFlow<MatchView?> = _view.asStateFlow()
+
+    private val _completedMatch = MutableStateFlow<RecordedMatch?>(null)
+    override val completedMatch: StateFlow<RecordedMatch?> = _completedMatch.asStateFlow()
 
     private val watchdog = ConnectionWatchdog(scope) { send(ProtocolCodec.encodeHostToGuest(HostToGuest.Heartbeat)) }
     override val connectionState: StateFlow<ConnectionState> get() = watchdog.state
@@ -286,7 +316,11 @@ public class HostMatchSession(
         when (val result = RulesEngine.apply(state, seat, intent)) {
             is StepResult.Applied -> {
                 state = result.state
-                _view.value = RulesEngine.project(state, Seat.HOST).toMatchView()
+                val newView = RulesEngine.project(state, Seat.HOST).toMatchView()
+                _view.value = newView
+                if (newView is MatchView.Finished) {
+                    _completedMatch.compareAndSet(null, RecordedMatch(clock.now(), opponentName, newView.toMatchSummary(Seat.HOST)))
+                }
                 scope.launch { pushGuestView() }
             }
             is StepResult.Rejected -> Unit // slice 1 has no error channel back to the sender yet.
@@ -307,12 +341,15 @@ public class HostMatchSession(
 /**
  * The guest never runs [RulesEngine] — every [MatchView] it shows came from the host over the
  * wire. [sessionToken] is the value learned from the handshake's `HelloAck`, presented back in a
- * [GuestToHost.Resume] after a drop.
+ * [GuestToHost.Resume] after a drop. [opponentName] and [clock] exist solely to decorate
+ * [completedMatch] (TDD §11) — nothing in the rules/session layer itself reads either.
  */
 public class GuestMatchSession(
     initialTransport: Transport,
     private val scope: CoroutineScope,
     private val sessionToken: String,
+    private val opponentName: String,
+    private val clock: Clock = Clock.System,
 ) : MatchSession {
 
     private var transport: Transport = initialTransport
@@ -338,6 +375,9 @@ public class GuestMatchSession(
 
     private val _view = MutableStateFlow<MatchView?>(null)
     override val view: StateFlow<MatchView?> = _view.asStateFlow()
+
+    private val _completedMatch = MutableStateFlow<RecordedMatch?>(null)
+    override val completedMatch: StateFlow<RecordedMatch?> = _completedMatch.asStateFlow()
 
     private val watchdog = ConnectionWatchdog(scope) { send(ProtocolCodec.encodeGuestToHost(GuestToHost.Heartbeat)) }
     override val connectionState: StateFlow<ConnectionState> get() = watchdog.state
@@ -403,7 +443,7 @@ public class GuestMatchSession(
                 val message = runCatching { ProtocolCodec.decodeHostToGuest(bytes) }.getOrNull() ?: return@collect
                 when (message) {
                     is HostToGuest.View -> {
-                        _view.value = message.view
+                        recordView(message.view)
                         pendingIntent = null
                     }
                     // Already consumed during the pre-match handshake for a two-device guest
@@ -418,7 +458,7 @@ public class GuestMatchSession(
                         // Set before `_view` — a collector reading both must never observe the
                         // new view without also being able to see that it was a resync.
                         _lastResync.value = message.view.revision
-                        _view.value = message.view
+                        recordView(message.view)
                         pendingIntent = null
                         watchdog.onResumeSettled()
                     }
@@ -436,6 +476,13 @@ public class GuestMatchSession(
     private suspend fun send(bytes: ByteArray) {
         watchdog.onOutboundTraffic()
         transport.send(bytes)
+    }
+
+    private fun recordView(newView: MatchView) {
+        _view.value = newView
+        if (newView is MatchView.Finished) {
+            _completedMatch.compareAndSet(null, RecordedMatch(clock.now(), opponentName, newView.toMatchSummary(Seat.GUEST)))
+        }
     }
 }
 

@@ -62,8 +62,8 @@ class ConnectionResilienceTest {
     fun `three missed heartbeats declare the peer unreachable, and an un-recovered window abandons the match`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-            GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+            GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
 
             // Host stops hearing anything the guest sends (including its heartbeats) — simulates
             // the guest freezing mid-background, per the foreground-service ADR.
@@ -83,8 +83,8 @@ class ConnectionResilienceTest {
     fun `traffic resuming mid-countdown restores Connected without a full resume handshake`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-            GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+            GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
 
             hostTransport.dropConnection()
             advanceTimeBy(6.seconds)
@@ -102,8 +102,8 @@ class ConnectionResilienceTest {
     @Test
     fun `a deliberate guest quit is seen by the host as PeerLeft, not a countdown`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-        val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+        val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
 
         guest.leave()
 
@@ -113,8 +113,8 @@ class ConnectionResilienceTest {
     @Test
     fun `a deliberate host quit is seen by the guest as PeerLeft, not a countdown`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-        val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+        val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
 
         host.leave()
 
@@ -125,8 +125,8 @@ class ConnectionResilienceTest {
     fun `a guest intent the host never received is applied exactly once after a resume`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
             resolveOneRound(host, guest)
             val roundBefore = roundNumber(host)
 
@@ -149,8 +149,8 @@ class ConnectionResilienceTest {
     fun `the guest's lastResync flags exactly the view a resume delivered, never an organic one, and the host is never flagged`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
             assertEquals(null, guest.lastResync.value, "no resume has happened yet")
 
             // An organic transition — resolving a round the ordinary way — must never set it.
@@ -181,8 +181,8 @@ class ConnectionResilienceTest {
     fun `a guest intent the host already applied is not re-applied after a resume`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
             resolveOneRound(host, guest)
             val roundBefore = roundNumber(host)
 
@@ -206,8 +206,8 @@ class ConnectionResilienceTest {
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransportRaw, guestTransport) = LoopbackTransport.createPair()
             val recordingHostTransport = RecordingTransport(hostTransportRaw)
-            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), recordingHostTransport, backgroundScope, TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), recordingHostTransport, backgroundScope, TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
             resolveOneRound(host, guest)
             val roundBefore = roundNumber(host)
             assertFalse(guest.hasPendingIntent.value)
@@ -229,8 +229,8 @@ class ConnectionResilienceTest {
     @Test
     fun `a resume with an unrecognised session token is rejected`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-        GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+        GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
 
         val (newHostTransport, newGuestTransport) = LoopbackTransport.createPair()
         newGuestTransport.send(ProtocolCodec.encodeGuestToHost(GuestToHost.Resume("not-the-real-token", null)))
@@ -245,8 +245,8 @@ class ConnectionResilienceTest {
     @Test
     fun `a resume arriving after the window has already expired is rejected`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN)
-        GuestMatchSession(guestTransport, backgroundScope, TOKEN)
+        val host = HostMatchSession(sixCardDeck(), MatchConfig("resilience-deck"), Random(1), hostTransport, backgroundScope, TOKEN, "Opponent")
+        GuestMatchSession(guestTransport, backgroundScope, TOKEN, "Opponent")
 
         hostTransport.dropConnection()
         advanceTimeBy(6.seconds)

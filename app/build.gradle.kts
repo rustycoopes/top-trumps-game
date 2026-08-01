@@ -27,7 +27,7 @@ android {
     defaultConfig {
         applicationId = "com.toptrumps.app"
         versionCode = 1
-        versionName = "0.6.0-slice7"
+        versionName = "0.7.0-slice8"
     }
 
     buildFeatures {

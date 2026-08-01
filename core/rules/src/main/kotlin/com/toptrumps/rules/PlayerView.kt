@@ -62,5 +62,7 @@ public sealed interface PlayerView {
         override val myScore: Int,
         override val opponentScore: Int,
         override val myPile: List<CardFace>,
+        /** [MatchState.cardsWonWith] for this viewer — the cards match history credits with a win, not everything in [myPile]. */
+        val cardsWonWith: List<CardFace>,
     ) : PlayerView
 }

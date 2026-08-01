@@ -53,8 +53,17 @@ public class MatchController(
     private val deckSource: DeckSource,
     private val listDecks: () -> List<DeckSummary>,
     private val scope: CoroutineScope,
+    /** The peer's display name, already known from NSD discovery before this controller ever ran — decorates the [MatchSession] this creates so its [MatchSession.completedMatch] carries who was actually played (TDD §11). */
+    private val peerDisplayName: String,
     /** Guest-only: dials a fresh [Transport] to the host, direct-redial first and NSD fallback second — see [AppGraph]. `null` for the host side, which has nothing to dial out to. */
     private val reconnect: (suspend () -> Transport)? = null,
+    /**
+     * Fires once, the moment [MatchPhase.InMatch] is reached — [AppGraph] hangs its history
+     * collector off this rather than this class knowing anything about `:feature:history`. Passed
+     * this controller's own [scope] (its match's lifetime) so that collector can bound itself to
+     * it rather than outliving a quit or abandoned match forever.
+     */
+    private val onMatchStarted: (MatchSession, deckId: String, matchScope: CoroutineScope) -> Unit = { _, _, _ -> },
 ) {
     private val _phase = MutableStateFlow<MatchPhase>(MatchPhase.Handshaking)
     public val phase: StateFlow<MatchPhase> = _phase.asStateFlow()
@@ -112,8 +121,9 @@ public class MatchController(
                     HostHandshake.DeckResult.Refused -> _phase.value = MatchPhase.DeckMismatch(deckId)
                     HostHandshake.DeckResult.Accepted -> {
                         val token = checkNotNull(sessionToken) { "chooseDeck accepted before awaitHello issued a token" }
-                        val session = HostMatchSession(deck, config, Random(System.nanoTime()), transport, scope, token)
+                        val session = HostMatchSession(deck, config, Random(System.nanoTime()), transport, scope, token, peerDisplayName)
                         _phase.value = MatchPhase.InMatch(session, deckId, role.name)
+                        onMatchStarted(session, deckId, scope)
                     }
                 }
             }
@@ -132,9 +142,10 @@ public class MatchController(
             is GuestHandshake.Result.VersionRefused -> _phase.value = MatchPhase.VersionMismatch(result.hostVersion)
             is GuestHandshake.Result.DeckRefused -> _phase.value = MatchPhase.DeckMismatch(result.deckId)
             is GuestHandshake.Result.Ready -> {
-                val session = GuestMatchSession(transport, scope, result.sessionToken)
+                val session = GuestMatchSession(transport, scope, result.sessionToken, peerDisplayName)
                 watchConnection(session)
                 _phase.value = MatchPhase.InMatch(session, result.deckId, role.name)
+                onMatchStarted(session, result.deckId, scope)
             }
         }
     }

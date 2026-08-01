@@ -28,6 +28,7 @@ public object RulesEngine {
             config = config,
             hands = hands,
             piles = mapOf(Seat.HOST to emptyList(), Seat.GUEST to emptyList()),
+            cardsWonWith = mapOf(Seat.HOST to emptyList(), Seat.GUEST to emptyList()),
             roundNumber = 1,
             totalRounds = minOf(hands.getValue(Seat.HOST).size, hands.getValue(Seat.GUEST).size),
             round = RoundState.AwaitingChoice(
@@ -133,6 +134,13 @@ public object RulesEngine {
                 Seat.GUEST to state.piles.getValue(Seat.GUEST) + guestCard,
             )
         }
+        // Only the round's own card, and only for the seat that actually won it — the captured
+        // opposing card is real score (newPiles above) but didn't itself win anything.
+        val newCardsWonWith = when (resolved.winner) {
+            Seat.HOST -> state.cardsWonWith + (Seat.HOST to state.cardsWonWith.getValue(Seat.HOST) + hostCard)
+            Seat.GUEST -> state.cardsWonWith + (Seat.GUEST to state.cardsWonWith.getValue(Seat.GUEST) + guestCard)
+            null -> state.cardsWonWith
+        }
 
         if (newHands.getValue(Seat.HOST).isEmpty() || newHands.getValue(Seat.GUEST).isEmpty()) {
             val hostScore = newPiles.getValue(Seat.HOST).size
@@ -146,6 +154,7 @@ public object RulesEngine {
                 state.copy(
                     hands = newHands,
                     piles = newPiles,
+                    cardsWonWith = newCardsWonWith,
                     outcome = MatchOutcome(matchWinner, hostScore, guestScore),
                     revision = state.revision + 1,
                 ),
@@ -156,6 +165,7 @@ public object RulesEngine {
             state.copy(
                 hands = newHands,
                 piles = newPiles,
+                cardsWonWith = newCardsWonWith,
                 roundNumber = state.roundNumber + 1,
                 round = RoundState.AwaitingChoice(
                     chooser = resolved.chooser.opponent(),
@@ -185,6 +195,7 @@ public object RulesEngine {
                 myScore = state.piles.getValue(viewer).size,
                 opponentScore = state.piles.getValue(opponentSeat).size,
                 myPile = state.piles.getValue(viewer).map { it.toCardFace() },
+                cardsWonWith = state.cardsWonWith.getValue(viewer).map { it.toCardFace() },
             )
         }
 
