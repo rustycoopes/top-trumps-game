@@ -40,4 +40,10 @@ public object ProtocolCodec {
 
     public fun decodeView(bytes: ByteArray): MatchView =
         json.decodeFromString(MatchView.serializer(), bytes.decodeToString())
+
+    public fun encodeLobbyMessage(message: LobbyMessage): ByteArray =
+        json.encodeToString(LobbyMessage.serializer(), message).encodeToByteArray()
+
+    public fun decodeLobbyMessage(bytes: ByteArray): LobbyMessage =
+        json.decodeFromString(LobbyMessage.serializer(), bytes.decodeToString())
 }

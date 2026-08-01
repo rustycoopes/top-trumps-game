@@ -2,10 +2,15 @@
 
 package com.toptrumps.app
 
-import android.content.res.AssetManager
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.nsd.NsdManager
 import com.toptrumps.ai.AiOpponentDriver
 import com.toptrumps.decks.DeckLoader
 import com.toptrumps.decks.DeckValidationResult
+import com.toptrumps.platform.net.NsdLobbyDiscovery
+import com.toptrumps.platform.net.NsdLobbyRegistration
+import com.toptrumps.platform.net.WifiNetworkProvider
 import com.toptrumps.rules.MatchConfig
 import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.session.GuestMatchSession
@@ -19,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
+import java.util.UUID
 import kotlin.random.Random
 
 /** A deck folder available in the picker — id is the asset folder name, name is its manifest label. */
@@ -29,9 +35,19 @@ public data class DeckSummary(val id: String, val name: String)
  * two real [MatchSession]s wired over a [LoopbackTransport]: the human plays the host, an
  * [AiOpponentDriver] plays the guest through the exact same session API a remote human would use.
  */
-public class AppGraph(assets: AssetManager) {
+public class AppGraph(context: Context) {
 
-    private val deckSource = AndroidAssetDeckSource(assets)
+    private val deckSource = AndroidAssetDeckSource(context.assets)
+
+    public val displayNamePreferences: DisplayNamePreferences = DisplayNamePreferences(context)
+
+    /** A per-launch instance id, encoded into the mDNS instance name for resolve-free self-filtering — see the instance-name ADR. */
+    private val instanceId: String = UUID.randomUUID().toString().replace("-", "").take(8)
+
+    private val nsdManager = context.getSystemService(NsdManager::class.java)
+    private val nsdDiscovery = NsdLobbyDiscovery(nsdManager)
+    private val wifiNetworkProvider =
+        WifiNetworkProvider(context.getSystemService(ConnectivityManager::class.java))
 
     // Confined to one worker: HostMatchSession mutates its authoritative state from both the
     // human's `submit()` call and the AI's guest-intent traffic, and the TDD requires that
@@ -78,6 +94,16 @@ public class AppGraph(assets: AssetManager) {
 
         return SoloMatchSession(host, matchScope)
     }
+
+    /** A fresh [LobbyController] for one visit to the lobby screen — call [LobbyController.close] on leaving it. */
+    public fun createLobbyController(displayName: String): LobbyController = LobbyController(
+        displayName = displayName,
+        instanceId = instanceId,
+        discovery = nsdDiscovery,
+        registration = NsdLobbyRegistration(nsdManager),
+        wifiNetworkProvider = wifiNetworkProvider,
+        parentScope = scope,
+    )
 
     /** Cancels every coroutine this graph started. Call from the owning component's teardown. */
     public fun close() {
