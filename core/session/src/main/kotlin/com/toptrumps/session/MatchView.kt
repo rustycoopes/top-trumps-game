@@ -1,10 +1,13 @@
 package com.toptrumps.session
 
 import com.toptrumps.rules.CardFace
+import com.toptrumps.rules.MatchResult
+import com.toptrumps.rules.MatchSummary
 import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.OpponentCardView
 import com.toptrumps.rules.PlayerView
 import com.toptrumps.rules.RoundState
+import com.toptrumps.rules.Seat
 import com.toptrumps.rules.StatValue
 import com.toptrumps.rules.displayDirection
 import kotlinx.serialization.SerialName
@@ -106,6 +109,8 @@ public sealed interface MatchView {
         override val myScore: Int,
         override val opponentScore: Int,
         override val myPile: List<RemoteCardFace>,
+        /** [com.toptrumps.rules.PlayerView.Finished.cardsWonWith]'s wire twin — see [toMatchSummary]. */
+        val cardsWonWith: List<RemoteCardFace>,
     ) : MatchView
 }
 
@@ -122,6 +127,7 @@ public fun PlayerView.toMatchView(): MatchView = when (this) {
         myScore = myScore,
         opponentScore = opponentScore,
         myPile = myPile.map { it.toRemote() },
+        cardsWonWith = cardsWonWith.map { it.toRemote() },
     )
     is PlayerView.InProgress -> MatchView.InProgress(
         revision = revision,
@@ -159,3 +165,23 @@ public fun PlayerView.toMatchView(): MatchView = when (this) {
         myPile = myPile.map { it.toRemote() },
     )
 }
+
+private fun RemoteCardFace.toLocal(): CardFace = CardFace(id, name, stats.mapKeys { MetricKey(it.key) }.mapValues { StatValue(it.value) }, imageFile)
+
+/**
+ * The one place a [MatchView.Finished] becomes a [MatchSummary] — used identically by
+ * [HostMatchSession] and [GuestMatchSession], since both hold a [MatchView] rather than a
+ * [PlayerView] by the time a match ends (see [HostMatchSession]'s `_view`). [mySeat] resolves
+ * [MatchView.Finished.winner] (an absolute seat, "HOST"/"GUEST") against the seat this session
+ * plays.
+ */
+internal fun MatchView.Finished.toMatchSummary(mySeat: Seat): MatchSummary = MatchSummary(
+    result = when (winner) {
+        null -> MatchResult.DRAW
+        mySeat.name -> MatchResult.WIN
+        else -> MatchResult.LOSS
+    },
+    myScore = myScore,
+    opponentScore = opponentScore,
+    cardsWon = cardsWonWith.map { it.toLocal() },
+)

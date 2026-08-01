@@ -55,6 +55,12 @@ private data object Lobby
 private data object Settings
 
 @Serializable
+private data object History
+
+@Serializable
+private data object Stats
+
+@Serializable
 private data object ManualConnect
 
 @Serializable
@@ -144,10 +150,26 @@ private fun AppRoot(appGraph: AppGraph) {
                 controller = controller,
                 onOpenSettings = { navController.navigate(Settings) },
                 onOpenManualConnect = { navController.navigate(ManualConnect) },
+                onOpenHistory = { navController.navigate(History) },
                 onPlaySolo = { navController.navigate(Solo) },
                 onConnected = { _, _ ->
                     navController.navigate(Connected) { popUpTo(Lobby) }
                 },
+            )
+        }
+
+        composable<History> {
+            HistoryScreen(
+                repository = appGraph.historyRepository,
+                onOpenStats = { navController.navigate(Stats) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable<Stats> {
+            StatsScreen(
+                repository = appGraph.historyRepository,
+                onBack = { navController.popBackStack() },
             )
         }
 

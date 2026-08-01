@@ -19,6 +19,14 @@ public data class MatchState internal constructor(
     val config: MatchConfig,
     val hands: Map<Seat, List<Card>>,
     val piles: Map<Seat, List<Card>>,
+    /**
+     * A seat's own card from every round *it* won — distinct from [piles], which also holds the
+     * opponent's card from that round (the round winner takes both, see [RulesEngine]'s
+     * `applyAdvance`). This is what match history's "cards that have won you the most rounds"
+     * (slice 8) actually means: the card that did the winning, not everything a seat ended up
+     * holding. Empty for a round [TieFallback.EACH_KEEPS_OWN] draws, since nobody's card won it.
+     */
+    val cardsWonWith: Map<Seat, List<Card>>,
     val roundNumber: Int,
     /** Fixed at deal time: the number of cards each hand started with. */
     val totalRounds: Int,

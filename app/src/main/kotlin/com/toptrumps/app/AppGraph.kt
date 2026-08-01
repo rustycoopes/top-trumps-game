@@ -9,10 +9,15 @@ import android.net.nsd.NsdManager
 import com.toptrumps.ai.AiOpponentDriver
 import com.toptrumps.decks.DeckLoader
 import com.toptrumps.decks.DeckValidationResult
+import com.toptrumps.feature.history.CardWin
+import com.toptrumps.feature.history.HistoryDatabase
+import com.toptrumps.feature.history.MatchHistoryRepository
+import com.toptrumps.feature.history.Outcome
 import com.toptrumps.platform.net.NsdLobbyDiscovery
 import com.toptrumps.platform.net.NsdLobbyRegistration
 import com.toptrumps.platform.net.WifiNetworkProvider
 import com.toptrumps.rules.MatchConfig
+import com.toptrumps.rules.MatchResult
 import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.session.ConnectionState
 import com.toptrumps.session.GuestMatchSession
@@ -23,6 +28,7 @@ import com.toptrumps.session.LoopbackTransport
 import com.toptrumps.session.MatchSession
 import com.toptrumps.session.MatchView
 import com.toptrumps.session.ProtocolCodec
+import com.toptrumps.session.RecordedMatch
 import com.toptrumps.session.Role
 import com.toptrumps.session.TcpTransport
 import com.toptrumps.session.Transport
@@ -30,12 +36,25 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import kotlin.random.Random
+
+/** The opponent name recorded for a solo match — there's no real display name to decorate it with. */
+private const val AI_OPPONENT_NAME = "AI"
+
+/** The AI's own guest-side session needs an opponentName too, but nothing ever reads it — only the human's own (host) [MatchSession.completedMatch] is tracked into history. */
+private const val UNREAD_SOLO_GUEST_OPPONENT_NAME = "You"
 
 /** A deck folder available in the picker — id is the asset folder name, name is its manifest label. */
 public data class DeckSummary(val id: String, val name: String)
@@ -51,6 +70,9 @@ public class AppGraph(context: Context) {
     private val deckSource = AndroidAssetDeckSource(context.assets)
 
     public val displayNamePreferences: DisplayNamePreferences = DisplayNamePreferences(context)
+
+    /** `:feature:history`'s entire surface — `:app` is the only module that knows both it and `:core:session` exist (the collector-not-dependency seam, TDD §11). */
+    public val historyRepository: MatchHistoryRepository = MatchHistoryRepository(HistoryDatabase.create(context))
 
     /** A per-launch instance id, encoded into the mDNS instance name for resolve-free self-filtering — see the instance-name ADR. */
     private val instanceId: String = UUID.randomUUID().toString().replace("-", "").take(8)
@@ -103,12 +125,67 @@ public class AppGraph(context: Context) {
         // Solo mode has no real handshake to mint one, and never resumes — LoopbackTransport
         // never drops — so a throwaway token is fine here.
         val soloSessionToken = UUID.randomUUID().toString()
-        val host = HostMatchSession(deck, MatchConfig(deck.id), Random(System.nanoTime()), hostTransport, matchScope, soloSessionToken)
-        val guest = GuestMatchSession(guestTransport, matchScope, soloSessionToken)
+        val host = HostMatchSession(deck, MatchConfig(deck.id), Random(System.nanoTime()), hostTransport, matchScope, soloSessionToken, AI_OPPONENT_NAME)
+        val guest = GuestMatchSession(guestTransport, matchScope, soloSessionToken, UNREAD_SOLO_GUEST_OPPONENT_NAME)
 
         AiOpponentDriver(guest, seatName = "GUEST", deck = deck, scope = matchScope).start()
+        trackHistory(host, deck.id, matchScope)
 
         return SoloMatchSession(host, matchScope)
+    }
+
+    /**
+     * Subscribed on the graph's own long-lived [scope], not [matchScope] — a player who taps away
+     * from the result screen the instant it appears calls `close()`/`leave()` on the match's own
+     * scope almost immediately, and that must not race the DB write. But the same reasoning cuts
+     * the other way for a match that's quit or abandoned rather than finished: nothing would ever
+     * cancel this collector, and it would sit parked on the process-lifetime [scope] holding the
+     * whole [session]/deck/transport graph forever. Racing against [matchScope]'s own completion —
+     * which every real exit path (`close()`, `leave()`, a rematch, an Activity-scoped abandonment)
+     * eventually triggers — bounds it either way.
+     */
+    private fun trackHistory(session: MatchSession, deckId: String, matchScope: CoroutineScope) {
+        scope.launch {
+            runCatching {
+                val recorded = awaitCompletedOrScopeEnd(session, matchScope) ?: return@launch
+                // A single deck's manifest, not the full listDecks() catalog walk — and off the
+                // single-worker dispatcher every live MatchSession mutates its state on.
+                val deckName = withContext(Dispatchers.IO) {
+                    when (val result = DeckLoader.load(deckSource, deckId)) {
+                        is DeckValidationResult.Valid -> result.deck.name
+                        is DeckValidationResult.Invalid -> deckId
+                    }
+                }
+                historyRepository.recordMatch(
+                    timestampEpochMillis = recorded.timestamp.toEpochMilliseconds(),
+                    deckId = deckId,
+                    deckName = deckName,
+                    opponentName = recorded.opponentName,
+                    outcome = recorded.summary.result.toOutcome(),
+                    myScore = recorded.summary.myScore,
+                    opponentScore = recorded.summary.opponentScore,
+                    cardsWon = recorded.summary.cardsWon.map { CardWin(it.id, it.name) },
+                )
+                // History is the deliberately droppable slice (the WBS): a failed write here must
+                // never take the app down with it — only ever log, and only in debug.
+            }.onFailure { if (BuildConfig.DEBUG) it.printStackTrace() }
+        }
+    }
+
+    /** `null` if [matchScope] ends first (the match was quit, abandoned, or otherwise torn down without ever finishing) — see [trackHistory]. */
+    private suspend fun awaitCompletedOrScopeEnd(session: MatchSession, matchScope: CoroutineScope): RecordedMatch? {
+        val matchJob = matchScope.coroutineContext[Job] ?: return session.completedMatch.filterNotNull().first()
+        return coroutineScope {
+            val completed = async { session.completedMatch.filterNotNull().first() }
+            val scopeEnded = async { matchJob.join() }
+            val result = select<RecordedMatch?> {
+                completed.onAwait { it }
+                scopeEnded.onAwait { null }
+            }
+            completed.cancel()
+            scopeEnded.cancel()
+            result
+        }
     }
 
     // The one two-device match in progress, if any — mirrors the "at most one at a time" pattern
@@ -150,11 +227,13 @@ public class AppGraph(context: Context) {
             deckSource = deckSource,
             listDecks = ::listDecks,
             scope = matchScope,
+            peerDisplayName = peerDisplayName,
             reconnect = if (role == Role.GUEST) {
                 { redialGuestTransport(peerInstanceId, hostAddressHint, lobbyController, matchScope) }
             } else {
                 null
             },
+            onMatchStarted = ::trackHistory,
         )
         _activeMatch.value = controller
         _activeMatchPeerName.value = peerDisplayName
@@ -244,6 +323,7 @@ private class SoloMatchSession(
     override val connectionState: StateFlow<ConnectionState> get() = host.connectionState
     override val hasPendingIntent: StateFlow<Boolean> get() = host.hasPendingIntent
     override val lastResync: StateFlow<Long?> get() = host.lastResync
+    override val completedMatch: StateFlow<RecordedMatch?> get() = host.completedMatch
     override fun submit(intent: PlayerIntent): Unit = host.submit(intent)
 
     override fun leave() {
@@ -255,4 +335,11 @@ private class SoloMatchSession(
         host.close()
         matchScope.cancel()
     }
+}
+
+/** `:core:rules`' vocabulary translated into `:feature:history`'s own — the one place both are ever imported together. */
+private fun MatchResult.toOutcome(): Outcome = when (this) {
+    MatchResult.WIN -> Outcome.WIN
+    MatchResult.LOSS -> Outcome.LOSS
+    MatchResult.DRAW -> Outcome.DRAW
 }

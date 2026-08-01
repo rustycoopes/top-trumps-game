@@ -113,8 +113,8 @@ class MatchSessionTest {
     @Test
     fun `a chosen metric resolves identically on host and guest`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+        val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
 
         assertNotNull(guest.view.value, "guest should receive an initial view over the wire")
 
@@ -132,15 +132,15 @@ class MatchSessionTest {
     fun `win direction works both ways over the wire`() = runTest(UnconfinedTestDispatcher()) {
         run {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+            val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             chooseMetric(host, guest, topSpeed) // HIGH_WINS
             assertNotNull(((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner)
         }
         run {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(2), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+            val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(2), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             chooseMetric(host, guest, year) // LOW_WINS
             assertNotNull(((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner)
         }
@@ -149,8 +149,8 @@ class MatchSessionTest {
     @Test
     fun `the opponent's full card is revealed on the guest once the round resolves`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+        val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
 
         chooseMetric(host, guest, topSpeed)
 
@@ -162,8 +162,8 @@ class MatchSessionTest {
     fun `during an active tiebreak chain, only the metrics played so far appear on the guest's opponent view`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(tieableDeck(), MatchConfig("tieable-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+            val host = HostMatchSession(tieableDeck(), MatchConfig("tieable-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             val driver = MatchDriver(host, guest)
 
             driver.choose(topSpeed) // ties
@@ -181,8 +181,8 @@ class MatchSessionTest {
     fun `no unplayed stat value survives the wire as JSON, including across a two-step tiebreak`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(tieableDeck(), MatchConfig("tieable-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+            val host = HostMatchSession(tieableDeck(), MatchConfig("tieable-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             val driver = MatchDriver(host, guest)
 
             driver.choose(topSpeed) // ties
@@ -208,8 +208,8 @@ class MatchSessionTest {
     fun `CHOOSER_WINS travels on the wire and the guest agrees on the winner`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
         val config = MatchConfig("all-tied-deck", TieFallback.CHOOSER_WINS)
-        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
         val driver = MatchDriver(host, guest)
         val chooser = (driver.currentView().round as RemoteRoundState.AwaitingChoice).chooser
 
@@ -230,8 +230,8 @@ class MatchSessionTest {
     fun `DEFENDER_WINS travels on the wire and the guest agrees on the winner`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
         val config = MatchConfig("all-tied-deck", TieFallback.DEFENDER_WINS)
-        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
         val driver = MatchDriver(host, guest)
         val chooser = (driver.currentView().round as RemoteRoundState.AwaitingChoice).chooser
         val defender = if (chooser == "HOST") "GUEST" else "HOST"
@@ -250,8 +250,8 @@ class MatchSessionTest {
     fun `EACH_KEEPS_OWN travels on the wire and both sides see no round winner`() = runTest(UnconfinedTestDispatcher()) {
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
         val config = MatchConfig("all-tied-deck", TieFallback.EACH_KEEPS_OWN)
-        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+        val host = HostMatchSession(allTiedDeck(), config, Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+        val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
         val driver = MatchDriver(host, guest)
 
         driver.choose(topSpeed)
@@ -270,8 +270,8 @@ class MatchSessionTest {
     fun `a full match resolves identically on host and guest, with no draw and turn alternation held`() =
         runTest(UnconfinedTestDispatcher()) {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-            val host = HostMatchSession(sixCardDeck(), MatchConfig("six-card-deck"), Random(3), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN)
+            val host = HostMatchSession(sixCardDeck(), MatchConfig("six-card-deck"), Random(3), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+            val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             val driver = MatchDriver(host, guest)
             val choosers = mutableListOf<String>()
 
@@ -301,8 +301,8 @@ class MatchSessionTest {
             fun guestHandIds(seed: Long): List<String> {
                 val (hostTransport, guestTransportRaw) = LoopbackTransport.createPair()
                 val recording = RecordingTransport(guestTransportRaw)
-                HostMatchSession(sixCardDeck(), MatchConfig("six-card-deck"), Random(seed), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-                GuestMatchSession(recording, backgroundScope, TEST_SESSION_TOKEN)
+                HostMatchSession(sixCardDeck(), MatchConfig("six-card-deck"), Random(seed), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+                GuestMatchSession(recording, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
                 val matchStart = recording.frames
                     .map { ProtocolCodec.decodeHostToGuest(it) }
                     .filterIsInstance<HostToGuest.MatchStart>()
@@ -323,8 +323,8 @@ class MatchSessionTest {
             val deck = tieableDeck()
             val (hostTransport, guestTransportRaw) = LoopbackTransport.createPair()
             val recording = RecordingTransport(guestTransportRaw)
-            val host = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN)
-            val guest = GuestMatchSession(recording, backgroundScope, TEST_SESSION_TOKEN)
+            val host = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
+            val guest = GuestMatchSession(recording, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             val driver = MatchDriver(host, guest)
 
             driver.playMatch { _, round -> round.remainingMetrics.first() }

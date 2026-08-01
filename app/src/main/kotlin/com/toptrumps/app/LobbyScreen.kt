@@ -33,6 +33,7 @@ public fun LobbyScreen(
     controller: LobbyController,
     onOpenSettings: () -> Unit,
     onOpenManualConnect: () -> Unit,
+    onOpenHistory: () -> Unit,
     onPlaySolo: () -> Unit,
     onConnected: (Role, String) -> Unit,
     modifier: Modifier = Modifier,
@@ -55,6 +56,7 @@ public fun LobbyScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onOpenSettings) { Text("Settings") }
             TextButton(onClick = onOpenManualConnect) { Text("Connect by address") }
+            TextButton(onClick = onOpenHistory) { Text("History") }
         }
 
         Text("Lobby")

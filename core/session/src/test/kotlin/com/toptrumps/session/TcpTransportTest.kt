@@ -137,10 +137,10 @@ class TcpTransportTest {
                     },
                 )
 
-                val hostSession = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, scope, sessionToken)
+                val hostSession = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, scope, sessionToken, "Opponent")
                 val handshakeResult = withTimeout(5_000) { guestHandshake.await() }
                 assertNotNull(handshakeResult as? GuestHandshake.Result.Ready)
-                val guestSession = GuestMatchSession(guestTransport, scope, sessionToken)
+                val guestSession = GuestMatchSession(guestTransport, scope, sessionToken, "Opponent")
 
                 // Real sockets, unlike the in-memory seam tests, genuinely suspend between a
                 // submit() and its resolving View — the deal itself is the first such round trip.
