@@ -8,7 +8,6 @@ import com.toptrumps.rules.Direction
 import com.toptrumps.rules.MatchConfig
 import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.MetricSpec
-import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.rules.StatValue
 import com.toptrumps.rules.TieFallback
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -95,13 +94,6 @@ private fun sixCardDeck(): Deck = Deck(
     ),
 )
 
-/** Submits from whichever side [com.toptrumps.rules.RulesEngine.deal] actually picked as the first chooser. */
-private fun chooseMetric(host: HostMatchSession, guest: GuestMatchSession, metric: MetricKey) {
-    val chooser = (host.view.value as MatchView.InProgress).round.let { it as RemoteRoundState.AwaitingChoice }.chooser
-    val intent = PlayerIntent.ChooseMetric(metric)
-    if (chooser == "HOST") host.submit(intent) else guest.submit(intent)
-}
-
 /**
  * The primary seam: two [MatchSession]s over an in-memory [Transport]. Because [Transport]
  * carries bytes, this exercises the real [ProtocolCodec], not just [com.toptrumps.rules.RulesEngine].
@@ -118,7 +110,7 @@ class MatchSessionTest {
 
         assertNotNull(guest.view.value, "guest should receive an initial view over the wire")
 
-        chooseMetric(host, guest, topSpeed)
+        MatchDriver(host, guest).choose(topSpeed)
 
         val hostWinner = ((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner
         val guestWinner = ((guest.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner
@@ -134,14 +126,14 @@ class MatchSessionTest {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
             val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
-            chooseMetric(host, guest, topSpeed) // HIGH_WINS
+            MatchDriver(host, guest).choose(topSpeed) // HIGH_WINS
             assertNotNull(((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner)
         }
         run {
             val (hostTransport, guestTransport) = LoopbackTransport.createPair()
             val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(2), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
             val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
-            chooseMetric(host, guest, year) // LOW_WINS
+            MatchDriver(host, guest).choose(year) // LOW_WINS
             assertNotNull(((host.view.value as MatchView.InProgress).round as RemoteRoundState.Resolved).winner)
         }
     }
@@ -152,7 +144,7 @@ class MatchSessionTest {
         val host = HostMatchSession(testDeck(), MatchConfig("test-deck"), Random(1), hostTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
         val guest = GuestMatchSession(guestTransport, backgroundScope, TEST_SESSION_TOKEN, "Opponent")
 
-        chooseMetric(host, guest, topSpeed)
+        MatchDriver(host, guest).choose(topSpeed)
 
         val opponent = (guest.view.value as MatchView.InProgress).opponent as RemoteOpponentView.Revealed
         assertEquals(2, opponent.card.stats.size, "every stat, not just the played one, is now visible")
