@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,20 +21,16 @@ import kotlinx.serialization.Serializable
 
 public class MainActivity : ComponentActivity() {
 
-    private lateinit var appGraph: AppGraph
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        appGraph = AppGraph(this)
+        // Application-scoped, not created here — a two-device match's state (and the socket
+        // underneath it) must not die just because this Activity was recreated. See
+        // TopTrumpsApplication and the foreground-service ADR.
+        val appGraph = (application as TopTrumpsApplication).appGraph
 
         setContent {
             AppRoot(appGraph)
         }
-    }
-
-    override fun onDestroy() {
-        appGraph.close()
-        super.onDestroy()
     }
 }
 
@@ -85,13 +80,14 @@ private fun AppRoot(appGraph: AppGraph) {
 
     // One controller for as long as a name exists, shared by every route that touches the lobby
     // (Lobby, Settings' re-registration-on-rename, ManualConnect) — two controllers would race to
-    // bind the same fixed LOBBY_PORT. Recreated only if the display name itself changes.
+    // bind the same fixed LOBBY_PORT. `appGraph.lobbyController` hands back the *same* instance
+    // across an Activity recreation rather than building a new one — deliberately not torn down
+    // in a `DisposableEffect.onDispose` here, since a recreation disposes this composition too,
+    // and closing on every recreation is exactly the "socket dies with the Activity" bug this
+    // slice exists to fix. `start()` is idempotent, so re-calling it after a recreation is safe.
     val knownName = (nameState as? NameState.Known)?.name
-    val controller = knownName?.let { name -> remember(name) { appGraph.createLobbyController(name) } }
-    DisposableEffect(controller) {
-        controller?.start()
-        onDispose { controller?.close() }
-    }
+    val controller = knownName?.let { name -> remember(name) { appGraph.lobbyController(name) } }
+    LaunchedEffect(controller) { controller?.start() }
 
     NavHost(navController = navController, startDestination = Loading) {
         composable<Loading> {
@@ -99,7 +95,16 @@ private fun AppRoot(appGraph: AppGraph) {
                 when (val state = nameState) {
                     is NameState.Loading -> Unit
                     is NameState.Unset -> navController.navigate(NameEntry) { popUpTo(Loading) { inclusive = true } }
-                    is NameState.Known -> navController.navigate(Lobby) { popUpTo(Loading) { inclusive = true } }
+                    is NameState.Known -> {
+                        // A fresh Activity instance always starts its NavHost at `Loading` — an
+                        // Activity recreation now leaves the match itself alone (see
+                        // `appGraph.lobbyController`/`activeMatch`), but without this check the
+                        // user would still visually land back in the Lobby instead of their live
+                        // match screen. `Connected` reads its content from the same persisted
+                        // `LobbyController`/`MatchController`, so this is a pure navigation fix.
+                        val destination = if (appGraph.activeMatch.value != null) Connected else Lobby
+                        navController.navigate(destination) { popUpTo(Loading) { inclusive = true } }
+                    }
                 }
             }
         }
@@ -164,26 +169,51 @@ private fun AppRoot(appGraph: AppGraph) {
             val connected = invitationState as? InvitationState.Connected
             if (connected == null) {
                 // The socket closed out from under us (peer dropped before the match started, or
-                // we're mid-navigation away) — nothing left to drive a match over.
-                LaunchedEffect(Unit) { navController.navigate(Lobby) { popUpTo(Lobby) { inclusive = true } } }
+                // we're mid-navigation away) — nothing left to drive a match over. Also the one
+                // path back to Lobby that doesn't go through the "Leave" button below, so it must
+                // do the same active-match cleanup itself rather than leak it.
+                LaunchedEffect(Unit) {
+                    appGraph.activeMatch.value?.let { stale ->
+                        stale.close()
+                        appGraph.clearActiveMatch(stale)
+                    }
+                    navController.navigate(Lobby) { popUpTo(Lobby) { inclusive = true } }
+                }
                 return@composable
             }
 
+            // Reuses the already-active controller across a recreation rather than building a
+            // second one over the same live transport — a fresh `HostMatchSession` would re-deal
+            // the match from round 1 on a socket the peer already associates with one in progress.
             val matchController = remember(connected.transport) {
-                appGraph.createMatchController(connected.transport, connected.role, knownName.orEmpty())
+                appGraph.activeMatch.value ?: appGraph.createMatchController(
+                    transport = connected.transport,
+                    role = connected.role,
+                    displayName = knownName.orEmpty(),
+                    peerInstanceId = connected.peer.instanceId,
+                    peerDisplayName = connected.peer.displayName,
+                    lobbyController = controller,
+                )
             }
-            DisposableEffect(matchController) { onDispose { matchController.close() } }
+
+            // Cleanup lives here, not in a `DisposableEffect.onDispose` — disposal also fires on
+            // a mere Activity recreation, which must *not* tear down a live match. Every real exit
+            // path calls this explicitly: the "Leave" family of buttons below, and the `connected
+            // == null` branch above for the "peer vanished before we got here" case.
+            val leaveMatch: () -> Unit = {
+                matchController.close()
+                appGraph.clearActiveMatch(matchController)
+                // Closes the connected socket and returns the controller to Idle *before*
+                // navigating — Lobby's own `LaunchedEffect(invitation)` would otherwise see
+                // it still `Connected` on first composition and bounce straight back here.
+                controller.leave()
+                navController.navigate(Lobby) { popUpTo(Lobby) { inclusive = true } }
+            }
 
             TwoDeviceMatchScreen(
                 controller = matchController,
                 peerDisplayName = connected.peer.displayName,
-                onLeave = {
-                    // Closes the connected socket and returns the controller to Idle *before*
-                    // navigating — Lobby's own `LaunchedEffect(invitation)` would otherwise see
-                    // it still `Connected` on first composition and bounce straight back here.
-                    controller.leave()
-                    navController.navigate(Lobby) { popUpTo(Lobby) { inclusive = true } }
-                },
+                onLeave = leaveMatch,
             )
         }
 

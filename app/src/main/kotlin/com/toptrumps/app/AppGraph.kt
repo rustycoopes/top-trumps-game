@@ -3,6 +3,7 @@
 package com.toptrumps.app
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import com.toptrumps.ai.AiOpponentDriver
@@ -13,19 +14,26 @@ import com.toptrumps.platform.net.NsdLobbyRegistration
 import com.toptrumps.platform.net.WifiNetworkProvider
 import com.toptrumps.rules.MatchConfig
 import com.toptrumps.rules.PlayerIntent
+import com.toptrumps.session.ConnectionState
 import com.toptrumps.session.GuestMatchSession
 import com.toptrumps.session.HostMatchSession
+import com.toptrumps.session.HostToGuest
+import com.toptrumps.session.LOBBY_PORT
 import com.toptrumps.session.LoopbackTransport
 import com.toptrumps.session.MatchSession
 import com.toptrumps.session.MatchView
+import com.toptrumps.session.ProtocolCodec
 import com.toptrumps.session.Role
+import com.toptrumps.session.TcpTransport
 import com.toptrumps.session.Transport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
 import kotlin.random.Random
 
@@ -39,6 +47,7 @@ public data class DeckSummary(val id: String, val name: String)
  */
 public class AppGraph(context: Context) {
 
+    private val appContext = context.applicationContext
     private val deckSource = AndroidAssetDeckSource(context.assets)
 
     public val displayNamePreferences: DisplayNamePreferences = DisplayNamePreferences(context)
@@ -86,22 +95,49 @@ public class AppGraph(context: Context) {
         val matchScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
 
         val (hostTransport, guestTransport) = LoopbackTransport.createPair()
-        val host = HostMatchSession(deck, MatchConfig(deck.id), Random(System.nanoTime()), hostTransport, matchScope)
-        val guest = GuestMatchSession(guestTransport, matchScope)
+        // Solo mode has no real handshake to mint one, and never resumes — LoopbackTransport
+        // never drops — so a throwaway token is fine here.
+        val soloSessionToken = UUID.randomUUID().toString()
+        val host = HostMatchSession(deck, MatchConfig(deck.id), Random(System.nanoTime()), hostTransport, matchScope, soloSessionToken)
+        val guest = GuestMatchSession(guestTransport, matchScope, soloSessionToken)
 
         AiOpponentDriver(guest, seatName = "GUEST", deck = deck, scope = matchScope).start()
 
         return SoloMatchSession(host, matchScope)
     }
 
+    // The one two-device match in progress, if any — mirrors the "at most one at a time" pattern
+    // already implicit in LobbyController's own invitation state. Tracked here (rather than left
+    // purely Composable-scoped) so the foreground service and a reconnecting guest's inbound
+    // resume — both of which can arrive with no UI currently observing them — have something to
+    // find. See the foreground-service and reconnect-resync ADRs.
+    private val _activeMatch = MutableStateFlow<MatchController?>(null)
+    public val activeMatch: StateFlow<MatchController?> = _activeMatch.asStateFlow()
+
+    private val _activeMatchPeerName = MutableStateFlow<String?>(null)
+    public val activeMatchPeerName: StateFlow<String?> = _activeMatchPeerName.asStateFlow()
+
     /**
-     * A fresh [MatchController] for one visit to the connected screen — call [MatchController.close]
+     * A fresh [MatchController] for one visit to the connected screen — call [clearActiveMatch]
      * on leaving it. [transport] is the same connected socket [LobbyController] handed over on
-     * [com.toptrumps.session.InvitationState.Connected]; this graph never dials or accepts one itself.
+     * [com.toptrumps.session.InvitationState.Connected]; this graph never dials or accepts one
+     * itself, except for a guest's reconnect redial. [lobbyController] is the caller's own —
+     * still needed after the handoff for its live Wi-Fi socket factory (see [redialGuestTransport]).
      */
-    public fun createMatchController(transport: Transport, role: Role, displayName: String): MatchController {
+    public fun createMatchController(
+        transport: Transport,
+        role: Role,
+        displayName: String,
+        peerInstanceId: String,
+        peerDisplayName: String,
+        lobbyController: LobbyController,
+    ): MatchController {
         val matchScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
-        return MatchController(
+        // The guest never dialled this connection — the host always did, even in the mutual-tap
+        // tiebreak case (see the reconnect-resync ADR) — so the only address a guest has for a
+        // direct redial is the one its already-accepted socket reports.
+        val hostAddressHint = (transport as? TcpTransport)?.remoteHost
+        val controller = MatchController(
             transport = transport,
             role = role,
             displayName = displayName,
@@ -109,18 +145,83 @@ public class AppGraph(context: Context) {
             deckSource = deckSource,
             listDecks = ::listDecks,
             scope = matchScope,
+            reconnect = if (role == Role.GUEST) {
+                { redialGuestTransport(peerInstanceId, hostAddressHint, lobbyController, matchScope) }
+            } else {
+                null
+            },
         )
+        _activeMatch.value = controller
+        _activeMatchPeerName.value = peerDisplayName
+        appContext.startForegroundService(Intent(appContext, MatchForegroundService::class.java))
+        return controller
     }
 
-    /** A fresh [LobbyController] for one visit to the lobby screen — call [LobbyController.close] on leaving it. */
-    public fun createLobbyController(displayName: String): LobbyController = LobbyController(
-        displayName = displayName,
-        instanceId = instanceId,
-        discovery = nsdDiscovery,
-        registration = NsdLobbyRegistration(nsdManager),
-        wifiNetworkProvider = wifiNetworkProvider,
-        parentScope = scope,
-    )
+    /** Call once the connected screen is left — stops the foreground service and forgets this match, so a late resume attempt is correctly told UNKNOWN_SESSION instead of finding a stale controller. */
+    public fun clearActiveMatch(controller: MatchController) {
+        if (_activeMatch.value !== controller) return // superseded by a newer match already
+        _activeMatch.value = null
+        _activeMatchPeerName.value = null
+        appContext.stopService(Intent(appContext, MatchForegroundService::class.java))
+    }
+
+    /** The live [HostMatchSession] for the current match, if we're hosting one — [LobbyController]'s inbound-resume sniffing hands a reconnecting guest's frame here. */
+    public fun currentHostSession(): HostMatchSession? =
+        (_activeMatch.value?.phase?.value as? MatchPhase.InMatch)?.session as? HostMatchSession
+
+    /** Direct redial first (no NSD re-resolve), NSD resolve-and-dial only if that fails — per the foreground-service ADR. */
+    private suspend fun redialGuestTransport(
+        peerInstanceId: String,
+        hostAddressHint: String?,
+        lobbyController: LobbyController,
+        matchScope: CoroutineScope,
+    ): Transport {
+        val factory = lobbyController.currentSocketFactory() ?: error("no Wi-Fi network available to redial on")
+        if (hostAddressHint != null) {
+            val direct = runCatching { TcpTransport.connect(factory, hostAddressHint, LOBBY_PORT, matchScope, Dispatchers.IO) }
+            if (direct.isSuccess) return direct.getOrThrow()
+        }
+        val resolved = nsdDiscovery.resolve(peerInstanceId)
+        return TcpTransport.connect(factory, resolved.host, resolved.port, matchScope, Dispatchers.IO)
+    }
+
+    private var lobbyController: LobbyController? = null
+    private var lobbyControllerDisplayName: String? = null
+
+    /**
+     * The one [LobbyController] for the process's life, not a fresh one per visit — it owns the
+     * live socket for whatever match is in progress, and that socket (like [activeMatch] itself)
+     * must survive an Activity recreation, not just [AppGraph] doing so nominally. Reused as long
+     * as [displayName] hasn't changed (a rename re-registers under the new name); [LobbyController.start]
+     * is itself idempotent, so calling this again after a recreation is safe.
+     */
+    public fun lobbyController(displayName: String): LobbyController {
+        lobbyController?.let { existing ->
+            if (lobbyControllerDisplayName == displayName) return existing
+        }
+        val fresh = LobbyController(
+            displayName = displayName,
+            instanceId = instanceId,
+            discovery = nsdDiscovery,
+            registration = NsdLobbyRegistration(nsdManager),
+            wifiNetworkProvider = wifiNetworkProvider,
+            parentScope = scope,
+            onResumeAttempt = { transport, resume ->
+                val hostSession = currentHostSession()
+                if (hostSession != null) {
+                    hostSession.acceptResume(transport, resume)
+                } else {
+                    // No live match to resume into (already left, or this session was never the
+                    // host) — tell the guest so, rather than leaving it to time out its own countdown.
+                    transport.send(ProtocolCodec.encodeHostToGuest(HostToGuest.ResumeRejected("UNKNOWN_SESSION")))
+                    transport.close()
+                }
+            },
+        )
+        lobbyController = fresh
+        lobbyControllerDisplayName = displayName
+        return fresh
+    }
 
     /** Cancels every coroutine this graph started. Call from the owning component's teardown. */
     public fun close() {
@@ -134,7 +235,14 @@ private class SoloMatchSession(
     private val matchScope: CoroutineScope,
 ) : MatchSession {
     override val view: StateFlow<MatchView?> get() = host.view
+    override val connectionState: StateFlow<ConnectionState> get() = host.connectionState
+    override val hasPendingIntent: StateFlow<Boolean> get() = host.hasPendingIntent
     override fun submit(intent: PlayerIntent): Unit = host.submit(intent)
+
+    override fun leave() {
+        host.leave()
+        matchScope.cancel()
+    }
 
     override fun close() {
         host.close()

@@ -20,6 +20,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.DataOutputStream
 import java.net.Socket
@@ -126,7 +127,9 @@ class TcpTransportTest {
                     GuestHandshake.run(guestTransport, "Guest", "instance-id", localDeckHash = { hash })
                 }
 
-                assertEquals(HostHandshake.HelloResult.Ready, withTimeout(5_000) { HostHandshake.awaitHello(hostTransport) })
+                val helloResult = withTimeout(5_000) { HostHandshake.awaitHello(hostTransport) }
+                assertTrue(helloResult is HostHandshake.HelloResult.Ready)
+                val sessionToken = (helloResult as HostHandshake.HelloResult.Ready).sessionToken
                 assertEquals(
                     HostHandshake.DeckResult.Accepted,
                     withTimeout(5_000) {
@@ -134,10 +137,10 @@ class TcpTransportTest {
                     },
                 )
 
-                val hostSession = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, scope)
+                val hostSession = HostMatchSession(deck, MatchConfig(deck.id), Random(1), hostTransport, scope, sessionToken)
                 val handshakeResult = withTimeout(5_000) { guestHandshake.await() }
                 assertNotNull(handshakeResult as? GuestHandshake.Result.Ready)
-                val guestSession = GuestMatchSession(guestTransport, scope)
+                val guestSession = GuestMatchSession(guestTransport, scope, sessionToken)
 
                 // Real sockets, unlike the in-memory seam tests, genuinely suspend between a
                 // submit() and its resolving View — the deal itself is the first such round trip.

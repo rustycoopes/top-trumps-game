@@ -41,10 +41,20 @@ public class TcpTransport private constructor(
     private val input = DataInputStream(socket.getInputStream())
     private val output = DataOutputStream(socket.getOutputStream())
 
+    /**
+     * The peer's address — for an accepted (not dialled) connection, this is the only way the
+     * local side ever learns it, which is exactly the guest's situation: the host is always the
+     * one who dialled (see the reconnect-resync ADR). Lets a guest redial directly on reconnect
+     * with no NSD re-resolve.
+     */
+    public val remoteHost: String get() = socket.inetAddress.hostAddress ?: socket.inetAddress.hostName
+
     private val received = Channel<ByteArray>(Channel.UNLIMITED)
     override val incoming: Flow<ByteArray> = received.receiveAsFlow()
 
     private val outgoing = Channel<ByteArray>(Channel.UNLIMITED)
+
+    private val writerJob: Job
 
     init {
         scope.launch(ioDispatcher) {
@@ -59,7 +69,7 @@ public class TcpTransport private constructor(
                 received.close()
             }
         }
-        scope.launch(ioDispatcher) {
+        writerJob = scope.launch(ioDispatcher) {
             try {
                 for (frame in outgoing) {
                     writeFrame(frame)
@@ -74,9 +84,33 @@ public class TcpTransport private constructor(
         outgoing.send(bytes)
     }
 
-    /** Idempotent: closing an already-closed socket is a silent no-op. */
+    /**
+     * Idempotent: closing an already-closed socket is a silent no-op. Half-closes the output
+     * side first — see the reconnect-resync ADR's deliberate-quit note — so the peer's read
+     * returns a clean EOF (`-1`) rather than risking a reset racing the last frame, whether this
+     * close is a deliberate quit or ordinary teardown; there's no case where the reset is
+     * preferable.
+     *
+     * Does *not* wait for a just-`send()`-ed frame to actually reach the wire — `outgoing` is
+     * only queued into, not flushed, by `send()`'s return. A caller that needs its last frame
+     * guaranteed to land before the socket dies (a deliberate-quit courtesy message) must use
+     * [closeGracefully] instead.
+     */
     override fun close() {
         outgoing.close()
+        runCatching { socket.shutdownOutput() }
+        runCatching { socket.close() }
+    }
+
+    /**
+     * Waits for the writer coroutine to actually drain [outgoing] — including a frame `send()`
+     * just queued — before closing, so a courtesy message can't lose the race against the socket
+     * dying underneath it.
+     */
+    override suspend fun closeGracefully() {
+        outgoing.close()
+        writerJob.join()
+        runCatching { socket.shutdownOutput() }
         runCatching { socket.close() }
     }
 

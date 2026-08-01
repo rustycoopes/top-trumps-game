@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.toptrumps.session.ConnectionState
 
 /**
  * The whole two-device journey from a freshly connected socket to a playing match — story
@@ -63,15 +64,50 @@ public fun TwoDeviceMatchScreen(
                 onLeave,
             )
 
-        is MatchPhase.InMatch ->
-            MatchScreen(
-                session = current.session,
-                deckId = current.deckId,
-                localSeat = current.localSeat,
-                rematchLabel = "Back to lobby",
-                onRematch = onLeave,
-                modifier = modifier,
-            )
+        is MatchPhase.InMatch -> {
+            // Only InMatch has a live session — the countdown/abandon/left story is entirely
+            // about a drop *during* play (the heartbeat only starts once a session exists); a
+            // drop during the handshake above already has its own ConnectionLost dead end.
+            val connectionState by current.session.connectionState.collectAsStateWithLifecycle()
+            when (val connection = connectionState) {
+                is ConnectionState.Connected ->
+                    MatchScreen(
+                        session = current.session,
+                        deckId = current.deckId,
+                        localSeat = current.localSeat,
+                        rematchLabel = "Back to lobby",
+                        onRematch = onLeave,
+                        onLeaveMatch = { current.session.leave(); onLeave() },
+                        modifier = modifier,
+                    )
+
+                is ConnectionState.PeerUnreachable ->
+                    StatusScreen(
+                        modifier,
+                        "$peerDisplayName seems to have disconnected",
+                        // The reconnect-resync ADR's host/guest asymmetry: a guest actively
+                        // redials, a host can only wait for one to arrive — the copy must not
+                        // imply the host is doing something it isn't.
+                        if (current.localSeat == "GUEST") {
+                            "Trying to reconnect… ${connection.secondsRemaining}s left before the match is abandoned."
+                        } else {
+                            "Waiting for $peerDisplayName to reconnect… ${connection.secondsRemaining}s left before the match is abandoned."
+                        },
+                        onLeave,
+                    )
+
+                is ConnectionState.Abandoned ->
+                    StatusScreen(
+                        modifier,
+                        "Match abandoned",
+                        "$peerDisplayName couldn't be reached in time — the match has ended.",
+                        onLeave,
+                    )
+
+                is ConnectionState.PeerLeft ->
+                    StatusScreen(modifier, "$peerDisplayName left the game", "The match has ended.", onLeave)
+            }
+        }
     }
 }
 

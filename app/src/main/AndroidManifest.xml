@@ -1,6 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- All three below are normal permissions on API 26+ — no runtime prompt. CHANGE_NETWORK_STATE
+         also justifies the connectedDevice foreground service type. See the foreground-service ADR. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <!-- Runtime on API 33+, but the service runs whether or not it's granted — denial only hides
+         the notification (MatchForegroundService.updateNotification). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
+        android:name=".TopTrumpsApplication"
         android:allowBackup="true"
         android:label="Top Trumps"
         android:icon="@android:drawable/sym_def_app_icon"
@@ -14,6 +24,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".MatchForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
     </application>
 
 </manifest>

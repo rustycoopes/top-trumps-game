@@ -3,6 +3,8 @@ package com.toptrumps.session
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -36,7 +38,7 @@ class MatchHandshakeTest {
         val hostResult = async { HostHandshake.awaitHello(host) }
         guest.send(ProtocolCodec.encodeGuestToHost(GuestToHost.Hello(PROTOCOL_VERSION, "Guest", "id")))
 
-        assertEquals(HostHandshake.HelloResult.Ready, hostResult.await())
+        assertTrue(hostResult.await() is HostHandshake.HelloResult.Ready)
 
         host.close()
         guest.close()
@@ -51,7 +53,7 @@ class MatchHandshakeTest {
             GuestHandshake.run(guest, "Guest", "instance-id", localDeckHash = { "different-hash" })
         }
 
-        assertEquals(HostHandshake.HelloResult.Ready, HostHandshake.awaitHello(host))
+        assertTrue(HostHandshake.awaitHello(host) is HostHandshake.HelloResult.Ready)
         val hostResult = HostHandshake.chooseDeck(host, "test-deck", "host-hash", config, confirmWindow = 50.milliseconds)
 
         assertEquals(HostHandshake.DeckResult.Refused, hostResult)
@@ -71,7 +73,8 @@ class MatchHandshakeTest {
             GuestHandshake.run(guest, "Guest", "instance-id", localDeckHash = { "same-hash" })
         }
 
-        assertEquals(HostHandshake.HelloResult.Ready, HostHandshake.awaitHello(host))
+        val helloResult = HostHandshake.awaitHello(host)
+        check(helloResult is HostHandshake.HelloResult.Ready)
         assertEquals(
             HostHandshake.DeckResult.Accepted,
             HostHandshake.chooseDeck(host, "test-deck", "same-hash", config, confirmWindow = 50.milliseconds),
@@ -80,9 +83,29 @@ class MatchHandshakeTest {
         // since this test exercises the handshake gates in isolation from dealing.
         host.send(ProtocolCodec.encodeHostToGuest(HostToGuest.MatchStart(hand, 3)))
 
-        assertEquals(GuestHandshake.Result.Ready("test-deck", config, hand, 3), guestResult.await())
+        assertEquals(GuestHandshake.Result.Ready("test-deck", config, hand, 3, helloResult.sessionToken), guestResult.await())
 
         host.close()
         guest.close()
+    }
+
+    @Test
+    fun `each handshake mints a fresh session token, so a rematch can't collide with a finished match's resume`() = runTest {
+        fun tokenOf(handshakeResult: HostHandshake.HelloResult): String =
+            (handshakeResult as HostHandshake.HelloResult.Ready).sessionToken
+
+        val (hostA, guestA) = LoopbackTransport.createPair()
+        val helloA = async { HostHandshake.awaitHello(hostA) }
+        guestA.send(ProtocolCodec.encodeGuestToHost(GuestToHost.Hello(PROTOCOL_VERSION, "Guest", "id")))
+        val tokenA = tokenOf(helloA.await())
+
+        val (hostB, guestB) = LoopbackTransport.createPair()
+        val helloB = async { HostHandshake.awaitHello(hostB) }
+        guestB.send(ProtocolCodec.encodeGuestToHost(GuestToHost.Hello(PROTOCOL_VERSION, "Guest", "id")))
+        val tokenB = tokenOf(helloB.await())
+
+        assertNotEquals(tokenA, tokenB)
+
+        hostA.close(); guestA.close(); hostB.close(); guestB.close()
     }
 }
