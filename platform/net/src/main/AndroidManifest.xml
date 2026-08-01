@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- NsdManager registration/discovery and raw sockets need INTERNET; ConnectivityManager
+         needs ACCESS_NETWORK_STATE. Both are normal permissions — no runtime prompt, confirmed
+         clean on-device by the Slice 0 spike. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+</manifest>
