@@ -69,3 +69,60 @@ gallery and previews from Slice 3 for card appearance, plus a live two-device ma
 `theme`-bearing manifest doesn't disturb the handshake (the theme block sits inside the hashed
 `manifest.json` bytes, so this is exercising the existing `manifestHash` check with new content, not a
 new code path).
+
+## Delivered
+
+Issue [#30](https://github.com/rustycoopes/top-trumps-game/issues/30), branch
+`slice-5-remaining-surfaces`, 2026-08-02.
+
+The win-pile grid (`MatchScreen.kt`'s `WinPileGrid`) now renders mini `AssetTrumpCard`s
+(`CardVariant.MINI`) instead of a bare `AsyncImage` thumbnail — the old `CardImage` composable is
+deleted. Tapping a pile card opens it full-size and read-only (`CardVariant.HERO`,
+`onChooseStat = null`, sized via the same `solveCardWidth`/`BoxWithConstraints` pattern `HeroCard`
+already uses), closing PRD story 49. This is a new `openedCard` state local to `WinPileGrid` itself,
+one level below `InProgressScreen`'s existing `showingPile` flag — opening/closing a card never
+touches `showingPile`, so the live round underneath is untouched either way, matching the existing
+"a state within the match, not a navigation destination" comment this slice extends rather than
+replaces.
+
+The deck picker (`DeckPickerScreen.kt`) is rewritten from a plain per-deck `Button` list into a
+`LazyVerticalGrid` of themed mini cards — each deck's resolved `DeckTheme` (`AppGraph.deckTheme`,
+falling back to `DeckTheme.DEFAULT` for a deck that doesn't resolve) drives the tile's accent colour,
+and a new `DeckSummary.heroImageFile` field (resolved once in `AppGraph.listDecks()`, from the same
+`Deck` load `listDecks()` already does to populate `deckThemeCache`) supplies the representative
+image. Both existing call sites (`MainActivity.kt`'s `SoloMatchHost`, `TwoDeviceMatchScreen.kt`) were
+updated to pass `deckTheme`/`imageLoader` through — both already had `AppGraph`/`imageLoader` in
+scope, so no new plumbing was needed beyond the two call sites themselves. No second `ImageLoader`
+instance is introduced anywhere in this slice — verified by code review.
+
+The result screen (`ResultScreen`) gained explicit `MaterialTheme.typography.headlineLarge`/
+`titleLarge` and `MaterialTheme.colorScheme.onBackground` on its two `Text` calls — it was already
+inside `TopTrumpsTheme`'s `MaterialTheme` wrap and inherited Material defaults implicitly, but named
+neither typography nor colour explicitly before this. No card showcase was added, per the PRD's
+explicit scope boundary for this screen.
+
+`decks/lucys-youtubers/manifest.json`'s `theme.accent` moved from `#FF0000` (≈4.0:1 contrast against
+white stat text — fails the PRD's ≥4.5:1 bar) to `#C2185B`, a hot-pink/magenta accent computed at
+≈5.87:1 (WCAG relative-luminance formula, no in-repo contrast helper exists so this was hand-computed
+and double-checked independently by both review agents). Motorcycles' existing `#C8102E` accent
+(≈5.88:1, set in Slice 2) already passed and was left unchanged.
+
+Code review (`code-review-master` and `code-quality-guardian`, run in parallel) found no functional
+bugs, no state-loss/race conditions, no second `ImageLoader`, and confirmed the `heroImageFile`
+lookup's `.first { }` in `listDecks()` can't throw (traced the full guarantee chain from
+`DeckLoader`'s validation through `resolveDeckTheme`'s fallback). One real issue was found and fixed:
+placing `.clickable()` on the outer modifier passed into `AssetTrumpCard` put it *outside* the
+card's own internal `clip` in the composed modifier chain, so the tap ripple would have bled past
+the card's rounded corners into the square layout box behind it. Fixed by clipping the caller's own
+modifier (`Modifier.clip(RoundedCornerShape(CardCornerRadius))`) before `clickable`, in both
+`WinPileGrid` and `DeckPickerScreen`. Minor nits also addressed: a stale `AppGraph.loadDeck` doc
+comment, a missing `Modifier.fillMaxSize()` on the picker's grid (harmless but inconsistent with its
+two sibling grids), and a `remember` key on the picker's `CardContent` that used `deck.name` instead
+of `deck.id` like every other `remember` in the same file. Nothing rose to a follow-up-issue bar.
+
+`./gradlew test` (all modules, no regressions) and `:app:lintDebug` both pass. The acceptance
+criterion explicitly marked "needs two physical devices to confirm" in this file — that a
+`theme`-bearing deck manifest doesn't disturb the two-device handshake — was **not** verified on
+physical hardware this session, none was available, consistent with every other slice in this
+feature's precedent. Every other acceptance criterion was verified by reading the shipped code and
+its test coverage directly.

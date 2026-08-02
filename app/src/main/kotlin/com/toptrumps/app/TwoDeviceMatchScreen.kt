@@ -52,7 +52,13 @@ public fun TwoDeviceMatchScreen(
             )
 
         is MatchPhase.PickingDeck ->
-            DeckPickerScreen(decks = current.decks, onPick = { controller.pickDeck(it.id) }, modifier = modifier)
+            DeckPickerScreen(
+                decks = current.decks,
+                deckTheme = deckTheme,
+                imageLoader = imageLoader,
+                onPick = { controller.pickDeck(it.id) },
+                modifier = modifier,
+            )
 
         is MatchPhase.WaitingForHost ->
             StatusScreen(modifier, "Connected to $peerDisplayName", "Waiting for $peerDisplayName to choose a deck…", onLeave)

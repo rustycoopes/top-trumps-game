@@ -302,7 +302,7 @@ private fun SoloMatchHost(appGraph: AppGraph) {
         // every card's image reference, which is real file IO — recomputing it on every
         // recomposition of the picker would redo that walk on the main thread for nothing.
         val decks = remember { appGraph.listDecks() }
-        DeckPickerScreen(decks = decks, onPick = { chosenDeck = it })
+        DeckPickerScreen(decks = decks, deckTheme = appGraph::deckTheme, imageLoader = appGraph.imageLoader, onPick = { chosenDeck = it })
         return
     }
 
