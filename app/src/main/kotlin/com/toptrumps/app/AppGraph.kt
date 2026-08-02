@@ -60,8 +60,13 @@ private const val AI_OPPONENT_NAME = "AI"
 /** The AI's own guest-side session needs an opponentName too, but nothing ever reads it — only the human's own (host) [MatchSession.completedMatch] is tracked into history. */
 private const val UNREAD_SOLO_GUEST_OPPONENT_NAME = "You"
 
-/** A deck folder available in the picker — id is the asset folder name, name is its manifest label. */
-public data class DeckSummary(val id: String, val name: String)
+/**
+ * A deck folder available in the picker — id is the asset folder name, name is its manifest
+ * label. [heroImageFile] is the resolved [DeckTheme.heroCardId] card's own image file, ready to
+ * hand straight to an [coil3.ImageLoader] request — the picker never loads a full [Deck] itself
+ * (card-visual-identity WBS slice 5).
+ */
+public data class DeckSummary(val id: String, val name: String, val heroImageFile: String)
 
 /**
  * A hand-written dependency graph — no DI framework, per the module-structure ADR. Solo mode is
@@ -126,8 +131,12 @@ public class AppGraph(context: Context) {
     public fun listDecks(): List<DeckSummary> = deckSource.listDecks().mapNotNull { id ->
         when (val result = DeckLoader.load(deckSource, id)) {
             is DeckValidationResult.Valid -> {
-                deckThemeCache.computeIfAbsent(id) { resolveDeckTheme(result.deck) }
-                DeckSummary(id, result.deck.name)
+                val theme = deckThemeCache.computeIfAbsent(id) { resolveDeckTheme(result.deck) }
+                // .first{} can't throw: resolveDeckTheme guarantees heroCardId names a real card
+                // in this same deck (either DeckLoader validated it against the manifest's own
+                // card ids, or resolveDeckTheme fell back to deck.cards.first().id itself).
+                val heroImageFile = result.deck.cards.first { it.id == theme.heroCardId }.image.file
+                DeckSummary(id, result.deck.name, heroImageFile)
             }
             is DeckValidationResult.Invalid -> null
         }
@@ -151,8 +160,9 @@ public class AppGraph(context: Context) {
 
     /**
      * The full [Deck] behind [deckId], for the debug card gallery ([CardGalleryScreen]) —
-     * [listDecks] only keeps enough to populate [DeckSummary] (id/name), not [Deck.cards] or
-     * [Deck.metrics]. `null` if [deckId] doesn't resolve to a valid deck. Not cached: unlike
+     * [listDecks] only reads one card's image out of [Deck.cards] (for [DeckSummary.heroImageFile]),
+     * never the full card list or [Deck.metrics]. `null` if [deckId] doesn't resolve to a valid
+     * deck. Not cached: unlike
      * [deckTheme], the gallery is the only caller and only ever loads one deck at a time.
      */
     public fun loadDeck(deckId: String): Deck? =

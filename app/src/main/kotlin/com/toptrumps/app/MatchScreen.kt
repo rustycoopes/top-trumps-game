@@ -1,5 +1,6 @@
 package com.toptrumps.app
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -8,11 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -33,8 +36,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
-import coil3.compose.AsyncImage
 import com.toptrumps.app.card.AssetTrumpCard
+import com.toptrumps.app.card.CardCornerRadius
 import com.toptrumps.app.card.CardVariant
 import com.toptrumps.app.card.RowOutcome
 import com.toptrumps.app.card.TrumpCardBack
@@ -150,7 +153,15 @@ private fun InProgressScreen(
     var showingPile by remember { mutableStateOf(false) }
 
     if (showingPile) {
-        WinPileGrid(pile = view.myPile, deckId = deckId, imageLoader = imageLoader, onBack = { showingPile = false }, modifier = modifier)
+        WinPileGrid(
+            pile = view.myPile,
+            deckId = deckId,
+            metrics = view.metrics,
+            palette = palette,
+            imageLoader = imageLoader,
+            onBack = { showingPile = false },
+            modifier = modifier,
+        )
         return
     }
 
@@ -508,25 +519,63 @@ private fun MatchActionStrip(session: MatchSession, view: MatchView.InProgress, 
     }
 }
 
+/**
+ * Mini cards ([CardVariant.MINI]), not bare thumbnails (card-visual-identity WBS slice 5, closing
+ * PRD story 49). Tapping one opens it full-size, read-only ([CardVariant.HERO], `onChooseStat =
+ * null`) — the same rendering the reveal already uses — via a local [openedCard], not a navigation
+ * destination: [onBack] (and therefore the live round underneath) is untouched by opening or
+ * closing a pile card.
+ */
 @Composable
 private fun WinPileGrid(
     pile: List<RemoteCardFace>,
     deckId: String,
+    metrics: List<RemoteMetricSpec>,
+    palette: CardPalette,
     imageLoader: ImageLoader,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var openedCard by remember { mutableStateOf<RemoteCardFace?>(null) }
+
+    val opened = openedCard
+    if (opened != null) {
+        Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { openedCard = null }) { Text("Back to pile") }
+            BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                val geometry = remember(maxWidth, maxHeight) {
+                    cardGeometry(solveCardWidth(maxWidth, maxHeight, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
+                }
+                val content = remember(opened, metrics) { cardContentOf(opened, metrics) }
+                AssetTrumpCard(deckId, opened.imageFile, content, palette, geometry, imageLoader, onChooseStat = null)
+            }
+        }
+        return
+    }
+
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = onBack) { Text("Back to match") }
         Text("Your pile (${pile.size} cards)")
+        // One instance shared by every tile, not recomputed per cell — same discipline as the
+        // card gallery's own mini grid (CardGalleryScreen.kt).
+        val miniGeometry = remember { cardGeometry(width = 96.dp, variant = CardVariant.MINI) }
         LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.fillMaxSize()) {
-            items(pile) { card ->
-                Column(modifier = Modifier.padding(4.dp)) {
-                    // A small, explicit thumbnail size — thirty full-resolution bitmaps in this
-                    // grid would be ~3.5MB each in memory and OOM a mid-range phone (TDD §7).
-                    CardImage(deckId, card.imageFile, card.name, imageLoader, size = 96.dp)
-                    Text(card.name)
-                }
+            items(pile, key = { it.id }) { card ->
+                val content = remember(card, metrics) { cardContentOf(card, metrics) }
+                AssetTrumpCard(
+                    deckId = deckId,
+                    imageFile = card.imageFile,
+                    content = content,
+                    palette = palette,
+                    geometry = miniGeometry,
+                    imageLoader = imageLoader,
+                    // Clipped *before* `clickable` (outer, not inner, in the composed chain) so the
+                    // tap ripple is bounded by the card's own rounded corners instead of bleeding
+                    // into the square layout box behind it — CardChrome's own `clip` only reaches
+                    // content drawn inside it, not this caller-supplied modifier.
+                    modifier = Modifier.padding(4.dp).clip(RoundedCornerShape(CardCornerRadius)).clickable(onClickLabel = card.name) { openedCard = card },
+                    onChooseStat = null,
+                )
             }
         }
     }
@@ -556,38 +605,21 @@ private fun ResultScreen(
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            when (view.winner) {
+            text = when (view.winner) {
                 null -> "It's a draw."
                 localSeat -> "Victory!"
                 else -> "Defeat."
             },
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onBackground,
         )
-        Text("Final score — you: ${view.myScore}, opponent: ${view.opponentScore}")
+        Text(
+            text = "Final score — you: ${view.myScore}, opponent: ${view.opponentScore}",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
         Button(onClick = onRematch) { Text(rematchLabel) }
     }
-}
-
-/**
- * Renders a card's photo from the deck's own asset folder — `file:///android_asset/<deckId>/<imageFile>`,
- * per the deck-storage ADR. [imageLoader] has its disk cache disabled (the source is already local
- * storage) and [size] gives Coil an explicit decode target for every call site, rather than ever
- * decoding a full-resolution bitmap into a thumbnail.
- */
-@Composable
-internal fun CardImage(
-    deckId: String,
-    imageFile: String,
-    contentDescription: String?,
-    imageLoader: ImageLoader,
-    size: Dp,
-    modifier: Modifier = Modifier,
-) {
-    AsyncImage(
-        model = "file:///android_asset/$deckId/$imageFile",
-        contentDescription = contentDescription,
-        imageLoader = imageLoader,
-        modifier = modifier.size(size),
-    )
 }
 
 /**
