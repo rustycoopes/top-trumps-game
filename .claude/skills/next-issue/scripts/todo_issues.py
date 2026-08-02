@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List Todo issues in the OrganizeMe project, grouped by feature track then slice then priority tier.
+"""List Todo issues in this repo's GitHub Project, grouped by feature track then slice then priority tier.
 
 The skill uses this to get a deterministic shortlist so it doesn't re-derive the gathering,
 slice-ordering, and tiering logic on every run. It intentionally does NOT make the final pick —
@@ -16,12 +16,18 @@ Within a track, work is preferred by slice number, lowest first — earlier slic
 foundation later ones build on, so finish them first. Within a single slice, issues are bucketed
 by priority tier.
 
+The GitHub Project board is auto-detected: the repo's owner (from `gh repo view`) is used to
+list that owner's projects, and the one whose title normalizes (lowercase, alphanumeric-only)
+to a match against the repo name is used. Pass --owner/--project to skip detection and target
+a specific board directly.
+
 Usage:
     python todo_issues.py                                # every track, every slice
     python todo_issues.py --feature restructure           # legacy track only
     python todo_issues.py --feature prompt-versioning     # one new-style feature track
     python todo_issues.py --feature prompt-versioning --slice 2
     python todo_issues.py --status "In Progress"
+    python todo_issues.py --owner rustycoopes --project 2 # skip auto-detection
 
 Priority tiers (highest first): bug > enhancement > future-enhancement > (other/untiered)
 Output: JSON on stdout:
@@ -39,9 +45,6 @@ import re
 import subprocess
 import sys
 
-PROJECT_NUMBER = "2"
-PROJECT_OWNER = "rustycoopes"
-
 # Highest priority first. An issue is placed in the first tier whose label it carries.
 TIER_ORDER = ["bug", "enhancement", "future-enhancement"]
 
@@ -57,18 +60,57 @@ NON_FEATURE_LABELS = {
 }
 
 
-def fetch_items():
+def _normalize(name):
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def _run_gh(args):
     try:
         out = subprocess.run(
-            ["gh", "project", "item-list", PROJECT_NUMBER,
-             "--owner", PROJECT_OWNER, "--format", "json", "--limit", "300"],
+            ["gh"] + args,
             capture_output=True, text=True, check=True,
             encoding="utf-8", errors="replace",
         ).stdout
     except FileNotFoundError:
         sys.exit("error: `gh` CLI not found on PATH.")
     except subprocess.CalledProcessError as e:
-        sys.exit(f"error: gh project item-list failed:\n{e.stderr}")
+        sys.exit(f"error: gh {' '.join(args)} failed:\n{e.stderr}")
+    return out
+
+
+def resolve_project(owner, project):
+    """Return (owner, project_number). Auto-detects whichever of owner/project wasn't passed
+    explicitly by matching the current repo's name against the current owner's project titles."""
+    if owner is None:
+        repo_json = json.loads(_run_gh(["repo", "view", "--json", "owner,name"]))
+        owner = repo_json["owner"]["login"]
+        repo_name = repo_json["name"]
+    else:
+        repo_name = None
+
+    if project is not None:
+        return owner, project
+
+    if repo_name is None:
+        sys.exit("error: --project requires either an explicit --owner or a repo to infer one from.")
+
+    projects = json.loads(_run_gh(["project", "list", "--owner", owner, "--format", "json"])).get("projects", [])
+    target = _normalize(repo_name)
+    matches = [p for p in projects if _normalize(p["title"]) == target
+               or target.startswith(_normalize(p["title"])) or _normalize(p["title"]).startswith(target)]
+    if len(matches) == 1:
+        return owner, str(matches[0]["number"])
+    if not matches:
+        titles = ", ".join(f"{p['title']!r} (#{p['number']})" for p in projects) or "none"
+        sys.exit(f"error: no GitHub Project for owner {owner!r} matches repo {repo_name!r}. "
+                  f"Available: {titles}. Pass --project to specify one explicitly.")
+    numbers = ", ".join(f"#{p['number']} {p['title']!r}" for p in matches)
+    sys.exit(f"error: multiple GitHub Projects for owner {owner!r} match repo {repo_name!r}: "
+              f"{numbers}. Pass --project to disambiguate.")
+
+
+def fetch_items(owner, project):
+    out = _run_gh(["project", "item-list", project, "--owner", owner, "--format", "json", "--limit", "300"])
     return json.loads(out).get("items", [])
 
 
@@ -109,11 +151,18 @@ def main():
                     help="restrict to one slice number within the selected --feature")
     ap.add_argument("--status", default="Todo",
                     help="project Status value to filter by (default: Todo)")
+    ap.add_argument("--owner", default=None,
+                    help="GitHub Project owner; default: auto-detect from `gh repo view`")
+    ap.add_argument("--project", default=None,
+                    help="GitHub Project number; default: auto-detect by matching repo name "
+                         "against the owner's project titles")
     args = ap.parse_args()
+
+    owner, project = resolve_project(args.owner, args.project)
 
     # track -> slice number -> {tier: [candidates]}
     by_track = {}
-    for item in fetch_items():
+    for item in fetch_items(owner, project):
         content = item.get("content") or {}
         number = content.get("number")
         if number is None:  # draft items with no linked issue

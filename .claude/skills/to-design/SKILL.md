@@ -13,9 +13,9 @@ This skill takes `docs/features/<feature-slug>/PRD.md` and produces the technica
 2. Explore the codebase for the existing patterns, seams, and conventions in the area this feature touches — prefer reusing what's there over introducing something new. Check `docs/adr/` for prior decisions that constrain this design.
 
 3. Spawn three design sub-agents **in parallel** (single message, multiple `Agent` tool calls), each reviewing the PRD from its own lens:
-   - `fastapi-expert` — stack-specific implementation concerns: endpoints, schemas, migrations, background work, testing seams, given this is a Python 3.12 + FastAPI codebase.
+   - a stack-specific expert matching this repo's actual language/framework (e.g. `fastapi-expert` for Python/FastAPI, `spring-boot-expert` for Java/Spring, `react-architect` for React — pick whichever available agent fits, or skip this slot if none is a real match) — implementation concerns: endpoints/APIs, schemas, migrations, background work, testing seams.
    - `clean-architecture-expert` — layering and boundaries: where this feature's logic should live relative to existing modules, what stays decoupled from what.
-   - `microservices-architect` — service/deployment topology: does this stay within one app, does it cross the Host/hosted-app boundary, any infra implications.
+   - `microservices-architect` — service/deployment topology: does this stay within one module/app, does it cross a module or repo boundary (e.g. into a shared platform repo, if this repo is part of a multi-repo platform), any infra implications.
 
    Give each agent the full PRD plus the codebase context from step 2, and ask each to flag the real trade-offs it sees, not just describe an approach.
 

@@ -38,7 +38,7 @@ Create the `<feature-slug>` and `<slice-id>` labels with `gh label create` if th
 
 ### 4. Publish the issue
 
-Publish to the GitHub issue tracker using the template below, applying all three labels and assigning to the **OrganizeMe** project board. If this slice is blocked by another slice already published, reference its real issue number.
+Publish to the GitHub issue tracker using the template below, applying all three labels and assigning to this repo's GitHub project board. If this slice is blocked by another slice already published, reference its real issue number.
 
 <issue-template>
 ## Parent

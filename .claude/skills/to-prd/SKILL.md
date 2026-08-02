@@ -16,7 +16,7 @@ Check with the user that these seams match their expectations.
 
 3. Derive a short kebab-case `<feature-slug>` from the feature (e.g. `prompt-versioning`). Confirm it with the user if there's any ambiguity — it's the name every later skill in the chain (`/to-design`, `/to-wbs`, `/to-issues`, `/to-implementation`) will key off.
 
-4. Determine which repo the feature directory belongs in: if the feature is scoped to a single app, it lives in that app's own repo; if it's cross-app/platform-level, it lives in `organize-me`. Create `docs/features/<feature-slug>/` there if it doesn't exist.
+4. Determine which repo the feature directory belongs in. For a standalone single-repo project, that's always the current repo. If this repo is part of a multi-repo platform (check its `CLAUDE.md` for a platform/shared repo), a feature scoped to a single app lives in that app's own repo, while a cross-app/platform-level feature lives in the platform's shared repo instead. Create `docs/features/<feature-slug>/` there if it doesn't exist.
 
 5. Write the PRD using the template below to `docs/features/<feature-slug>/PRD.md`. This skill does not touch the issue tracker — no GitHub issue gets created for the feature as a whole; that happens per-slice, later, via `/to-issues`.
 

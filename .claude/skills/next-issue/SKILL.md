@@ -1,7 +1,7 @@
 ---
 name: next-issue
 description: >-
-  Choose the single highest-priority issue to work on next from the OrganizeMe GitHub project
+  Choose the single highest-priority issue to work on next from this repo's GitHub project
   board, explain the choice, and kick off implementation. Use this whenever the user asks what to
   work on next, which issue to pick up, to "grab/start the next issue", "what's next", or to triage
   the Todo column — even if they don't name an issue number. The point is deliberate selection
@@ -11,10 +11,11 @@ description: >-
 
 # Pick and start the next issue
 
-This project tracks work as GitHub issues on the **OrganizeMe** project board (project #2, owner
-`rustycoopes`). The job of this skill is to look at what's ready to work on, make a *considered*
-choice about what delivers the most value next, get the user's OK, and hand off to the
-`/to-implementation` skill to actually build it.
+This project tracks work as GitHub issues on a per-repo GitHub project board — `todo_issues.py`
+auto-detects it by matching the repo name against the project titles owned by the repo's owner
+(pass `--owner`/`--project` to override). The job of this skill is to look at what's ready to
+work on, make a *considered* choice about what delivers the most value next, get the user's OK,
+and hand off to the `/to-implementation` skill to actually build it.
 
 The reason selection is a deliberate step (rather than "take the next open issue") is that a good
 build order gives the project a solid base: finish earlier slices before later ones, fix what's
