@@ -65,3 +65,46 @@ None — can start immediately, in parallel with [Slice 2](slice-2-theme-deck-da
 This slice *is* the test — there is no seam above it. Prior art for the Gradle configuration exists on
 the unmerged `feature/history` branch's `build.gradle.kts`, which should be copied rather than
 reinvented. No production code changes in this slice.
+
+## Delivered
+
+Issue: [#26](https://github.com/rustycoopes/top-trumps-game/issues/26) · Branch:
+`slice-1-test-infrastructure-spike` · Date: 2026-08-02
+
+Built as designed, with one correction to the "expect a merge conflict" note: `:feature:history`
+(already merged, not an unmerged branch) had already added the `junit4` and `robolectric`
+aliases to `gradle/libs.versions.toml`, at `4.13.2`/`4.14.1` rather than the ADR's `4.16.1` — kept
+the existing shared version rather than forking it, since a bump would also move
+`:feature:history`'s test classpath and a real test run confirms `4.14.1` works fine on this
+toolchain. Only the two BOM-managed Compose-testing aliases (`compose-ui-test-junit4`,
+`compose-ui-test-manifest`) were new. `testOptions.unitTests.isIncludeAndroidResources`, the
+`testImplementation`/`debugImplementation` split, and the `--add-opens` `jvmArgs` block landed in
+`app/build.gradle.kts` exactly as specified.
+
+One addition beyond the ADR's literal text: `app/src/test/resources/robolectric.properties` also
+sets `application=android.app.Application`, overriding the manifest-declared
+`TopTrumpsApplication` (whose `onCreate()` builds a full `AppGraph` — NSD, Room, sound) so the
+smoke test — and every future `:app` unit test — starts isolated from real app startup rather
+than silently inheriting it. Confirmed via `AskUserQuestion` before implementing; the ADR has been
+updated with the same reasoning.
+
+**AGP 9.1.1 / Gradle 9.3.1 confirmed working**, the "one genuine unknown" this slice existed to
+resolve. Verified with a real JDK 17 (Temurin 17.0.20+8, matching CI's `temurin-17`) — the local
+Android Studio JBR is JDK 25, which turned out to fail Robolectric tests for a different reason
+than the ADR anticipated (see below), so it can't be used for local verification here. Both
+`./gradlew :feature:history:test :app:test` and `./gradlew build --stacktrace` (the exact command
+CI runs) are green, with zero changes to `.github/workflows/ci.yml`.
+
+Code review (run in parallel by `code-review-master` and `code-quality-guardian`) independently
+found the same real issue: running Robolectric tests under the local Android Studio JBR (JDK 25)
+fails with `org.objectweb.asm.ClassReader: Unsupported class file major version 69`, not the
+`InaccessibleObjectException` the ADR's `--add-opens` flags were written to prevent — a pre-existing
+gap (also reproduces on unmodified `master`'s `:feature:history` suite), not something this slice
+introduced, and CI is unaffected since it runs JDK 17. Filed as
+[#31](https://github.com/rustycoopes/top-trumps-game/issues/31) rather than fixed here, since it's
+a local-dev-only trap and the fix (possibly bumping `robolectric` to `4.16.1`) has classpath-wide
+blast radius outside this slice's scope. The review's other finding — the `application=` override
+being undocumented — was fixed directly (comments added to `robolectric.properties`, plus a new
+paragraph in the ADR).
+
+Not verified on-device: not applicable — this slice has no UI to run, only a JVM test.
