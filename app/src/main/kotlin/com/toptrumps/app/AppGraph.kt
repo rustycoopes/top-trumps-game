@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
+import android.net.wifi.WifiManager
 import coil3.ImageLoader
 import com.toptrumps.ai.AiOpponentDriver
 import com.toptrumps.decks.DeckLoader
@@ -85,6 +86,7 @@ public class AppGraph(context: Context) {
     private val nsdDiscovery = NsdLobbyDiscovery(nsdManager)
     private val wifiNetworkProvider =
         WifiNetworkProvider(context.getSystemService(ConnectivityManager::class.java))
+    private val wifiManager = context.getSystemService(WifiManager::class.java)
 
     // Confined to one worker: HostMatchSession mutates its authoritative state from both the
     // human's `submit()` call and the AI's guest-intent traffic, and the TDD requires that
@@ -342,6 +344,7 @@ public class AppGraph(context: Context) {
             discovery = nsdDiscovery,
             registration = NsdLobbyRegistration(nsdManager),
             wifiNetworkProvider = wifiNetworkProvider,
+            multicastLock = wifiManager.createMulticastLock("top-trumps-lobby"),
             parentScope = scope,
             onResumeAttempt = { transport, resume ->
                 val hostSession = currentHostSession()

@@ -62,9 +62,10 @@ public class TcpTransport private constructor(
                 while (true) {
                     received.send(readFrame())
                 }
-            } catch (_: IOException) {
+            } catch (e: IOException) {
                 // Peer closed, or `close()` closed the socket out from under us — either way,
                 // there is nothing more to read.
+                println("TTWire: reader loop ended on socket=${System.identityHashCode(socket)}: ${e.message}")
             } finally {
                 received.close()
             }
@@ -74,13 +75,15 @@ public class TcpTransport private constructor(
                 for (frame in outgoing) {
                     writeFrame(frame)
                 }
-            } catch (_: IOException) {
+            } catch (e: IOException) {
                 // The reader coroutine observes the same closed socket and unwinds on its own.
+                println("TTWire: writer loop ended on socket=${System.identityHashCode(socket)}: ${e.message}")
             }
         }
     }
 
     override suspend fun send(bytes: ByteArray) {
+        println("TTWire: queuing send of ${bytes.size} bytes on socket=${System.identityHashCode(socket)}")
         outgoing.send(bytes)
     }
 
@@ -115,6 +118,7 @@ public class TcpTransport private constructor(
     }
 
     private fun readFrame(): ByteArray {
+        println("TTWire: blocking on readFrame socket=${System.identityHashCode(socket)}")
         val length = input.readInt()
         // An IOException, not `require`'s IllegalArgumentException — the reader loop below only
         // catches IOException, and a peer sending a bogus header must drop the connection
@@ -124,6 +128,7 @@ public class TcpTransport private constructor(
         }
         val frame = ByteArray(length)
         input.readFully(frame)
+        println("TTWire: read ${frame.size} bytes on socket=${System.identityHashCode(socket)}")
         return frame
     }
 
@@ -131,6 +136,7 @@ public class TcpTransport private constructor(
         output.writeInt(frame.size)
         output.write(frame)
         output.flush()
+        println("TTWire: wrote ${frame.size} bytes on socket=${System.identityHashCode(socket)}")
     }
 
     public companion object {

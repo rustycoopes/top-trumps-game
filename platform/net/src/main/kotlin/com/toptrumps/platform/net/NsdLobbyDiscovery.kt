@@ -4,6 +4,7 @@ import android.net.Network
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
+import android.util.Log
 import com.toptrumps.session.DiscoveryEvent
 import com.toptrumps.session.LobbyReducer
 import kotlinx.coroutines.channels.awaitClose
@@ -36,22 +37,36 @@ public class NsdLobbyDiscovery(private val nsdManager: NsdManager) {
     /** [network] pins discovery to the Wi-Fi link on API 33+, where the `Network`-bound overload exists — see the network-binding ADR. Ignored below API 33. */
     public fun events(network: Network? = null): Flow<DiscoveryEvent> = callbackFlow {
         val listener = object : NsdManager.DiscoveryListener {
-            override fun onDiscoveryStarted(serviceType: String) = Unit
-            override fun onDiscoveryStopped(serviceType: String) = Unit
+            override fun onDiscoveryStarted(serviceType: String) {
+                Log.d("TTHandshake", "Discovery: started for $serviceType network=$network")
+            }
+            override fun onDiscoveryStopped(serviceType: String) {
+                Log.d("TTHandshake", "Discovery: stopped for $serviceType")
+            }
             override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) = Unit
 
             override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+                Log.d("TTHandshake", "Discovery: startDiscoveryFailed errorCode=$errorCode")
                 close(IllegalStateException("startDiscovery failed: errorCode=$errorCode"))
             }
 
             override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-                if (!serviceInfo.matchesServiceType()) return
-                val parsed = LobbyReducer.parseInstanceName(serviceInfo.serviceName) ?: return
+                Log.d("TTHandshake", "Discovery: onServiceFound raw name='${serviceInfo.serviceName}' type='${serviceInfo.serviceType}'")
+                if (!serviceInfo.matchesServiceType()) {
+                    Log.d("TTHandshake", "Discovery: ignored, service type mismatch")
+                    return
+                }
+                val parsed = LobbyReducer.parseInstanceName(serviceInfo.serviceName)
+                if (parsed == null) {
+                    Log.d("TTHandshake", "Discovery: ignored, could not parse instance name")
+                    return
+                }
                 rawByInstanceId[parsed.instanceId] = serviceInfo
                 trySend(DiscoveryEvent.ServiceFound(serviceInfo.serviceName, Clock.System.now()))
             }
 
             override fun onServiceLost(serviceInfo: NsdServiceInfo) {
+                Log.d("TTHandshake", "Discovery: onServiceLost raw name='${serviceInfo.serviceName}'")
                 if (!serviceInfo.matchesServiceType()) return
                 LobbyReducer.parseInstanceName(serviceInfo.serviceName)?.let { rawByInstanceId.remove(it.instanceId) }
                 trySend(DiscoveryEvent.ServiceLost(serviceInfo.serviceName))
@@ -59,12 +74,17 @@ public class NsdLobbyDiscovery(private val nsdManager: NsdManager) {
         }
 
         if (network != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Log.d("TTHandshake", "Discovery: calling discoverServices bound to network=$network (SDK=${Build.VERSION.SDK_INT})")
             val directExecutor = Executor { it.run() }
             nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, network, directExecutor, listener)
         } else {
+            Log.d("TTHandshake", "Discovery: calling discoverServices unbound (network param null or SDK<33; network=$network, SDK=${Build.VERSION.SDK_INT})")
             nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, listener)
         }
-        awaitClose { nsdManager.stopServiceDiscovery(listener) }
+        awaitClose {
+            Log.d("TTHandshake", "Discovery: awaitClose, stopping discovery")
+            nsdManager.stopServiceDiscovery(listener)
+        }
     }
 
     /**

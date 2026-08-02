@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <!-- AOSP's NsdManager doesn't require a multicast lock, but several OEMs (Samsung among them)
+         filter multicast frames on Wi-Fi once the radio's been idle a while regardless — without
+         this, discovery flickers or drops mid-session. See the NSD reliability ADR. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Runtime on API 33+, but the service runs whether or not it's granted — denial only hides
          the notification (MatchForegroundService.updateNotification). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

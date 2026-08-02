@@ -2,6 +2,7 @@ package com.toptrumps.platform.net
 
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.util.Log
 import com.toptrumps.session.LobbyReducer
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -19,21 +20,27 @@ public class NsdLobbyRegistration(private val nsdManager: NsdManager) {
 
     /** Returns the *actual* registered service name — never assume it matches what was requested; Android auto-renames on collision. */
     public suspend fun register(displayName: String, instanceId: String, port: Int): String {
+        val requestedName = LobbyReducer.buildInstanceName(displayName, instanceId)
+        Log.d("TTHandshake", "Registration: registering '$requestedName' on port $port")
         val serviceInfo = NsdServiceInfo().apply {
-            serviceName = LobbyReducer.buildInstanceName(displayName, instanceId)
+            serviceName = requestedName
             serviceType = SERVICE_TYPE
             setPort(port)
         }
         return suspendCancellableCoroutine { continuation ->
             val listener = object : NsdManager.RegistrationListener {
                 override fun onRegistrationFailed(info: NsdServiceInfo, errorCode: Int) {
+                    Log.d("TTHandshake", "Registration: FAILED errorCode=$errorCode")
                     continuation.resumeWithException(IllegalStateException("registerService failed: errorCode=$errorCode"))
                 }
 
                 override fun onUnregistrationFailed(info: NsdServiceInfo, errorCode: Int) = Unit
-                override fun onServiceUnregistered(info: NsdServiceInfo) = Unit
+                override fun onServiceUnregistered(info: NsdServiceInfo) {
+                    Log.d("TTHandshake", "Registration: onServiceUnregistered '${info.serviceName}'")
+                }
 
                 override fun onServiceRegistered(info: NsdServiceInfo) {
+                    Log.d("TTHandshake", "Registration: registered as '${info.serviceName}'")
                     continuation.resume(info.serviceName)
                 }
             }
@@ -44,6 +51,7 @@ public class NsdLobbyRegistration(private val nsdManager: NsdManager) {
 
     /** Idempotent: unregistering without an active registration is a silent no-op. */
     public fun unregister() {
+        Log.d("TTHandshake", "Registration: unregister() called, activeListener=${activeListener != null}")
         activeListener?.let { nsdManager.unregisterService(it) }
         activeListener = null
     }

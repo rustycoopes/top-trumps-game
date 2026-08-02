@@ -1,5 +1,6 @@
 package com.toptrumps.app
 
+import android.util.Log
 import com.toptrumps.decks.DeckLoader
 import com.toptrumps.decks.DeckSource
 import com.toptrumps.rules.MatchConfig
@@ -95,10 +96,19 @@ public class MatchController(
     }
 
     private suspend fun runHost() {
+        Log.d("TTHandshake", "runHost: awaiting Hello on transport=${transport.hashCode()}")
+        val started = System.currentTimeMillis()
         when (val result = HostHandshake.awaitHello(transport)) {
-            is HostHandshake.HelloResult.Refused -> _phase.value = MatchPhase.VersionMismatch(result.guestVersion)
-            HostHandshake.HelloResult.TimedOut -> _phase.value = MatchPhase.HandshakeTimedOut
+            is HostHandshake.HelloResult.Refused -> {
+                Log.d("TTHandshake", "runHost: Refused after ${System.currentTimeMillis() - started}ms (guestVersion=${result.guestVersion})")
+                _phase.value = MatchPhase.VersionMismatch(result.guestVersion)
+            }
+            HostHandshake.HelloResult.TimedOut -> {
+                Log.d("TTHandshake", "runHost: TimedOut after ${System.currentTimeMillis() - started}ms")
+                _phase.value = MatchPhase.HandshakeTimedOut
+            }
             is HostHandshake.HelloResult.Ready -> {
+                Log.d("TTHandshake", "runHost: Ready after ${System.currentTimeMillis() - started}ms")
                 sessionToken = result.sessionToken
                 _phase.value = MatchPhase.PickingDeck(listDecks())
             }
@@ -136,12 +146,15 @@ public class MatchController(
 
     private suspend fun runGuest() {
         _phase.value = MatchPhase.WaitingForHost
+        Log.d("TTHandshake", "runGuest: sending Hello on transport=${transport.hashCode()}")
+        val started = System.currentTimeMillis()
         val result = GuestHandshake.run(
             transport,
             displayName,
             instanceId,
             localDeckHash = { deckId -> DeckLoader.manifestHash(deckSource, deckId) },
         )
+        Log.d("TTHandshake", "runGuest: result=${result::class.simpleName} after ${System.currentTimeMillis() - started}ms")
         when (result) {
             is GuestHandshake.Result.VersionRefused -> _phase.value = MatchPhase.VersionMismatch(result.hostVersion)
             is GuestHandshake.Result.DeckRefused -> _phase.value = MatchPhase.DeckMismatch(result.deckId)
@@ -192,6 +205,7 @@ public class MatchController(
         } catch (c: CancellationException) {
             throw c
         } catch (t: Throwable) {
+            Log.d("TTHandshake", "runOrConnectionLost: caught ${t::class.simpleName}: ${t.message}")
             _phase.value = MatchPhase.ConnectionLost
         }
     }

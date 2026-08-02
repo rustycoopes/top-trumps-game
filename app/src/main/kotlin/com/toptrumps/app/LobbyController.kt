@@ -1,6 +1,8 @@
 package com.toptrumps.app
 
 import android.net.Network
+import android.net.wifi.WifiManager
+import android.util.Log
 import com.toptrumps.platform.net.NsdLobbyDiscovery
 import com.toptrumps.platform.net.NsdLobbyRegistration
 import com.toptrumps.platform.net.WifiNetworkProvider
@@ -31,7 +33,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
 import javax.net.SocketFactory
 import kotlin.time.Duration.Companion.seconds
@@ -48,6 +52,7 @@ public class LobbyController(
     private val discovery: NsdLobbyDiscovery,
     private val registration: NsdLobbyRegistration,
     private val wifiNetworkProvider: WifiNetworkProvider,
+    private val multicastLock: WifiManager.MulticastLock,
     parentScope: CoroutineScope,
     /** A fresh inbound connection whose first frame is a resume rather than a lobby message — see the reconnect-resync ADR. Default no-op so a caller with no live match never needs to care. */
     private val onResumeAttempt: suspend (Transport, GuestToHost.Resume) -> Unit = { _, _ -> },
@@ -77,6 +82,9 @@ public class LobbyController(
 
     private var started = false
 
+    /** Well under [LobbyReducer]'s 30s peer TTL — see the discovery-refresh note on [setupForNetwork]. */
+    private val discoveryRefreshInterval = 15.seconds
+
     /**
      * Restarts registration, discovery and the listen socket on every Wi-Fi network change —
      * roaming kills discovery with no callback (TDD §8). Idempotent: this controller is now
@@ -87,16 +95,26 @@ public class LobbyController(
     public fun start() {
         if (started) return
         started = true
+        // Some OEMs filter multicast frames once Wi-Fi has been idle a while, silently dropping
+        // mDNS packets — held for the controller's whole life, not just discovery, since our own
+        // registration announcements are just as vulnerable. See the NSD reliability ADR.
+        multicastLock.acquire()
         scope.launch {
+            Log.d("TTHandshake", "LobbyController.start(): observing Wi-Fi network")
             wifiNetworkProvider.observeWifiNetwork()
-                .catch { _error.value = it.message ?: "Could not observe the Wi-Fi network" }
+                .catch {
+                    Log.d("TTHandshake", "LobbyController: observeWifiNetwork error: ${it.message}")
+                    _error.value = it.message ?: "Could not observe the Wi-Fi network"
+                }
                 .collectLatest { network ->
+                    Log.d("TTHandshake", "LobbyController: got Wi-Fi network=$network")
                     _error.value = null
                     try {
                         setupForNetwork(network)
                     } catch (c: CancellationException) {
                         throw c
                     } catch (t: Throwable) {
+                        Log.d("TTHandshake", "LobbyController: setupForNetwork failed: ${t::class.simpleName}: ${t.message}")
                         _error.value = t.message ?: "Could not start the lobby"
                     }
                 }
@@ -176,21 +194,40 @@ public class LobbyController(
     /** Cancels every coroutine this controller started — network observation, discovery, the listen socket, registration. */
     public fun close() {
         scope.cancel()
+        if (multicastLock.isHeld) multicastLock.release()
     }
 
     private suspend fun setupForNetwork(network: Network) {
         val boundListener =
             TcpListener.bind(wifiNetworkProvider.serverSocketFactory(network), scope, ioDispatcher, LOBBY_PORT)
+        Log.d("TTHandshake", "LobbyController.setupForNetwork: bound listen socket on port ${boundListener.localPort}")
         try {
             socketFactory = wifiNetworkProvider.socketFactory(network)
             _ownAddressHint.value = wifiNetworkProvider.wifiIpv4Address(network)?.hostAddress
+            Log.d("TTHandshake", "LobbyController.setupForNetwork: own address hint = ${_ownAddressHint.value}")
             registration.register(displayName, instanceId, boundListener.localPort)
 
             coroutineScope {
-                launch { boundListener.connections.collect { transport -> attachMessageListener(transport) } }
                 launch {
-                    discovery.events(network).collect { event ->
-                        _peers.value = LobbyReducer.reduce(_peers.value, event, instanceId)
+                    boundListener.connections.collect { transport ->
+                        Log.d("TTHandshake", "LobbyController: accepted inbound connection transport=${transport.hashCode()}")
+                        attachMessageListener(transport)
+                    }
+                }
+                launch {
+                    // `onServiceFound` fires once per browse session and never repeats for an
+                    // unchanged peer — confirmed live, a peer sat in view for minutes with no
+                    // repeat event. The TDD's own TTL design calls for "refresh on
+                    // re-announcement" (§8), but nothing produces one without this: restarting the
+                    // browse periodically, well under `LobbyReducer`'s 30s TTL, is what makes
+                    // Tick's pruning mean "peer is gone" rather than "peer aged out of view mid-match."
+                    while (true) {
+                        withTimeoutOrNull(discoveryRefreshInterval) {
+                            discovery.events(network).collect { event ->
+                                _peers.value = LobbyReducer.reduce(_peers.value, event, instanceId)
+                                Log.d("TTHandshake", "LobbyController: peers now = ${_peers.value.map { it.displayName + "/" + it.instanceId }}")
+                            }
+                        }
                     }
                 }
             }
@@ -221,8 +258,23 @@ public class LobbyController(
     private val lobbyListeners = mutableMapOf<Transport, Job>()
 
     private fun attachMessageListener(transport: Transport) {
-        lobbyListeners[transport] = scope.launch {
-            transport.incoming.collect { bytes ->
+        Log.d("TTHandshake", "LobbyController: attach listener on transport=${transport.hashCode()}")
+        val job = scope.launch {
+            // A manual pull loop, not `.collect`, so the loop itself decides whether to ask the
+            // flow for another frame — checked only *after* fully processing the current one. If
+            // this used `.collect` plus `detachMessageListener`'s `job.cancel()` to stop, the
+            // frame that arrives the instant this listener transitions the transport to Connected
+            // (e.g. the guest's Hello, sent right after receiving InviteAccept) can already be
+            // sitting in the channel by then — cancellation is cooperative, so `.collect` can pull
+            // and silently discard that frame here before the cancellation takes effect, and
+            // MatchController's handshake then waits forever for a Hello that already came and
+            // went. Breaking on our own synchronous check instead means we simply never ask.
+            while (true) {
+                // `firstOrNull`, not `first` — the transport can close (peer dropped, resolve
+                // failed) while this is waiting on the next frame, which completes `incoming` with
+                // zero elements. `first` treats that as an error and throws `NoSuchElementException`
+                // instead of just ending; `firstOrNull` reports it as `null` so this can exit cleanly.
+                val bytes = transport.incoming.firstOrNull() ?: break
                 val message = runCatching { ProtocolCodec.decodeLobbyMessage(bytes) }.getOrNull()
                 if (message == null) {
                     // Not a lobby message — the one other legitimate thing to arrive on a fresh
@@ -233,28 +285,32 @@ public class LobbyController(
                         detachMessageListener(transport)
                         onResumeAttempt(transport, resume)
                     }
-                    return@collect
+                } else {
+                    val event = when (message) {
+                        is LobbyMessage.Invite -> InvitationEvent.InboundInviteArrived(
+                            LobbyPeer(message.fromInstanceId, message.fromDisplayName, Clock.System.now()),
+                            transport,
+                        )
+                        is LobbyMessage.InviteAccept ->
+                            if (transportMatchesPending(transport)) InvitationEvent.OutboundAccepted else null
+                        is LobbyMessage.InviteDecline ->
+                            if (transportMatchesPending(transport)) InvitationEvent.OutboundDeclined(message.reason) else null
+                        is LobbyMessage.InviteCancel ->
+                            if (transportMatchesPending(transport)) InvitationEvent.InboundCancelled else null
+                    }
+                    if (event != null) applyInvitation(event)
                 }
-                val event = when (message) {
-                    is LobbyMessage.Invite -> InvitationEvent.InboundInviteArrived(
-                        LobbyPeer(message.fromInstanceId, message.fromDisplayName, Clock.System.now()),
-                        transport,
-                    )
-                    is LobbyMessage.InviteAccept ->
-                        if (transportMatchesPending(transport)) InvitationEvent.OutboundAccepted else null
-                    is LobbyMessage.InviteDecline ->
-                        if (transportMatchesPending(transport)) InvitationEvent.OutboundDeclined(message.reason) else null
-                    is LobbyMessage.InviteCancel ->
-                        if (transportMatchesPending(transport)) InvitationEvent.InboundCancelled else null
-                }
-                if (event != null) applyInvitation(event)
+                if (lobbyListeners[transport] == null) break
             }
         }
+        lobbyListeners[transport] = job
     }
 
     /** Stops reading [transport] as a lobby socket — called once it's either connected (ownership moves to [MatchController]) or closed (nothing left to read). */
     private fun detachMessageListener(transport: Transport) {
-        lobbyListeners.remove(transport)?.cancel()
+        val removed = lobbyListeners.remove(transport)
+        Log.d("TTHandshake", "LobbyController: detach listener on transport=${transport.hashCode()} (was attached=${removed != null})")
+        removed?.cancel()
     }
 
     private fun transportMatchesPending(transport: Transport): Boolean = when (val state = _invitation.value) {
@@ -271,7 +327,13 @@ public class LobbyController(
      * `ClosedSendChannelException` on the channel and could drop the courtesy message entirely.
      */
     private fun applyInvitation(event: InvitationEvent): InvitationState {
-        val result = InvitationResolver.resolve(_invitation.value, event, instanceId, displayName)
+        val before = _invitation.value
+        val result = InvitationResolver.resolve(before, event, instanceId, displayName)
+        Log.d(
+            "TTHandshake",
+            "LobbyController: ${before::class.simpleName} + ${event::class.simpleName} -> ${result.state::class.simpleName}" +
+                (if (result.state is InvitationState.Connected) " transport=${(result.state as InvitationState.Connected).transport.hashCode()} role=${(result.state as InvitationState.Connected).role}" else ""),
+        )
         _invitation.value = result.state
         // Connected means a match may start reading this same transport next; closed means
         // there's nothing left to read. Either way, this controller must stop listening now.
