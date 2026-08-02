@@ -1,6 +1,11 @@
 {
   "id": "lucys-youtubers",
   "name": "Lucy's YouTubers",
+  "theme": {
+    "accent": "#FF0000",
+    "onAccent": "#FFFFFF",
+    "heroCardId": "mrbeast"
+  },
   "metrics": [
     {
       "key": "birthYear",

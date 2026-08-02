@@ -110,3 +110,61 @@ and it should exist before Slice 3's Robolectric work starts.
 
 No UI test coverage in this slice — nothing here is yet wired into a screen a player sees, beyond the
 theme wrap and the flash fix, which are verified on-device.
+
+## Delivered
+
+Issue: [#27](https://github.com/rustycoopes/top-trumps-game/issues/27) · Branch:
+`slice-2-theme-deck-data-foundation` · Date: 2026-08-02
+
+Built as designed. `ArgbColor`/`DeckTheme` landed in `:core:rules`; `DeckLoader.parse` grew a
+`toDeckTheme`/`parseArgbHex` pair that degrades a malformed accent/`onAccent` hex to
+`DeckTheme.DEFAULT`'s field and an unmatched `heroCardId` to `null` — never to the deck's first
+card, which needs `Deck.cards` and is deliberately left to `:app` (TDD decision 6). A new
+`AllDecksThemeTest` walks every real `/decks` folder and re-derives the strict checks independently
+via the same `parseArgbHex`, so it catches what runtime tolerates; `decks/motorcycles` and
+`decks/lucys-youtubers` both now carry a real `theme` block (`kawasaki-ninja-h2` and `mrbeast` as
+hero cards respectively) exercising that path with production data, not just fixtures.
+
+`app/src/main/kotlin/com/toptrumps/app/theme/` (`Color.kt`, `Type.kt`, `Theme.kt`, `DeckPalette.kt`)
+is the app's first `MaterialTheme`; `MainActivity` wraps `AppRoot` in it. Anton (SIL OFL 1.1) is
+bundled at `res/font/anton_regular.ttf` with its licence at `assets/fonts/OFL.txt` (not under
+`res/font/`, which only accepts font resource types — a stray `.txt` there breaks aapt2).
+`res/values/themes.xml` + `res/values-night/themes.xml` replace the manifest's hardcoded
+`Theme.Material.Light.NoActionBar` with a `Theme.TopTrumps` that tracks the resource qualifier, so
+the pre-Compose window background already matches system dark mode before Compose's first frame.
+
+`AppGraph` gained `deckTheme(deckId): DeckTheme?` and a `resolveDeckTheme` (in its own file,
+`DeckThemeResolution.kt`, so the `heroCardId`-falls-back-to-first-card step is unit-testable without
+Robolectric) resolving `null` to the deck's first card; both `listDecks()` and `deckTheme()` share
+one cache. `AppGraph` now owns the app's single Coil `ImageLoader`, released in `close()`;
+`MatchScreen`'s old per-screen construction and `shutdown()` are deleted, with `imageLoader` threaded
+through as a parameter from `MainActivity`/`TwoDeviceMatchScreen` instead.
+
+`app/src/main/kotlin/com/toptrumps/app/card/CardGeometry.kt` implements the card-geometry ADR's
+grow-then-absorb sizing maths (`cardGeometry`/`solveCardWidth`) as pure `Dp` arithmetic, with
+`CardGeometryTest` covering the floor-binding case, the non-binding case, the exact crossover point,
+`maxHeight` absorption, front/back `==` identity, and both branches of `solveCardWidth`'s inverse.
+
+Code review (run in parallel by `code-review-master` and `code-quality-guardian`) found and fixed two
+real bugs before they had a chance to matter: `AppGraph.deckTheme`'s cache used `MutableMap.getOrPut`
+on a nullable-valued map, which can't distinguish "absent" from "present but null" and so never
+actually cached a miss (silently reopening every image in an invalid deck's manifest on each call,
+contradicting its own doc comment and this slice's own acceptance criterion); and the same cache was
+a plain `HashMap` mutated from two different threads (Compose's main thread via `listDecks()`, and a
+`MatchController`'s background `matchScope` dispatcher via the same call), an unsynchronized-mutation
+hazard the deck-theme-block ADR's own safety argument ("worst case is a wrong colour, never a crash")
+depends on not existing. Both are fixed together with a `ConcurrentHashMap` that simply never caches
+the invalid-`deckId` case, sidestepping the nullable-value trap entirely. Also fixed: two KDoc
+cross-module links that wouldn't have resolved for want of an import, and a duplicated 30-card
+manifest-fixture builder in `DeckLoaderTest` (now one parameterized `writeDeckFixture` shared with
+the pre-existing unresolvable-image test). No further-improvement issues were filed — every finding
+either was fixed directly or was confirmed as intentional, documented scope (`CardVariant` currently
+carries no arithmetic behaviour of its own, exactly as the ADR's `minRowHeight`-is-the-single-knob
+design specifies; it's forward plumbing for Slice 3's card composable).
+
+`:core:rules:test`, `:core:decks:test`, `:app:testDebugUnitTest`, `:app:lintDebug` ("No issues
+found"), `:app:assembleDebug`, and `checkCoreDependencyAllowlist` for all four `:core:*` modules all
+pass. The two on-device-only acceptance criteria — the cold-start dark-mode flash fix and the
+bundled font actually rendering — were not verified on a physical device this session (none was
+available); `:app:lintDebug` and a successful `:app:assembleDebug` are the strongest signal available
+from this environment that the font resource and theme XML are structurally sound.

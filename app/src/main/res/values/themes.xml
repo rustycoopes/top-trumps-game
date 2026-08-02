@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window's pre-Compose theme, referenced by AndroidManifest.xml. Split light/values-night
+         so the very first frame (before TopTrumpsTheme's isSystemInDarkTheme() ever runs) already
+         has the right background — otherwise dark mode flashes light on cold start. -->
+    <style name="Theme.TopTrumps" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

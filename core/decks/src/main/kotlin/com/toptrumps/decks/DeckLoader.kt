@@ -1,8 +1,10 @@
 package com.toptrumps.decks
 
+import com.toptrumps.rules.ArgbColor
 import com.toptrumps.rules.Card
 import com.toptrumps.rules.CardImage
 import com.toptrumps.rules.Deck
+import com.toptrumps.rules.DeckTheme
 import com.toptrumps.rules.Direction
 import com.toptrumps.rules.MetricDisplay
 import com.toptrumps.rules.MetricKey
@@ -151,8 +153,25 @@ public object DeckLoader {
                     ),
                 )
             },
+            theme = dto.theme.toDeckTheme(cardIds),
         )
         return DeckValidationResult.Valid(deck)
+    }
+
+    /**
+     * The `theme` block is cosmetic, so unlike everything else [parse] validates, a malformed
+     * field degrades to [DeckTheme.DEFAULT]'s value rather than failing the whole deck — see the
+     * deck-theme-block ADR. `null` (block absent, or a field within it absent) degrades the same
+     * way as a value that fails to parse. An unmatched `heroCardId` degrades to `null` here — not
+     * to the deck's first card, which needs [Deck.cards] and is `AppGraph`'s job (TDD decision 6).
+     */
+    private fun DeckThemeDto?.toDeckTheme(knownCardIds: List<String>): DeckTheme {
+        if (this == null) return DeckTheme.DEFAULT
+        return DeckTheme(
+            accent = accent?.let(::parseArgbHex) ?: DeckTheme.DEFAULT.accent,
+            onAccent = onAccent?.let(::parseArgbHex) ?: DeckTheme.DEFAULT.onAccent,
+            heroCardId = heroCardId?.takeIf { it in knownCardIds },
+        )
     }
 
     private fun String.toDirectionOrNull(): Direction? = when (this) {
@@ -166,4 +185,17 @@ public object DeckLoader {
         "YEARS_SINCE_VALUE" -> MetricDisplay.YEARS_SINCE_VALUE
         else -> null
     }
+}
+
+private val HEX_COLOR = Regex("^#[0-9A-Fa-f]{6}$")
+
+/**
+ * Parses `#RRGGBB` into an opaque, fully-alpha [ArgbColor] — see the deck-theme-block ADR. `null`
+ * if [hex] isn't exactly that shape, which callers treat as "degrade to the default colour" at
+ * runtime and "fail the build" in the all-decks CI test (same function, two verdicts).
+ */
+internal fun parseArgbHex(hex: String): ArgbColor? {
+    if (!HEX_COLOR.matches(hex)) return null
+    val rgb = hex.substring(1).toInt(16)
+    return ArgbColor((0xFF shl 24) or rgb)
 }

@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.toptrumps.app.theme.TopTrumpsTheme
 import com.toptrumps.session.InvitationState
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -37,7 +38,9 @@ public class MainActivity : ComponentActivity() {
         val appGraph = (application as TopTrumpsApplication).appGraph
 
         setContent {
-            AppRoot(appGraph)
+            TopTrumpsTheme {
+                AppRoot(appGraph)
+            }
         }
     }
 }
@@ -257,6 +260,7 @@ private fun AppRoot(appGraph: AppGraph) {
                 peerDisplayName = connected.peer.displayName,
                 onLeave = leaveMatch,
                 soundEffects = appGraph.soundEffects,
+                imageLoader = appGraph.imageLoader,
             )
         }
 
@@ -291,6 +295,7 @@ private fun SoloMatchHost(appGraph: AppGraph) {
     MatchScreen(
         session = session,
         deckId = deck.id,
+        imageLoader = appGraph.imageLoader,
         onRematch = {
             session.close()
             session = appGraph.startSoloMatch(deck.id)
