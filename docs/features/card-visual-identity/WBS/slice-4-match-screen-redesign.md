@@ -100,3 +100,64 @@ WBS slice-7-polish before it), animation perspective, timing, frame budget, and 
 manual and on-device by design — the seam-level property that already has automated coverage
 (`MatchSession.lastResync` / `ConnectionResilienceTest`) is unaffected by this slice's changes and
 needs no new test.
+
+## Delivered
+
+Issue: [#29](https://github.com/rustycoopes/top-trumps-game/issues/29) · Branch:
+`slice-4-match-screen-redesign` · Date: 2026-08-02
+
+Built as designed. Note first: Slice 3's PR (#36) was still open against `master` when this slice
+started despite issue #28 being closed — merged first (squash, `26e53de`) so this slice could build
+on the actual shipped card composable rather than a stale branch.
+
+`MatchScreen.kt`'s `InProgressScreen` is now the three-region `Column` from TDD decision 5 —
+`MatchTopBar` (scores, round counter, `Leave`), a `Modifier.weight(1f)` `BoxWithConstraints` holding
+either `HeroCard` or `RevealPair`, and `MatchActionStrip` (prompt text, `Continue`) — with no
+`verticalScroll` anywhere. `AwaitingChoiceContent`'s five `Button`s are gone; `HeroCard` builds a
+`CardContent` via Slice 3's `cardContentOf`, folding `round.remainingMetrics` and
+`session.hasPendingIntent` into one `availableMetrics` set so a tied-and-excluded row and a
+choice-in-flight both land on the same `StatRow.enabled = false` path, and wires `onChooseStat`
+straight to `PlayerIntent.ChooseMetric`. `RevealPair` hands both the player's and opponent's card the
+*same* `CardGeometry` instance (28dp row floor) so side-by-side row alignment falls out for free, per
+the design notes — no `IntrinsicSize.Min`, no `SubcomposeLayout`. The hero-to-reveal size change
+(~379dp → ~186dp) hard-cuts as specified; `animateDpAsState` was never attempted.
+
+`CardAnimations.kt`'s `FlippableOpponentCard` now takes `back`/`front: @Composable (Modifier) ->
+Unit` slots instead of `RemoteCardFace`/`deckId`/`ImageLoader`/`size: Dp`, and the documented
+recomposition bug (`rotation.value` read in the composable body to branch back/front) is fixed
+exactly as TDD decision 4 specifies: both faces compose once into the same `Box`, visibility driven
+from `alpha` inside `graphicsLayer {}` lambdas. Confirmed via a fresh `compose_reports` run —
+`FlippableOpponentCard`, `SlideOverlay`, and every new `MatchScreen.kt` composable report
+`restartable skippable` with no body-level animated-state reads. `SlidingCard`/`SlideOverlay` collapse
+`deckId`/`imageFile`/`name`/`imageLoader` into one content lambda per TDD decision 4, and the
+top-left-lerp → centre-lerp fix (subtracting the *scaled* half-size inside `offset {}`, transform
+origin left at `(0f, 0f)`) replaced the old lerp so a ~186dp reveal card doesn't visibly drift toward
+its own top-left while shrinking, the way a 220dp square never showed.
+
+Two call-site changes fell out of `MatchScreen` needing a `CardPalette` it didn't have before:
+`CardPalette` itself moved from `internal` to `public` (a `public` function can't expose an internal
+parameter type), and `TwoDeviceMatchScreen` gained a `deckTheme: (String) -> DeckTheme?` parameter
+(`AppGraph.deckTheme` passed as a function reference) since it resolves the palette itself once
+`MatchPhase.InMatch.deckId` is known — the guest side never loads a local `Deck` (TDD decision 6), so
+`TrumpCardBack`'s deck-name label falls back to the raw `deckId` on this screen; a prettier label is
+a follow-up, not a blocker.
+
+Code review (`code-review-master` and `code-quality-guardian`, run in parallel) found no functional
+bugs and confirmed the recomposition fix, the centre-lerp math, and the TDD/WBS fidelity by hand.
+Four things were fixed before shipping: (1) medium — `FlippableOpponentCard`'s always-composed faces
+left the settled-away back face permanently in the merged semantics tree (a TalkBack user would get
+both faces' content after the flip finished, not just during it); fixed by clearing the back face's
+semantics once `revealed` is true, using the already-tracked one-shot `revealed` boolean rather than
+the animating `rotation` value, so it costs one recomposition at reveal, not one per frame. (2) low —
+the hero card gave no visual cue it was inert during the opponent's turn (per-row dimming only runs
+when `onChooseStat` is non-null, and it's null then); fixed with a whole-card `alpha` dim gated on
+`isMyTurn`. (3) a parameter-order inconsistency between `HeroCard` and its sibling composables. (4)
+mixed named/positional arguments across `RevealPair`'s several `AssetTrumpCard` calls, normalized to
+named throughout. All four were fixed directly; nothing rose to a follow-up-issue bar.
+
+`./gradlew test` (all modules, no regressions), `:app:lintDebug` (clean), and `:app:compileDebugKotlin`
+all pass. The acceptance criteria explicitly marked "needs a physical device" in this file — flip
+perspective/no mirrored back face, the slide-to-pile's correct shape, on-device recomposition counts,
+dropped frames, status/nav-bar clearance on a gesture-nav device, and whether the hero-to-reveal cut
+reads as a glitch — were **not** verified on a physical device this session, none was available,
+consistent with Slice 3's precedent and this project's standing convention for anything visual.

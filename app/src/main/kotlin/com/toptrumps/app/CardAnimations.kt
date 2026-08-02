@@ -3,13 +3,8 @@ package com.toptrumps.app
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,23 +13,19 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import coil3.ImageLoader
-import com.toptrumps.session.RemoteCardFace
 import kotlin.math.roundToInt
 
 private const val FLIP_DURATION_MS = 420
@@ -95,20 +86,30 @@ internal class AnimationGate {
 /**
  * The opponent's card, face-down until [skipAnimation] is false and this composable is freshly
  * mounted — [InProgressScreen]'s `when (round)` branch swap means a fresh mount *is* "just
- * resolved" (Compose disposes [AwaitingChoiceContent]'s composition and starts this one from
- * scratch every time a round resolves), so a plain `LaunchedEffect(Unit)` is the whole trigger;
- * no round-number bookkeeping needed. Driven by [Animatable] rather than `animateFloatAsState` so
- * a hard-cut is a `snapTo`, not an animation to skip framing around (WBS design notes).
+ * resolved" (Compose disposes the awaiting-choice composition and starts this one from scratch
+ * every time a round resolves), so a plain `LaunchedEffect(Unit)` is the whole trigger; no
+ * round-number bookkeeping needed. Driven by [Animatable] rather than `animateFloatAsState` so a
+ * hard-cut is a `snapTo`, not an animation to skip framing around (WBS design notes).
+ *
+ * Takes two content slots — [back]/[front] — instead of `RemoteCardFace`/`deckId`/`ImageLoader`/
+ * `size: Dp` (card-visual-identity TDD decision 4): this composable no longer knows what a card
+ * is, and the caller is responsible for building both faces from the *same* `CardGeometry`
+ * instance so front/back are pixel-identical.
+ *
+ * Both faces are composed unconditionally, into the same `Box`, with visibility driven from
+ * inside a `graphicsLayer {}` lambda rather than an `if (rotation.value <= 90f)` branch in the
+ * composable body — the previous branch-swap re-triggered the whole subtree (~25 recompositions
+ * per flip once the leaf became a five-row stat table instead of one `AsyncImage`). A bonus of
+ * composing both faces from the start: the front's photo decodes during the back-facing half of
+ * the flip, fixing the empty-window flash on the first reveal frames.
  */
 @Composable
 internal fun FlippableOpponentCard(
-    card: RemoteCardFace,
-    deckId: String,
-    imageLoader: ImageLoader,
-    size: Dp,
     skipAnimation: Boolean,
     modifier: Modifier = Modifier,
     onRevealed: () -> Unit = {},
+    back: @Composable (Modifier) -> Unit,
+    front: @Composable (Modifier) -> Unit,
 ) {
     val rotation = remember { Animatable(0f) }
     val density = LocalDensity.current
@@ -128,29 +129,19 @@ internal fun FlippableOpponentCard(
             cameraDistance = 14f * density.density
         },
     ) {
-        if (rotation.value <= 90f) {
-            CardBack(size = size)
-        } else {
-            // Past the crossing, this layer is being viewed from behind — without the extra 180°
-            // the revealed face would render mirrored (WBS design notes).
-            Box(modifier = Modifier.graphicsLayer { rotationY = 180f }) {
-                CardImage(deckId, card.imageFile, card.name, imageLoader, size = size)
-            }
+        Box(modifier = Modifier.graphicsLayer { alpha = if (rotation.value <= 90f) 1f else 0f }) {
+            back(Modifier)
         }
-    }
-}
-
-/** A face-down card — no back-of-card art exists yet (see `design/assets.csv`'s ungenerated `card_back`), so this is a plain placeholder standing in for one. */
-@Composable
-internal fun CardBack(size: Dp, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .background(Color(0xFF23395D), RoundedCornerShape(8.dp))
-            .border(2.dp, Color(0xFFB08D57), RoundedCornerShape(8.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text("?", color = Color.White)
+        Box(
+            modifier = Modifier.graphicsLayer {
+                // Past the crossing, this layer is being viewed from behind — without the extra
+                // 180° the revealed face would render mirrored (WBS design notes).
+                alpha = if (rotation.value > 90f) 1f else 0f
+                rotationY = 180f
+            },
+        ) {
+            front(Modifier)
+        }
     }
 }
 
@@ -170,15 +161,19 @@ internal class CardSlotPositions {
 internal fun Modifier.reportGlobalPosition(onPositioned: (Rect) -> Unit): Modifier =
     onGloballyPositioned { onPositioned(it.boundsInRoot()) }
 
+/**
+ * [content] collapses what used to be four fields (`deckId`, `imageFile`, `name`, `imageLoader`)
+ * into one lambda — the caller's card composable carries its own geometry, so [SlideOverlay] never
+ * sizes it (card-visual-identity TDD decision 4). [start]'s size is the authoritative box size for
+ * the whole flight: the source card was built from the same geometry [content] rebuilds, so it's
+ * already exactly right, and re-measuring [content] here would be redundant.
+ */
 internal data class SlidingCard(
     val id: Long,
-    val deckId: String,
-    val imageFile: String,
-    val name: String,
-    val imageLoader: ImageLoader,
     val start: Rect,
     val end: Rect,
     val progress: Animatable<Float, *>,
+    val content: @Composable (Modifier) -> Unit,
 )
 
 /** Owns the in-flight slide animations for one [InProgressScreen] — a round can win both cards at once, so this is a list, not a single slot. */
@@ -189,14 +184,14 @@ internal class SlideOverlayState {
     /**
      * Animates a copy of the card from [start] to [end] and removes itself when done — the real
      * UI already reflects the new pile counts immediately, this is purely the visual travel. The
-     * `finally` matters: this is cancelled mid-flight whenever [ResolvedContent] is disposed (a
+     * `finally` matters: this is cancelled mid-flight whenever the resolved round is disposed (a
      * player advancing rounds fast enough to outrun the ~450ms animation), and without it a
      * cancelled slide would leave a permanently frozen card in [items] for the rest of the match —
      * `slideOverlay` outlives any one round.
      */
-    suspend fun slide(deckId: String, imageFile: String, name: String, imageLoader: ImageLoader, start: Rect, end: Rect) {
+    suspend fun slide(start: Rect, end: Rect, content: @Composable (Modifier) -> Unit) {
         val progress = Animatable(0f)
-        val item = SlidingCard(nextId++, deckId, imageFile, name, imageLoader, start, end, progress)
+        val item = SlidingCard(nextId++, start, end, progress, content)
         items.add(item)
         try {
             progress.animateTo(1f, animationSpec = tween(SLIDE_DURATION_MS, easing = FastOutSlowInEasing))
@@ -213,19 +208,28 @@ internal class SlideOverlayState {
  * the `offset {}`/`graphicsLayer {}` lambdas, not in this composable's own body — reading it here
  * instead would subscribe this whole `forEach` to recompose on every animation tick, the exact
  * mistake the WBS design notes call out.
+ *
+ * `transformOrigin(0f, 0f)` scales each card toward its own top-left, which was invisible at
+ * 220dp square but drifts badly at reveal size (~186dp+) if the *top-left* is what's lerped
+ * between start/end — the visual centre would crawl toward the top-left as the card shrinks.
+ * Lerping *centres* instead, then subtracting the scaled half-size inside the same `offset {}`
+ * lambda, keeps the shrink visually centred without touching the origin itself.
  */
 @Composable
 internal fun SlideOverlay(state: SlideOverlayState, overlayOrigin: Rect?) {
     if (overlayOrigin == null) return
-    val density = LocalDensity.current
     state.items.forEach { item ->
-        val startLocal = item.start.topLeft - overlayOrigin.topLeft
-        val endLocal = item.end.topLeft - overlayOrigin.topLeft
+        val startCenterLocal = item.start.center - overlayOrigin.topLeft
+        val endCenterLocal = item.end.center - overlayOrigin.topLeft
+        val halfSize = item.start.size.center
         Box(
             modifier = Modifier
                 .offset {
-                    val current = startLocal + (endLocal - startLocal) * item.progress.value
-                    IntOffset(current.x.roundToInt(), current.y.roundToInt())
+                    val progress = item.progress.value
+                    val scale = 1f - 0.65f * progress
+                    val center = startCenterLocal + (endCenterLocal - startCenterLocal) * progress
+                    val topLeft = center - Offset(halfSize.x * scale, halfSize.y * scale)
+                    IntOffset(topLeft.x.roundToInt(), topLeft.y.roundToInt())
                 }
                 .graphicsLayer {
                     val progress = item.progress.value
@@ -239,7 +243,11 @@ internal fun SlideOverlay(state: SlideOverlayState, overlayOrigin: Rect?) {
                     transformOrigin = TransformOrigin(0f, 0f)
                 },
         ) {
-            CardImage(item.deckId, item.imageFile, item.name, item.imageLoader, size = with(density) { item.start.width.toDp() })
+            item.content(Modifier)
         }
     }
 }
+
+/** The centre of a size treated as a vector from (0,0) — i.e. half-width/half-height, named for its use in [SlideOverlay]'s centre-based lerp. */
+private val Size.center: Offset
+    get() = Offset(width / 2f, height / 2f)

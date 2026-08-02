@@ -19,6 +19,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.toptrumps.app.theme.TopTrumpsTheme
+import com.toptrumps.app.theme.toCardPalette
+import com.toptrumps.rules.DeckTheme
 import com.toptrumps.session.InvitationState
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -274,6 +276,7 @@ private fun AppRoot(appGraph: AppGraph) {
                 onLeave = leaveMatch,
                 soundEffects = appGraph.soundEffects,
                 imageLoader = appGraph.imageLoader,
+                deckTheme = appGraph::deckTheme,
             )
         }
 
@@ -304,11 +307,15 @@ private fun SoloMatchHost(appGraph: AppGraph) {
     }
 
     var session by remember(deck.id) { mutableStateOf(appGraph.startSoloMatch(deck.id)) }
+    // Already resolved and cached by the listDecks() call above (both run against the same
+    // validated deck) — only a genuinely invalid id would fall back here.
+    val palette = remember(deck.id) { (appGraph.deckTheme(deck.id) ?: DeckTheme.DEFAULT).toCardPalette() }
 
     MatchScreen(
         session = session,
         deckId = deck.id,
         imageLoader = appGraph.imageLoader,
+        palette = palette,
         onRematch = {
             session.close()
             session = appGraph.startSoloMatch(deck.id)

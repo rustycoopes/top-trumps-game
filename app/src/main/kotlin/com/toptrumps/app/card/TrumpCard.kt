@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -95,6 +96,9 @@ private fun CardTitleBanner(title: String, palette: CardPalette, height: Dp) {
     }
 }
 
+/** How much a tied-and-excluded (or pending-choice) row dims — enough to read as "not choosable" without losing the value underneath it. */
+private const val DisabledRowAlpha = 0.4f
+
 private val QuietTint = Color.Black.copy(alpha = 0.06f)
 private fun outcomeTint(outcome: RowOutcome): Color = when (outcome) {
     RowOutcome.WIN -> Color(0xFF2E7D32).copy(alpha = 0.35f)
@@ -111,7 +115,11 @@ private fun outcomeTint(outcome: RowOutcome): Color = when (outcome) {
  * for accessibility services, but still leaves an `OnClick` action in the merged semantics tree — a
  * Compose UI test's `performClick()` drives that action directly, bypassing the real touch
  * gesture's own enabled check, so the callback itself re-checks [StatRow.enabled] rather than
- * relying on `clickable` alone to gate it.
+ * relying on `clickable` alone to gate it. A dimmed, non-tappable row (tied-and-excluded, or the
+ * whole card while a choice is in flight) only ever means "not choosable right now" in an
+ * interactive context — read-only contexts (mini, reveal, pile) always report every row `enabled`
+ * regardless of this dimming, since [onChooseStat] being `null` there already makes tappability
+ * moot (card-visual-identity WBS slice-4 acceptance criteria).
  */
 @Composable
 private fun StatRowView(
@@ -126,9 +134,11 @@ private fun StatRowView(
         .testTag("stat-row-${row.metricKey}")
 
     if (onChooseStat != null) {
-        rowModifier = rowModifier.clickable(enabled = row.enabled, onClickLabel = row.label) {
-            if (row.enabled) onChooseStat(row.metricKey)
-        }
+        rowModifier = rowModifier
+            .alpha(if (row.enabled) 1f else DisabledRowAlpha)
+            .clickable(enabled = row.enabled, onClickLabel = row.label) {
+                if (row.enabled) onChooseStat(row.metricKey)
+            }
     }
     row.outcome?.let { outcome ->
         rowModifier = rowModifier.semantics { stateDescription = outcome.name }.background(outcomeTint(outcome))

@@ -2,6 +2,7 @@ package com.toptrumps.app
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,8 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,14 +23,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import com.toptrumps.app.card.AssetTrumpCard
+import com.toptrumps.app.card.CardVariant
+import com.toptrumps.app.card.RowOutcome
+import com.toptrumps.app.card.TrumpCardBack
+import com.toptrumps.app.card.cardContentOf
+import com.toptrumps.app.card.cardGeometry
+import com.toptrumps.app.card.solveCardWidth
+import com.toptrumps.app.theme.CardPalette
 import com.toptrumps.rules.MetricKey
 import com.toptrumps.rules.PlayerIntent
 import com.toptrumps.rules.yearsSince
@@ -45,6 +55,18 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
+/** Row floor for the full-size hero card — see card-visual-identity TDD decision 5. */
+private val HeroMinRowHeight = 48.dp
+
+/** Row floor for the side-by-side reveal — smaller than the hero's, since two ~190dp-wide cards don't fit a strict 48dp floor plus an outcome glyph (WBS design notes). */
+private val RevealMinRowHeight = 28.dp
+
+/** Gap between the two reveal cards. */
+private val RevealSpacing = 12.dp
+
+/** How much the hero card dims when it's not [MatchScreen]'s own player's turn — the whole card is inert then, not just individual rows. */
+private const val HeroInertAlpha = 0.6f
+
 /**
  * [localSeat] is the wire-level seat string ("HOST"/"GUEST") the local player occupies — solo
  * mode always seats the human as [com.toptrumps.rules.Seat.HOST] (the default), so its call site
@@ -56,13 +78,16 @@ import kotlinx.datetime.Clock
  * six cues WBS slice-7-polish calls for; [rememberAnimationGate] (shared across the whole match,
  * not per-round) decides whether a given reveal/slide/sound plays or hard-cuts. [imageLoader] is
  * the app's single shared instance ([AppGraph.imageLoader]) — this screen no longer builds or
- * shuts down its own (slice 2's ImageLoader-ownership move).
+ * shuts down its own (slice 2's ImageLoader-ownership move). [palette] is the deck's resolved
+ * [CardPalette] (card-visual-identity TDD decision 1) — every card colour on this screen comes
+ * from it, never from `MaterialTheme.colorScheme`.
  */
 @Composable
 public fun MatchScreen(
     session: MatchSession,
     deckId: String,
     imageLoader: ImageLoader,
+    palette: CardPalette,
     onRematch: () -> Unit,
     soundEffects: SoundEffects,
     modifier: Modifier = Modifier,
@@ -87,10 +112,17 @@ public fun MatchScreen(
         is MatchView.Finished ->
             ResultScreen(current, deckId, imageLoader, localSeat, rematchLabel, onRematch, soundEffects, animationGate, modifier)
         is MatchView.InProgress ->
-            InProgressScreen(session, current, deckId, localSeat, imageLoader, onLeaveMatch, soundEffects, animationGate, modifier)
+            InProgressScreen(session, current, deckId, localSeat, imageLoader, palette, onLeaveMatch, soundEffects, animationGate, modifier)
     }
 }
 
+/**
+ * Three fixed regions, never scrolling (card-visual-identity TDD decision 5): [MatchTopBar]
+ * (intrinsic height), a `Modifier.weight(1f)` card region holding either the choosable hero card
+ * or the side-by-side reveal, and a bottom action strip (intrinsic height). Rects are still
+ * `boundsInRoot()`, so moving the score labels out of a scrolling column into the top bar changes
+ * nothing about [SlideOverlay]'s coordinate maths.
+ */
 @Composable
 private fun InProgressScreen(
     session: MatchSession,
@@ -98,6 +130,7 @@ private fun InProgressScreen(
     deckId: String,
     localSeat: String,
     imageLoader: ImageLoader,
+    palette: CardPalette,
     onLeaveMatch: (() -> Unit)?,
     soundEffects: SoundEffects,
     gate: AnimationGate,
@@ -121,37 +154,62 @@ private fun InProgressScreen(
         return
     }
 
-    // Shared by ScoreBar (targets) and ResolvedContent (sources) so the slide overlay can animate
-    // between them — hoisted here since they're siblings, not ancestor/descendant.
+    // Shared by MatchTopBar (targets) and the reveal region (sources) so the slide overlay can
+    // animate between them — hoisted here since they're siblings, not ancestor/descendant.
     val positions = remember { CardSlotPositions() }
     val slideOverlay = remember { SlideOverlayState() }
     var overlayOrigin by remember { mutableStateOf<Rect?>(null) }
 
+    // Disabled while a choice/advance is already in flight — a second tap wouldn't be resent
+    // anyway (the reconnect-resync ADR's at-most-one-intent invariant), but this is what makes
+    // every row/button on the card and the strip say so.
+    val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
+
     Box(modifier = modifier.fillMaxSize().reportGlobalPosition { overlayOrigin = it }) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            ScoreBar(view = view, onTapMyPile = { showingPile = true }, positions = positions)
-            Text("Your card: ${view.self.name}")
-            CardImage(
-                deckId,
-                view.self.imageFile,
-                view.self.name,
-                imageLoader,
-                size = 220.dp,
-                modifier = Modifier.reportGlobalPosition { positions.selfCard = it },
-            )
+        Column(modifier = Modifier.fillMaxSize()) {
+            MatchTopBar(view = view, onTapMyPile = { showingPile = true }, onLeaveMatch = onLeaveMatch, positions = positions)
 
-            when (val round = view.round) {
-                is RemoteRoundState.AwaitingChoice -> AwaitingChoiceContent(session, view, round, localSeat, soundEffects)
-                is RemoteRoundState.Resolved ->
-                    ResolvedContent(session, view, round, deckId, localSeat, imageLoader, soundEffects, gate, positions, slideOverlay)
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                // Never inside the card composable itself — that would mean a subcomposition per
+                // grid cell elsewhere (WBS design notes). One BoxWithConstraints, right here.
+                BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                    when (val round = view.round) {
+                        is RemoteRoundState.AwaitingChoice ->
+                            HeroCard(
+                                session = session,
+                                view = view,
+                                round = round,
+                                localSeat = localSeat,
+                                deckId = deckId,
+                                imageLoader = imageLoader,
+                                palette = palette,
+                                pending = pending,
+                                soundEffects = soundEffects,
+                                maxWidth = maxWidth,
+                                maxHeight = maxHeight,
+                                positions = positions,
+                            )
+                        is RemoteRoundState.Resolved ->
+                            RevealPair(
+                                session = session,
+                                view = view,
+                                round = round,
+                                deckId = deckId,
+                                localSeat = localSeat,
+                                imageLoader = imageLoader,
+                                palette = palette,
+                                soundEffects = soundEffects,
+                                gate = gate,
+                                positions = positions,
+                                slideOverlay = slideOverlay,
+                                maxWidth = maxWidth,
+                                maxHeight = maxHeight,
+                            )
+                    }
+                }
             }
 
-            if (onLeaveMatch != null) {
-                TextButton(onClick = onLeaveMatch) { Text("Leave match") }
-            }
+            MatchActionStrip(session = session, view = view, localSeat = localSeat, pending = pending)
         }
 
         SlideOverlay(state = slideOverlay, overlayOrigin = overlayOrigin)
@@ -159,83 +217,131 @@ private fun InProgressScreen(
 }
 
 @Composable
-private fun ScoreBar(view: MatchView.InProgress, onTapMyPile: () -> Unit, positions: CardSlotPositions) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+private fun MatchTopBar(
+    view: MatchView.InProgress,
+    onTapMyPile: () -> Unit,
+    onLeaveMatch: (() -> Unit)?,
+    positions: CardSlotPositions,
+) {
+    // Insets (status bar, nav bar, IME) are handled once, at the NavHost root — see MainActivity's
+    // `safeDrawingPadding()` comment — so this bar only needs its own visual padding.
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         TextButton(onClick = onTapMyPile, modifier = Modifier.reportGlobalPosition { positions.myPileLabel = it }) {
             Text("Your pile: ${view.myScore}")
         }
         Text("Round ${view.roundNumber} / ${view.totalRounds}")
         Text("Opponent: ${view.opponentScore}", modifier = Modifier.reportGlobalPosition { positions.opponentLabel = it })
+        // Shortened from the old "Leave match" — this bar already has three other elements
+        // competing for a fixed, non-scrolling width.
+        if (onLeaveMatch != null) {
+            TextButton(onClick = onLeaveMatch) { Text("Leave") }
+        }
     }
 }
 
+/**
+ * The full-screen hero card — the five Material `Button`s this replaces are gone; the card's own
+ * stat rows are the tap targets. Read-only (no `onChooseStat`) whenever it isn't [localSeat]'s
+ * turn to choose; every row disables itself while [pending], folding
+ * `spec.key in round.remainingMetrics` and `session.hasPendingIntent` into one `availableMetrics`
+ * set rather than a per-row `enabled && !pending` check (card-visual-identity TDD decision 5).
+ */
 @Composable
-private fun AwaitingChoiceContent(
+private fun HeroCard(
     session: MatchSession,
     view: MatchView.InProgress,
     round: RemoteRoundState.AwaitingChoice,
+    deckId: String,
     localSeat: String,
+    imageLoader: ImageLoader,
+    palette: CardPalette,
+    pending: Boolean,
     soundEffects: SoundEffects,
+    maxWidth: Dp,
+    maxHeight: Dp,
+    positions: CardSlotPositions,
 ) {
-    if (round.chooser != localSeat) {
-        Text("Opponent is choosing…")
-        return
+    val isMyTurn = round.chooser == localSeat
+    val geometry = remember(maxWidth, maxHeight) {
+        cardGeometry(solveCardWidth(maxWidth, maxHeight, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
+    }
+    val availableMetrics = if (isMyTurn && !pending) round.remainingMetrics.toSet() else emptySet()
+    val content = remember(view.self, view.metrics, availableMetrics) {
+        cardContentOf(card = view.self, metrics = view.metrics, availableMetrics = availableMetrics)
     }
 
-    val opponent = view.opponent
-    if (opponent is RemoteOpponentView.Contested && opponent.revealed.isNotEmpty()) {
-        Text("Tied so far — the same player chooses again:")
-        opponent.revealed.forEach { revealed ->
-            val spec = view.metrics.first { it.key == revealed.metric }
-            val selfValue = view.self.stats.getValue(revealed.metric)
-            Text("  ${spec.label}: you ${formatStat(spec, selfValue)} ${spec.unit} — opponent ${formatStat(spec, revealed.value)} ${spec.unit} (tied)")
-        }
-    } else {
-        Text("Choose a stat:")
-    }
-
-    // Disabled while a choice is already in flight — a second tap wouldn't be resent anyway (the
-    // reconnect-resync ADR's at-most-one-intent invariant), but a disabled button says so.
-    val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
-
-    view.metrics.forEach { spec ->
-        val value = view.self.stats.getValue(spec.key)
-        val available = spec.key in round.remainingMetrics
-        Button(
-            onClick = {
-                soundEffects.play(SoundEffects.Cue.SELECT)
-                session.submit(PlayerIntent.ChooseMetric(MetricKey(spec.key)))
-            },
-            enabled = available && !pending,
-        ) {
-            Text(
-                "${spec.label}: ${formatStat(spec, value)} ${spec.unit} (${spec.winDirectionLabel()})" +
-                    if (available) "" else " (tied — unavailable)",
-            )
-        }
-    }
+    AssetTrumpCard(
+        deckId = deckId,
+        imageFile = view.self.imageFile,
+        content = content,
+        palette = palette,
+        geometry = geometry,
+        imageLoader = imageLoader,
+        // Dims the whole card, not just its rows, whenever it isn't interactive at all (the
+        // opponent's turn) — StatRowView's own per-row dimming only ever runs when `onChooseStat`
+        // is non-null, so without this the card would otherwise look identically tappable whether
+        // or not it actually is.
+        modifier = Modifier.reportGlobalPosition { positions.selfCard = it }.alpha(if (isMyTurn) 1f else HeroInertAlpha),
+        onChooseStat = if (!isMyTurn) null else { metricKey ->
+            soundEffects.play(SoundEffects.Cue.SELECT)
+            session.submit(PlayerIntent.ChooseMetric(MetricKey(metricKey)))
+        },
+    )
 }
 
+/**
+ * Both full cards side by side at reveal, stat rows aligned for free because [geometry] is a
+ * single instance shared by both (card-visual-identity TDD decision 5) — the opponent's flips in
+ * via [FlippableOpponentCard]; the player's own card is already on screen and simply hard-cuts
+ * down to reveal size (the hero-to-reveal size jump isn't animated this slice — WBS design notes).
+ */
 @Composable
-private fun ResolvedContent(
+private fun RevealPair(
     session: MatchSession,
     view: MatchView.InProgress,
     round: RemoteRoundState.Resolved,
     deckId: String,
     localSeat: String,
     imageLoader: ImageLoader,
+    palette: CardPalette,
     soundEffects: SoundEffects,
     gate: AnimationGate,
     positions: CardSlotPositions,
     slideOverlay: SlideOverlayState,
+    maxWidth: Dp,
+    maxHeight: Dp,
 ) {
-    val spec = view.metrics.first { it.key == round.decidingMetric }
-    val selfValue = view.self.stats.getValue(spec.key)
-    val opponentCard = (view.opponent as? RemoteOpponentView.Revealed)?.card
-    val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
+    val opponentCard = (view.opponent as? RemoteOpponentView.Revealed)?.card ?: return
+
+    val geometry = remember(maxWidth, maxHeight) {
+        val perCardMaxWidth = (maxWidth - RevealSpacing) / 2
+        cardGeometry(solveCardWidth(perCardMaxWidth, maxHeight, RevealMinRowHeight), CardVariant.REVEAL, RevealMinRowHeight)
+    }
+
+    val myOutcome = when (round.winner) {
+        null -> RowOutcome.TIE
+        localSeat -> RowOutcome.WIN
+        else -> RowOutcome.LOSE
+    }
+    val opponentOutcome = when (round.winner) {
+        null -> RowOutcome.TIE
+        localSeat -> RowOutcome.LOSE
+        else -> RowOutcome.WIN
+    }
+
+    val myContent = remember(view.self, opponentCard, view.metrics, round.decidingMetric, myOutcome) {
+        cardContentOf(view.self, view.metrics, comparison = opponentCard.stats, decidingMetric = round.decidingMetric, decidedOutcome = myOutcome)
+    }
+    val opponentContent = remember(opponentCard, view.self, view.metrics, round.decidingMetric, opponentOutcome) {
+        cardContentOf(opponentCard, view.metrics, comparison = view.self.stats, decidingMetric = round.decidingMetric, decidedOutcome = opponentOutcome)
+    }
 
     // A fresh mount of this composable *is* "just resolved" — the `when (round)` above disposes
-    // AwaitingChoiceContent's composition and starts this one from scratch every time a round
+    // the awaiting-choice composition and starts this one from scratch every time a round
     // resolves, so a plain `remember` capturing the decision once, at that moment, is the whole
     // trigger; no round-number bookkeeping needed. `gate.shouldHardCut()` covers both a resync
     // landing straight on an already-resolved round and a backgrounded-and-resumed match (see
@@ -245,68 +351,160 @@ private fun ResolvedContent(
     // flag, so this must be evaluated exactly once — `remember` with no key guarantees that here,
     // same as every other "fresh mount is the event" decision in this file.
     val skipAnimation = remember { gate.shouldHardCut() || session.lastResync.value == view.revision }
+    var revealed by remember { mutableStateOf(false) }
 
-    if (round.resolution == "ALL_METRICS_TIED_FALLBACK") {
-        Text("Every stat tied on ${spec.label}!")
-    } else {
-        Text("Settled on ${spec.label}")
-        Text("You: ${formatStat(spec, selfValue)} ${spec.unit}")
-        val opponentValue = opponentCard?.stats?.get(spec.key)
-        Text("Opponent: ${opponentValue?.let { formatStat(spec, it) } ?: "?"} ${spec.unit}")
-    }
-
-    Text(
-        when (round.winner) {
-            null -> "You each keep your own card."
-            localSeat -> "You win this round!"
-            else -> "Opponent wins this round."
-        },
-    )
-
-    if (opponentCard != null) {
-        Text("Opponent's card, fully revealed: ${opponentCard.name}")
-        var revealed by remember { mutableStateOf(false) }
-        FlippableOpponentCard(
-            card = opponentCard,
+    Row(horizontalArrangement = Arrangement.spacedBy(RevealSpacing), verticalAlignment = Alignment.CenterVertically) {
+        AssetTrumpCard(
             deckId = deckId,
+            imageFile = view.self.imageFile,
+            content = myContent,
+            palette = palette,
+            geometry = geometry,
             imageLoader = imageLoader,
-            size = 220.dp,
+            onChooseStat = null,
+            modifier = Modifier.reportGlobalPosition { positions.selfCard = it },
+        )
+        FlippableOpponentCard(
             skipAnimation = skipAnimation,
             modifier = Modifier.reportGlobalPosition { positions.opponentCard = it },
             onRevealed = {
                 if (!skipAnimation) soundEffects.play(SoundEffects.Cue.FLIP)
                 revealed = true
             },
+            back = { mod ->
+                // MatchScreen only ever has `deckId`, not the deck's display name — the guest side
+                // of a two-device match never loads a local `Deck` at all (TDD decision 6), so
+                // there is no display name to show here without new wire plumbing. The id is a
+                // reasonable stand-in; a prettier label is a follow-up, not a blocker for this slice.
+                //
+                // Both faces stay composed for the whole flip (that's the recomposition fix — see
+                // CardAnimations.kt), so once `revealed` the back face is permanently invisible but
+                // would otherwise stay in the merged semantics tree forever, next to the front
+                // face's own content. `clearAndSetSemantics {}` only kicks in once settled, not
+                // read from the animating `rotation` value itself, so this costs one recomposition
+                // at the moment of reveal, not one per frame.
+                val backModifier = if (revealed) mod.clearAndSetSemantics {} else mod
+                TrumpCardBack(deckName = deckId, palette = palette, geometry = geometry, modifier = backModifier)
+            },
+            front = { mod ->
+                AssetTrumpCard(
+                    deckId = deckId,
+                    imageFile = opponentCard.imageFile,
+                    content = opponentContent,
+                    palette = palette,
+                    geometry = geometry,
+                    imageLoader = imageLoader,
+                    modifier = mod,
+                    onChooseStat = null,
+                )
+            },
         )
-        view.metrics.forEach { m -> Text("  ${m.label}: ${formatStat(m, opponentCard.stats.getValue(m.key))} ${m.unit}") }
+    }
 
-        // Waits for the flip to finish (or, on a hard-cut, for the single instant snapTo settles)
-        // before the win/loss cue and the slide-to-pile — a card announcing its own win before
-        // it's even visibly turned over reads as broken, not snappy.
-        LaunchedEffect(revealed) {
-            if (!revealed || skipAnimation || round.winner == null) return@LaunchedEffect
-            soundEffects.play(if (round.winner == localSeat) SoundEffects.Cue.ROUND_WIN else SoundEffects.Cue.ROUND_LOSS)
-            val target = if (round.winner == localSeat) positions.myPileLabel else positions.opponentLabel
-            val selfRect = positions.selfCard
-            val opponentRect = positions.opponentCard
-            // Both cards travel together, not one after the other — `slide` suspends for the
-            // animation's full duration, so awaiting the first before starting the second would
-            // make the opponent's card wait for the player's to finish landing.
-            if (target != null) {
-                coroutineScope {
-                    if (selfRect != null) {
-                        launch { slideOverlay.slide(deckId, view.self.imageFile, view.self.name, imageLoader, selfRect, target) }
+    // Waits for the flip to finish (or, on a hard-cut, for the single instant snapTo settles)
+    // before the win/loss cue and the slide-to-pile — a card announcing its own win before it's
+    // even visibly turned over reads as broken, not snappy.
+    LaunchedEffect(revealed) {
+        if (!revealed || skipAnimation || round.winner == null) return@LaunchedEffect
+        soundEffects.play(if (round.winner == localSeat) SoundEffects.Cue.ROUND_WIN else SoundEffects.Cue.ROUND_LOSS)
+        val target = if (round.winner == localSeat) positions.myPileLabel else positions.opponentLabel
+        val selfRect = positions.selfCard
+        val opponentRect = positions.opponentCard
+        // Both cards travel together, not one after the other — `slide` suspends for the
+        // animation's full duration, so awaiting the first before starting the second would make
+        // the opponent's card wait for the player's to finish landing.
+        if (target != null) {
+            coroutineScope {
+                if (selfRect != null) {
+                    launch {
+                        slideOverlay.slide(selfRect, target) { mod ->
+                            AssetTrumpCard(
+                                deckId = deckId,
+                                imageFile = view.self.imageFile,
+                                content = myContent,
+                                palette = palette,
+                                geometry = geometry,
+                                imageLoader = imageLoader,
+                                modifier = mod,
+                                onChooseStat = null,
+                            )
+                        }
                     }
-                    if (opponentRect != null) {
-                        launch { slideOverlay.slide(deckId, opponentCard.imageFile, opponentCard.name, imageLoader, opponentRect, target) }
+                }
+                if (opponentRect != null) {
+                    launch {
+                        slideOverlay.slide(opponentRect, target) { mod ->
+                            AssetTrumpCard(
+                                deckId = deckId,
+                                imageFile = opponentCard.imageFile,
+                                content = opponentContent,
+                                palette = palette,
+                                geometry = geometry,
+                                imageLoader = imageLoader,
+                                modifier = mod,
+                                onChooseStat = null,
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
 
-    Button(onClick = { session.submit(PlayerIntent.AdvanceRound) }, enabled = !pending) {
-        Text("Continue")
+/**
+ * The bottom action strip — prompt text plus, once a round is resolved, the Continue button.
+ * Intrinsic height, not fixed: the contested-tie case's revealed-metric detail can run to a few
+ * lines. The `SELECT` sound cue lives in [HeroCard]'s `onChooseStat`, not here — this strip has no
+ * `SoundEffects` dependency of its own beyond `Continue`'s implicit silence.
+ */
+@Composable
+private fun MatchActionStrip(session: MatchSession, view: MatchView.InProgress, localSeat: String, pending: Boolean) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        when (val round = view.round) {
+            is RemoteRoundState.AwaitingChoice -> {
+                if (round.chooser != localSeat) {
+                    Text("Opponent is choosing…")
+                    return@Column
+                }
+                val opponent = view.opponent
+                if (opponent is RemoteOpponentView.Contested && opponent.revealed.isNotEmpty()) {
+                    Text("Tied so far — the same player chooses again:")
+                    opponent.revealed.forEach { revealed ->
+                        val spec = view.metrics.first { it.key == revealed.metric }
+                        val selfValue = view.self.stats.getValue(revealed.metric)
+                        Text("  ${spec.label}: you ${formatStat(spec, selfValue)} ${spec.unit} — opponent ${formatStat(spec, revealed.value)} ${spec.unit} (tied)")
+                    }
+                } else {
+                    Text("Choose a stat:")
+                }
+            }
+            is RemoteRoundState.Resolved -> {
+                val spec = view.metrics.first { it.key == round.decidingMetric }
+                if (round.resolution == "ALL_METRICS_TIED_FALLBACK") {
+                    Text("Every stat tied on ${spec.label}!")
+                } else {
+                    val selfValue = view.self.stats.getValue(spec.key)
+                    val opponentCard = (view.opponent as? RemoteOpponentView.Revealed)?.card
+                    val opponentValue = opponentCard?.stats?.get(spec.key)
+                    Text("Settled on ${spec.label}")
+                    Text("You: ${formatStat(spec, selfValue)} ${spec.unit} — Opponent: ${opponentValue?.let { formatStat(spec, it) } ?: "?"} ${spec.unit}")
+                }
+                Text(
+                    when (round.winner) {
+                        null -> "You each keep your own card."
+                        localSeat -> "You win this round!"
+                        else -> "Opponent wins this round."
+                    },
+                )
+                Button(onClick = { session.submit(PlayerIntent.AdvanceRound) }, enabled = !pending) {
+                    Text("Continue")
+                }
+            }
+        }
     }
 }
 
@@ -346,10 +544,10 @@ private fun ResultScreen(
     gate: AnimationGate,
     modifier: Modifier = Modifier,
 ) {
-    // Same "a fresh mount is the event" reasoning as ResolvedContent — MatchScreen's `when (view)`
-    // only reaches this branch once, the moment the match actually finishes (or immediately, if a
-    // resync/resume landed straight on an already-finished match, in which case `shouldHardCut()`
-    // is true and the fanfare/dirge correctly does not play).
+    // Same "a fresh mount is the event" reasoning as the reveal region — MatchScreen's `when
+    // (view)` only reaches this branch once, the moment the match actually finishes (or
+    // immediately, if a resync/resume landed straight on an already-finished match, in which case
+    // `shouldHardCut()` is true and the fanfare/dirge correctly does not play).
     LaunchedEffect(Unit) {
         if (!gate.shouldHardCut() && view.winner != null) {
             soundEffects.play(if (view.winner == localSeat) SoundEffects.Cue.MATCH_VICTORY else SoundEffects.Cue.MATCH_DEFEAT)
@@ -401,10 +599,3 @@ private fun formatStat(spec: RemoteMetricSpec, raw: Double): String = when (spec
     "YEARS_SINCE_VALUE" -> yearsSince(raw.toInt(), Clock.System).toString()
     else -> if (raw == raw.toInt().toDouble()) raw.toInt().toString() else raw.toString()
 }
-
-/**
- * Story 27: whether a stat is won by the higher or lower shown value. [RemoteMetricSpec.direction]
- * is already the *displayed* direction (the host computes it via `MetricSpec.displayDirection()`
- * before it ever reaches the wire), so this is a plain label, not a flip.
- */
-private fun RemoteMetricSpec.winDirectionLabel(): String = if (direction == "HIGH_WINS") "higher wins" else "lower wins"
