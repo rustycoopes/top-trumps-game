@@ -39,400 +39,1171 @@
     {
       "id": "mrbeast",
       "name": "MrBeast",
-      "stats": { "birthYear": 1998, "channelStartYear": 2012, "subscribers": 510966601, "videos": 995, "totalViews": 132000000000 },
-      "image": { "file": "images/mrbeast.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1998,
+        "channelStartYear": 2012,
+        "subscribers": 510966601,
+        "videos": 995,
+        "totalViews": 132000000000
+      },
+      "image": {
+        "file": "images/mrbeast.webp",
+        "licence": "CC BY 4.0",
+        "author": "Tyren Redd",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:MrBeast_in_2026_(cropped_4).png"
+      },
       "_sources": {
         "birthYear": "Born May 7, 1998 (Jimmy Donaldson) - https://en.wikipedia.org/wiki/MrBeast",
         "channelStartYear": "Channel created February 19, 2012 - https://www.sportskeeda.com/pop-culture/when-mrbeast-start-youtube-channel-growth-explored-youtuber-hits-100-million-subscribers",
-        "subscribers": { "value": 510966601, "note": "As of July 31, 2026. First creator to pass 500M, confirmed June 2026.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCX6OQ3DkcsbYNE6H8uQQuVA and https://blog.youtube/creator-and-artist-stories/mrbeast-500-million-youtube-subscribers/" },
-        "videos": { "value": 995, "note": "Trackers range 963-995 depending on snapshot date; used the higher/more recent figure.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCX6OQ3DkcsbYNE6H8uQQuVA" },
-        "totalViews": { "value": 132000000000, "note": "Trackers disagree, ranging 131-135 billion as of late July/early August 2026; used a middle estimate.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCX6OQ3DkcsbYNE6H8uQQuVA and https://www.speakrj.com/audit/report/UCX6OQ3DkcsbYNE6H8uQQuVA/youtube" }
+        "subscribers": {
+          "value": 510966601,
+          "note": "As of July 31, 2026. First creator to pass 500M, confirmed June 2026.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCX6OQ3DkcsbYNE6H8uQQuVA and https://blog.youtube/creator-and-artist-stories/mrbeast-500-million-youtube-subscribers/"
+        },
+        "videos": {
+          "value": 995,
+          "note": "Trackers range 963-995 depending on snapshot date; used the higher/more recent figure.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCX6OQ3DkcsbYNE6H8uQQuVA"
+        },
+        "totalViews": {
+          "value": 132000000000,
+          "note": "Trackers disagree, ranging 131-135 billion as of late July/early August 2026; used a middle estimate.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCX6OQ3DkcsbYNE6H8uQQuVA and https://www.speakrj.com/audit/report/UCX6OQ3DkcsbYNE6H8uQQuVA/youtube"
+        }
       }
     },
     {
       "id": "unspeakable",
       "name": "Unspeakable",
-      "stats": { "birthYear": 1997, "channelStartYear": 2012, "subscribers": 20002090, "videos": 1130, "totalViews": 12270000000 },
-      "image": { "file": "images/unspeakable.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1997,
+        "channelStartYear": 2012,
+        "subscribers": 20002090,
+        "videos": 1130,
+        "totalViews": 12270000000
+      },
+      "image": {
+        "file": "images/unspeakable.webp",
+        "licence": "CC BY 3.0",
+        "author": "RedVacktor",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Unspeakable_Minefaire_2018_02.png"
+      },
       "_sources": {
         "birthYear": "Nathan Johnson Graham, born December 5, 1997 - https://www.forbes.com/profile/nathan-johnson-graham-unspeakable/",
         "channelStartYear": "October 2012 - https://en.wikipedia.org/wiki/Unspeakable_(YouTuber)",
-        "subscribers": { "value": 20002090, "note": "As of July 31, 2026, main channel only.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCwIWAbIeu0xI0ReKWOcw3eg" },
-        "videos": { "value": 1130, "note": "Main channel only; he also runs UnspeakablePlays and UnspeakableReacts, not counted here.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCwIWAbIeu0xI0ReKWOcw3eg" },
-        "totalViews": { "value": 12270000000, "note": "Main channel only (~12.27B). Combined across his three main channels the total is closer to ~20.9B, but this deck uses main-channel figures consistently.", "source": "search aggregation of tracker data, checked August 1, 2026" }
+        "subscribers": {
+          "value": 20002090,
+          "note": "As of July 31, 2026, main channel only.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCwIWAbIeu0xI0ReKWOcw3eg"
+        },
+        "videos": {
+          "value": 1130,
+          "note": "Main channel only; he also runs UnspeakablePlays and UnspeakableReacts, not counted here.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCwIWAbIeu0xI0ReKWOcw3eg"
+        },
+        "totalViews": {
+          "value": 12270000000,
+          "note": "Main channel only (~12.27B). Combined across his three main channels the total is closer to ~20.9B, but this deck uses main-channel figures consistently.",
+          "source": "search aggregation of tracker data, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "salish-matter",
       "name": "Salish Matter",
-      "stats": { "birthYear": 2009, "channelStartYear": 2023, "subscribers": 4240504, "videos": 15, "totalViews": 155000000 },
-      "image": { "file": "images/salish-matter.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2009,
+        "channelStartYear": 2023,
+        "subscribers": 4240504,
+        "videos": 15,
+        "totalViews": 155000000
+      },
+      "image": {
+        "file": "images/salish-matter.webp",
+        "licence": "CC BY 3.0",
+        "author": "NickRewind",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Salish_Matter_KCA_2025.png"
+      },
       "_sources": {
         "birthYear": "Born November 29, 2009, per a TIME100 Creators 2026 profile - https://time.com/collection/time100-creators/2026/salish-matter/",
         "channelStartYear": "July 21, 2023 - corroborated across multiple bio sources including thefamousmagazine.com",
-        "subscribers": { "value": 4240504, "note": "As of July 31, 2026.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCI3szCgzGTRBTF_2dVaTZdQ" },
-        "videos": { "value": 15, "note": "Unusually low video count relative to subscriber count - she grew very fast off very few uploads.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCI3szCgzGTRBTF_2dVaTZdQ" },
-        "totalViews": { "value": 155000000, "note": "As of early August 2026.", "source": "search aggregation of vidIQ/Social Blade tracker data, checked August 1, 2026" }
+        "subscribers": {
+          "value": 4240504,
+          "note": "As of July 31, 2026.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCI3szCgzGTRBTF_2dVaTZdQ"
+        },
+        "videos": {
+          "value": 15,
+          "note": "Unusually low video count relative to subscriber count - she grew very fast off very few uploads.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCI3szCgzGTRBTF_2dVaTZdQ"
+        },
+        "totalViews": {
+          "value": 155000000,
+          "note": "As of early August 2026.",
+          "source": "search aggregation of vidIQ/Social Blade tracker data, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "brent-rivera",
       "name": "Brent Rivera",
-      "stats": { "birthYear": 1998, "channelStartYear": 2009, "subscribers": 43492102, "videos": 898, "totalViews": 13260000000 },
-      "image": { "file": "images/brent-rivera.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1998,
+        "channelStartYear": 2009,
+        "subscribers": 43492102,
+        "videos": 898,
+        "totalViews": 13260000000
+      },
+      "image": {
+        "file": "images/brent-rivera.webp",
+        "licence": "CC BY 3.0",
+        "author": "Stokes Twins",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Brent_Rivera_2020_(cropped)_5.jpg"
+      },
       "_sources": {
         "birthYear": "Born January 9, 1998 - https://en.wikipedia.org/wiki/Brent_Rivera and https://nationaltoday.com/birthday/brent-rivera/",
-        "channelStartYear": { "value": 2009, "note": "Low confidence - reported by secondary bio sites, not confirmed against the channel's own About page.", "source": "search aggregation via Wikitubia/Sportskeeda bio summaries" },
-        "subscribers": { "value": 43492102, "note": "As of July 31, 2026.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UC56D-IHcUvLVFTX_8NpQMXg" },
-        "videos": { "value": 898, "note": "", "source": "https://socialcounts.org/youtube-live-subscriber-count/UC56D-IHcUvLVFTX_8NpQMXg" },
-        "totalViews": { "value": 13260000000, "note": "Sources vary from 12.6B to 13B (Wikipedia); used ~13.26B from a specialty tracker aggregate.", "source": "search aggregation, checked August 1, 2026" }
-      }
-    },
-    {
-      "id": "piper-rockelle",
-      "name": "Piper Rockelle",
-      "stats": { "birthYear": 2007, "channelStartYear": 2016, "subscribers": 12299022, "videos": 817, "totalViews": 3600000000 },
-      "image": { "file": "images/piper-rockelle.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
-      "_sources": {
-        "birthYear": "Born August 21, 2007 - https://en.wikipedia.org/wiki/Piper_Rockelle and https://nationaltoday.com/birthday/piper-rockelle/",
-        "channelStartYear": "Channel registered November 29, 2016; first video posted March 2017 - search corroboration via entertainment-press sources",
-        "subscribers": { "value": 12299022, "note": "As of July 31, 2026.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCYfbq37VGb-07tDS0FGtsPw" },
-        "videos": { "value": 817, "note": "A separate tracker independently reported a close 807.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCYfbq37VGb-07tDS0FGtsPw" },
-        "totalViews": { "value": 3600000000, "note": "", "source": "search aggregation, checked August 1, 2026" }
+        "channelStartYear": {
+          "value": 2009,
+          "note": "Low confidence - reported by secondary bio sites, not confirmed against the channel's own About page.",
+          "source": "search aggregation via Wikitubia/Sportskeeda bio summaries"
+        },
+        "subscribers": {
+          "value": 43492102,
+          "note": "As of July 31, 2026.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UC56D-IHcUvLVFTX_8NpQMXg"
+        },
+        "videos": {
+          "value": 898,
+          "note": "",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UC56D-IHcUvLVFTX_8NpQMXg"
+        },
+        "totalViews": {
+          "value": 13260000000,
+          "note": "Sources vary from 12.6B to 13B (Wikipedia); used ~13.26B from a specialty tracker aggregate.",
+          "source": "search aggregation, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "jojo-siwa",
       "name": "JoJo Siwa",
-      "stats": { "birthYear": 2003, "channelStartYear": 2015, "subscribers": 12016325, "videos": 726, "totalViews": 4000000000 },
-      "image": { "file": "images/jojo-siwa.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2003,
+        "channelStartYear": 2015,
+        "subscribers": 12016325,
+        "videos": 726,
+        "totalViews": 4000000000
+      },
+      "image": {
+        "file": "images/jojo-siwa.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "KLHam01",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:JoJo_Siwa_2026_(cropped).jpg"
+      },
       "_sources": {
         "birthYear": "Joelle Joanie Siwa, born May 19, 2003 - https://en.wikipedia.org/wiki/JoJo_Siwa",
         "channelStartYear": "Channel 'Its JoJo Siwa' opened February 2015 - https://press.farm/jojo-siwa-from-dance-moms-to-youtube-superstar/",
-        "subscribers": { "value": 12016325, "note": "As of July 31, 2026.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCeV2O_6QmFaaKBZHY3bJgsA" },
-        "videos": { "value": 726, "note": "A separate tracker independently reported a close 727.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCeV2O_6QmFaaKBZHY3bJgsA" },
-        "totalViews": { "value": 4000000000, "note": "Trackers range 3.9-4.1 billion; used a middle estimate.", "source": "search aggregation, checked August 1, 2026" }
+        "subscribers": {
+          "value": 12016325,
+          "note": "As of July 31, 2026.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCeV2O_6QmFaaKBZHY3bJgsA"
+        },
+        "videos": {
+          "value": 726,
+          "note": "A separate tracker independently reported a close 727.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCeV2O_6QmFaaKBZHY3bJgsA"
+        },
+        "totalViews": {
+          "value": 4000000000,
+          "note": "Trackers range 3.9-4.1 billion; used a middle estimate.",
+          "source": "search aggregation, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "rebecca-zamolo",
       "name": "Rebecca Zamolo",
-      "stats": { "birthYear": 1984, "channelStartYear": 2014, "subscribers": 22997882, "videos": 1197, "totalViews": 10500000000 },
-      "image": { "file": "images/rebecca-zamolo.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1984,
+        "channelStartYear": 2014,
+        "subscribers": 22997882,
+        "videos": 1197,
+        "totalViews": 10500000000
+      },
+      "image": {
+        "file": "images/rebecca-zamolo.webp",
+        "licence": "CC BY 3.0",
+        "author": "Rebecca Zamolo",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rebecca_Zamolo_2017.png"
+      },
       "_sources": {
         "birthYear": "Rebecca Lynn Zamolo, born September 28, 1984 - https://en.wikipedia.org/wiki/Rebecca_Zamolo",
-        "channelStartYear": { "value": 2014, "note": "Channel registered November 20, 2011, but first video posted May 1, 2014 - used the latter as the more meaningful 'started posting' date, consistent with this deck's convention.", "source": "search corroboration" },
-        "subscribers": { "value": 22997882, "note": "As of July 31, 2026.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCfw8x3VR-ElcaWW2Tg_jgSA" },
-        "videos": { "value": 1197, "note": "", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCfw8x3VR-ElcaWW2Tg_jgSA" },
-        "totalViews": { "value": 10500000000, "note": "Updated June 4, 2026 per source.", "source": "search aggregation, checked August 1, 2026" }
-      }
-    },
-    {
-      "id": "laurdiy",
-      "name": "LaurDIY",
-      "stats": { "birthYear": 1993, "channelStartYear": 2011, "subscribers": 8090000, "videos": 482, "totalViews": 458969550 },
-      "image": { "file": "images/laurdiy.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
-      "_sources": {
-        "birthYear": "Lauren Riihimaki, born August 11, 1993 - self-disclosed via her own Instagram birthday post (Aug 11, 2018), per https://en.wikipedia.org/wiki/Lauren_Riihimaki",
-        "channelStartYear": { "value": 2011, "note": "Wikipedia infobox states Dec 1, 2011; Social Blade states Dec 2, 2011 - one-day discrepancy likely a timezone artifact.", "source": "https://en.wikipedia.org/wiki/Lauren_Riihimaki and Social Blade" },
-        "subscribers": { "value": 8090000, "note": "Checked August 1, 2026.", "source": "https://socialblade.com/youtube/handle/laurdiy" },
-        "videos": { "value": 482, "note": "", "source": "https://socialblade.com/youtube/handle/laurdiy" },
-        "totalViews": { "value": 458969550, "note": "", "source": "https://socialblade.com/youtube/handle/laurdiy" }
+        "channelStartYear": {
+          "value": 2014,
+          "note": "Channel registered November 20, 2011, but first video posted May 1, 2014 - used the latter as the more meaningful 'started posting' date, consistent with this deck's convention.",
+          "source": "search corroboration"
+        },
+        "subscribers": {
+          "value": 22997882,
+          "note": "As of July 31, 2026.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCfw8x3VR-ElcaWW2Tg_jgSA"
+        },
+        "videos": {
+          "value": 1197,
+          "note": "",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCfw8x3VR-ElcaWW2Tg_jgSA"
+        },
+        "totalViews": {
+          "value": 10500000000,
+          "note": "Updated June 4, 2026 per source.",
+          "source": "search aggregation, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "jules-leblanc",
       "name": "Jules LeBlanc",
-      "stats": { "birthYear": 2004, "channelStartYear": 2017, "subscribers": 4200000, "videos": 351, "totalViews": 392000000 },
-      "image": { "file": "images/jules-leblanc.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2004,
+        "channelStartYear": 2017,
+        "subscribers": 4200000,
+        "videos": 351,
+        "totalViews": 392000000
+      },
+      "image": {
+        "file": "images/jules-leblanc.webp",
+        "licence": "CC BY 3.0",
+        "author": "It's The Donnellys",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:AnnieLeBlanc_2019.png"
+      },
       "_sources": {
-        "birthYear": { "value": 2004, "note": "Born December 5, 2004. Consistently reported across secondary sources; the specific first-party citation chain was not independently traced during research.", "source": "https://en.wikipedia.org/wiki/Jules_LeBlanc" },
-        "channelStartYear": { "value": 2017, "note": "The channel originally launched as 'Acroanna' (a gymnastics channel) on October 21, 2008, and was rebranded to Jules LeBlanc's current identity in 2017. This deck uses the rebrand year as 'channel start' for the current identity.", "source": "https://en.wikipedia.org/wiki/Jules_LeBlanc" },
-        "subscribers": { "value": 4200000, "note": "Checked August 1, 2026.", "source": "https://socialblade.com/youtube/handle/julesleblanc" },
-        "videos": { "value": 351, "note": "", "source": "https://socialblade.com/youtube/handle/julesleblanc" },
-        "totalViews": { "value": 392000000, "note": "", "source": "https://socialblade.com/youtube/handle/julesleblanc" }
+        "birthYear": {
+          "value": 2004,
+          "note": "Born December 5, 2004. Consistently reported across secondary sources; the specific first-party citation chain was not independently traced during research.",
+          "source": "https://en.wikipedia.org/wiki/Jules_LeBlanc"
+        },
+        "channelStartYear": {
+          "value": 2017,
+          "note": "The channel originally launched as 'Acroanna' (a gymnastics channel) on October 21, 2008, and was rebranded to Jules LeBlanc's current identity in 2017. This deck uses the rebrand year as 'channel start' for the current identity.",
+          "source": "https://en.wikipedia.org/wiki/Jules_LeBlanc"
+        },
+        "subscribers": {
+          "value": 4200000,
+          "note": "Checked August 1, 2026.",
+          "source": "https://socialblade.com/youtube/handle/julesleblanc"
+        },
+        "videos": {
+          "value": 351,
+          "note": "",
+          "source": "https://socialblade.com/youtube/handle/julesleblanc"
+        },
+        "totalViews": {
+          "value": 392000000,
+          "note": "",
+          "source": "https://socialblade.com/youtube/handle/julesleblanc"
+        }
       }
     },
     {
       "id": "baby-ariel",
       "name": "Baby Ariel",
-      "stats": { "birthYear": 2000, "channelStartYear": 2015, "subscribers": 2820000, "videos": 244, "totalViews": 325257564 },
-      "image": { "file": "images/baby-ariel.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2000,
+        "channelStartYear": 2015,
+        "subscribers": 2820000,
+        "videos": 244,
+        "totalViews": 325257564
+      },
+      "image": {
+        "file": "images/baby-ariel.webp",
+        "licence": "CC BY 3.0",
+        "author": "Sidewalks Entertainment",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ariel_Martin_on_Sidewalks_Entertainment.jpg"
+      },
       "_sources": {
-        "birthYear": { "value": 2000, "note": "Ariel Martin, born November 22, 2000. Consistently reported; first-party citation chain not independently traced during research.", "source": "https://en.wikipedia.org/wiki/Baby_Ariel" },
+        "birthYear": {
+          "value": 2000,
+          "note": "Ariel Martin, born November 22, 2000. Consistently reported; first-party citation chain not independently traced during research.",
+          "source": "https://en.wikipedia.org/wiki/Baby_Ariel"
+        },
         "channelStartYear": "June 22, 2015 - https://socialblade.com/youtube/handle/babyariel",
-        "subscribers": { "value": 2820000, "note": "Checked August 1, 2026.", "source": "https://socialblade.com/youtube/handle/babyariel" },
-        "videos": { "value": 244, "note": "", "source": "https://socialblade.com/youtube/handle/babyariel" },
-        "totalViews": { "value": 325257564, "note": "", "source": "https://socialblade.com/youtube/handle/babyariel" }
+        "subscribers": {
+          "value": 2820000,
+          "note": "Checked August 1, 2026.",
+          "source": "https://socialblade.com/youtube/handle/babyariel"
+        },
+        "videos": {
+          "value": 244,
+          "note": "",
+          "source": "https://socialblade.com/youtube/handle/babyariel"
+        },
+        "totalViews": {
+          "value": 325257564,
+          "note": "",
+          "source": "https://socialblade.com/youtube/handle/babyariel"
+        }
       }
     },
     {
       "id": "prestonplayz",
       "name": "PrestonPlayz",
-      "stats": { "birthYear": 1994, "channelStartYear": 2018, "subscribers": 17800000, "videos": 1200, "totalViews": 8500000000 },
-      "image": { "file": "images/prestonplayz.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1994,
+        "channelStartYear": 2018,
+        "subscribers": 17800000,
+        "videos": 1200,
+        "totalViews": 8500000000
+      },
+      "image": {
+        "file": "images/prestonplayz.webp",
+        "licence": "CC BY 3.0",
+        "author": "NickRewind",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:PrestonPlayz.jpg"
+      },
       "_sources": {
-        "birthYear": { "value": 1994, "note": "Preston Arsement, born May 4, 1994. Consistently reported; first-party citation chain not independently traced during research.", "source": "https://en.wikipedia.org/wiki/PrestonPlayz" },
-        "channelStartYear": { "value": 2018, "note": "March 13, 2018 for the current 'PrestonPlayz'-branded channel per Social Blade. He also has an earlier 2012-origin Minecraft channel under a related name, and separate 'Preston' (~32M subs) and 'PrestonGamez' (~4.9M) channels not used here.", "source": "https://socialblade.com/youtube/handle/prestonplayz" },
-        "subscribers": { "value": 17800000, "note": "Trackers show 17.6-18M as of August 1, 2026.", "source": "Social Blade and NoxInfluencer" },
-        "videos": { "value": 1200, "note": "", "source": "Social Blade and NoxInfluencer" },
-        "totalViews": { "value": 8500000000, "note": "", "source": "https://socialblade.com/youtube/handle/prestonplayz" }
+        "birthYear": {
+          "value": 1994,
+          "note": "Preston Arsement, born May 4, 1994. Consistently reported; first-party citation chain not independently traced during research.",
+          "source": "https://en.wikipedia.org/wiki/PrestonPlayz"
+        },
+        "channelStartYear": {
+          "value": 2018,
+          "note": "March 13, 2018 for the current 'PrestonPlayz'-branded channel per Social Blade. He also has an earlier 2012-origin Minecraft channel under a related name, and separate 'Preston' (~32M subs) and 'PrestonGamez' (~4.9M) channels not used here.",
+          "source": "https://socialblade.com/youtube/handle/prestonplayz"
+        },
+        "subscribers": {
+          "value": 17800000,
+          "note": "Trackers show 17.6-18M as of August 1, 2026.",
+          "source": "Social Blade and NoxInfluencer"
+        },
+        "videos": {
+          "value": 1200,
+          "note": "",
+          "source": "Social Blade and NoxInfluencer"
+        },
+        "totalViews": {
+          "value": 8500000000,
+          "note": "",
+          "source": "https://socialblade.com/youtube/handle/prestonplayz"
+        }
       }
     },
     {
       "id": "sssniperwolf",
       "name": "SSSniperWolf",
-      "stats": { "birthYear": 1992, "channelStartYear": 2013, "subscribers": 35000000, "videos": 4100, "totalViews": 27000000000 },
-      "image": { "file": "images/sssniperwolf.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1992,
+        "channelStartYear": 2013,
+        "subscribers": 35000000,
+        "videos": 4100,
+        "totalViews": 27000000000
+      },
+      "image": {
+        "file": "images/sssniperwolf.webp",
+        "licence": "CC BY 3.0",
+        "author": "SSSniperWolf",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Alia_Shelesh_YouTube_shorts_screenshot.jpg"
+      },
       "_sources": {
-        "birthYear": { "value": 1992, "note": "Alia 'Lia' Shelesh, born October 22, 1992. Consistently reported; first-party citation chain not independently traced during research.", "source": "https://en.wikipedia.org/wiki/SSSniperWolf" },
-        "channelStartYear": { "value": 2013, "note": "Current channel dates from January 20, 2013; she originally posted under a different handle ('sexysexysniper') from 2011.", "source": "https://socialblade.com/youtube/handle/sssniperwolf and https://en.wikipedia.org/wiki/SSSniperWolf" },
-        "subscribers": { "value": 35000000, "note": "Checked August 1, 2026.", "source": "https://socialblade.com/youtube/handle/sssniperwolf" },
-        "videos": { "value": 4100, "note": "", "source": "https://socialblade.com/youtube/handle/sssniperwolf" },
-        "totalViews": { "value": 27000000000, "note": "", "source": "https://socialblade.com/youtube/handle/sssniperwolf" }
-      }
-    },
-    {
-      "id": "kids-diana-show",
-      "name": "Kids Diana Show",
-      "stats": { "birthYear": 2014, "channelStartYear": 2015, "subscribers": 138000000, "videos": 1700, "totalViews": 125000000000 },
-      "image": { "file": "images/kids-diana-show.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
-      "_sources": {
-        "birthYear": { "value": 2014, "note": "Channel co-star Diana (Eva Diana Kidisyuk) reported born March 31, 2014. Her brother/co-star Roma Kidisyuk is reported born October 22, 2012 - a different age. This card uses Diana's birth year since she is the channel's primary namesake; both figures carry the same sourcing-chain caveat (consistently reported but not traced to a first-party family disclosure in this research pass).", "source": "https://en.wikipedia.org/wiki/Kids_Diana_Show" },
-        "channelStartYear": "May 12, 2015 - https://socialblade.com/youtube/handle/kidsdianashow, corroborated by https://en.wikipedia.org/wiki/Kids_Diana_Show ('2015')",
-        "subscribers": { "value": 138000000, "note": "Checked August 1, 2026; Wikipedia infobox (last updated within its own article, dated July 28, 2026) shows 138.98 million, consistent.", "source": "https://socialblade.com/youtube/handle/kidsdianashow" },
-        "videos": { "value": 1700, "note": "", "source": "https://socialblade.com/youtube/handle/kidsdianashow" },
-        "totalViews": { "value": 125000000000, "note": "Wikipedia infobox agrees closely.", "source": "https://socialblade.com/youtube/handle/kidsdianashow" }
+        "birthYear": {
+          "value": 1992,
+          "note": "Alia 'Lia' Shelesh, born October 22, 1992. Consistently reported; first-party citation chain not independently traced during research.",
+          "source": "https://en.wikipedia.org/wiki/SSSniperWolf"
+        },
+        "channelStartYear": {
+          "value": 2013,
+          "note": "Current channel dates from January 20, 2013; she originally posted under a different handle ('sexysexysniper') from 2011.",
+          "source": "https://socialblade.com/youtube/handle/sssniperwolf and https://en.wikipedia.org/wiki/SSSniperWolf"
+        },
+        "subscribers": {
+          "value": 35000000,
+          "note": "Checked August 1, 2026.",
+          "source": "https://socialblade.com/youtube/handle/sssniperwolf"
+        },
+        "videos": {
+          "value": 4100,
+          "note": "",
+          "source": "https://socialblade.com/youtube/handle/sssniperwolf"
+        },
+        "totalViews": {
+          "value": 27000000000,
+          "note": "",
+          "source": "https://socialblade.com/youtube/handle/sssniperwolf"
+        }
       }
     },
     {
       "id": "sofie-dossi",
       "name": "Sofie Dossi",
-      "stats": { "birthYear": 2001, "channelStartYear": 2016, "subscribers": 10100000, "videos": 510, "totalViews": 2200000000 },
-      "image": { "file": "images/sofie-dossi.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2001,
+        "channelStartYear": 2016,
+        "subscribers": 10100000,
+        "videos": 510,
+        "totalViews": 2200000000
+      },
+      "image": {
+        "file": "images/sofie-dossi.webp",
+        "licence": "CC BY 3.0",
+        "author": "Stokes Twins",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sofie_Dossi_(Stokes_Twins_2023)_05.png"
+      },
       "_sources": {
-        "birthYear": { "value": 2001, "note": "Born June 21, 2001 - genuinely self-disclosed: she stated her birthday in her own YouTube video 'Nobody showed up to my birthday...' (posted June 26, 2021, timestamp 5:27).", "source": "https://en.wikipedia.org/wiki/Sofie_Dossi" },
+        "birthYear": {
+          "value": 2001,
+          "note": "Born June 21, 2001 - genuinely self-disclosed: she stated her birthday in her own YouTube video 'Nobody showed up to my birthday...' (posted June 26, 2021, timestamp 5:27).",
+          "source": "https://en.wikipedia.org/wiki/Sofie_Dossi"
+        },
         "channelStartYear": "Late 2016 (first video uploaded) - https://en.wikipedia.org/wiki/Sofie_Dossi",
-        "subscribers": { "value": 10100000, "note": "As of February 24, 2026, per Wikipedia, sourced to her own channel data.", "source": "https://en.wikipedia.org/wiki/Sofie_Dossi" },
-        "videos": { "value": 510, "note": "Trackers disagree significantly (475 vs 545); used a middle estimate.", "source": "search aggregation, checked August 1, 2026" },
-        "totalViews": { "value": 2200000000, "note": "As of January 2026.", "source": "search aggregation, checked August 1, 2026" }
-      }
-    },
-    {
-      "id": "jayden-bartels",
-      "name": "Jayden Bartels",
-      "stats": { "birthYear": 2004, "channelStartYear": 2015, "subscribers": 773000, "videos": 420, "totalViews": 93922905 },
-      "image": { "file": "images/jayden-bartels.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
-      "_sources": {
-        "birthYear": "Born November 1, 2004 - self-disclosed via her own Instagram birthday post (November 1, 2020), per https://en.wikipedia.org/wiki/Jayden_Bartels",
-        "channelStartYear": "Active on YouTube since 2015 per Wikipedia; no exact channel-creation date found.",
-        "subscribers": { "value": 773000, "note": "This is a stale figure as of April 2023 (Wikidata) - the most recent reliably-attributable figure found. A more recent search returned an anomalous '12K subscribers' result that contradicts all other evidence about her notability and is treated as a data error, not used.", "source": "https://www.wikidata.org/wiki/Q90545626" },
-        "videos": { "value": 420, "note": "Stale figure as of April 2023 (Wikidata) - most recent reliable figure found.", "source": "https://www.wikidata.org/wiki/Q90545626" },
-        "totalViews": { "value": 93922905, "note": "More current than the subscriber/video figures above.", "source": "search aggregation, checked August 1, 2026" }
+        "subscribers": {
+          "value": 10100000,
+          "note": "As of February 24, 2026, per Wikipedia, sourced to her own channel data.",
+          "source": "https://en.wikipedia.org/wiki/Sofie_Dossi"
+        },
+        "videos": {
+          "value": 510,
+          "note": "Trackers disagree significantly (475 vs 545); used a middle estimate.",
+          "source": "search aggregation, checked August 1, 2026"
+        },
+        "totalViews": {
+          "value": 2200000000,
+          "note": "As of January 2026.",
+          "source": "search aggregation, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "charli-damelio",
       "name": "Charli D'Amelio",
-      "stats": { "birthYear": 2004, "channelStartYear": 2019, "subscribers": 8950000, "videos": 460, "totalViews": 403700000 },
-      "image": { "file": "images/charli-damelio.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2004,
+        "channelStartYear": 2019,
+        "subscribers": 8950000,
+        "videos": 460,
+        "totalViews": 403700000
+      },
+      "image": {
+        "file": "images/charli-damelio.webp",
+        "licence": "CC BY 3.0",
+        "author": "NickRewind",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Charli_D'Amelio_at_KCA_2022.jpg"
+      },
       "_sources": {
         "birthYear": "Born May 1, 2004 - extensively and reliably documented - https://en.wikipedia.org/wiki/Charli_D%27Amelio",
         "channelStartYear": "Began posting to this channel in November 2019 - https://en.wikipedia.org/wiki/Charli_D%27Amelio",
-        "subscribers": { "value": 8950000, "note": "Per Wikipedia infobox, last updated March 12, 2026.", "source": "https://en.wikipedia.org/wiki/Charli_D%27Amelio" },
-        "videos": { "value": 460, "note": "A separate tracker independently reported a close 478.", "source": "search aggregation, checked August 1, 2026" },
-        "totalViews": { "value": 403700000, "note": "Sources range 398-403.7 million.", "source": "search aggregation, checked August 1, 2026" }
+        "subscribers": {
+          "value": 8950000,
+          "note": "Per Wikipedia infobox, last updated March 12, 2026.",
+          "source": "https://en.wikipedia.org/wiki/Charli_D%27Amelio"
+        },
+        "videos": {
+          "value": 460,
+          "note": "A separate tracker independently reported a close 478.",
+          "source": "search aggregation, checked August 1, 2026"
+        },
+        "totalViews": {
+          "value": 403700000,
+          "note": "Sources range 398-403.7 million.",
+          "source": "search aggregation, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "addison-rae",
       "name": "Addison Rae",
-      "stats": { "birthYear": 2000, "channelStartYear": 2016, "subscribers": 4420000, "videos": 43, "totalViews": 282293202 },
-      "image": { "file": "images/addison-rae.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2000,
+        "channelStartYear": 2016,
+        "subscribers": 4420000,
+        "videos": 43,
+        "totalViews": 282293202
+      },
+      "image": {
+        "file": "images/addison-rae.webp",
+        "licence": "CC BY 4.0",
+        "author": "Raph_PH",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:LanaWembley030725-144_-_54640470921_(Addison_Rae).jpg"
+      },
       "_sources": {
         "birthYear": "Born October 6, 2000 - reliably documented; Wikipedia cites the Wall Street Journal and her own Twitter account - https://en.wikipedia.org/wiki/Addison_Rae",
         "channelStartYear": "First video uploaded August 28, 2016 - https://socialblade.com/youtube/handle/addisonrae",
-        "subscribers": { "value": 4420000, "note": "Checked August 1, 2026.", "source": "search aggregation, checked August 1, 2026" },
-        "videos": { "value": 43, "note": "", "source": "search aggregation, checked August 1, 2026" },
-        "totalViews": { "value": 282293202, "note": "", "source": "search aggregation, checked August 1, 2026" }
+        "subscribers": {
+          "value": 4420000,
+          "note": "Checked August 1, 2026.",
+          "source": "search aggregation, checked August 1, 2026"
+        },
+        "videos": {
+          "value": 43,
+          "note": "",
+          "source": "search aggregation, checked August 1, 2026"
+        },
+        "totalViews": {
+          "value": 282293202,
+          "note": "",
+          "source": "search aggregation, checked August 1, 2026"
+        }
       }
     },
     {
       "id": "emma-chamberlain",
       "name": "Emma Chamberlain",
-      "stats": { "birthYear": 2001, "channelStartYear": 2016, "subscribers": 12041209, "videos": 308, "totalViews": 1700000000 },
-      "image": { "file": "images/emma-chamberlain.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2001,
+        "channelStartYear": 2016,
+        "subscribers": 12041209,
+        "videos": 308,
+        "totalViews": 1700000000
+      },
+      "image": {
+        "file": "images/emma-chamberlain.webp",
+        "licence": "CC BY 3.0",
+        "author": "John Park",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Emma_Chamberlain_for_Chamberlain_Coffee,_2020_(1).png"
+      },
       "_sources": {
         "birthYear": "Born May 22, 2001 - Jonah Engel Bromwich, 'The Evolution of Emma Chamberlain,' The New York Times, July 9, 2019 - https://www.nytimes.com/2019/07/09/style/emma-chamberlain-youtube.html",
         "channelStartYear": "June 14, 2016 - stated directly in article body - https://en.wikipedia.org/wiki/Emma_Chamberlain",
-        "subscribers": { "value": 12041209, "note": "Wikipedia infobox last updated December 24, 2025.", "source": "https://en.wikipedia.org/wiki/Emma_Chamberlain" },
-        "videos": { "value": 308, "note": "Third-party aggregate; not confirmed in Wikipedia.", "source": "search aggregation" },
-        "totalViews": { "value": 1700000000, "note": "", "source": "https://en.wikipedia.org/wiki/Emma_Chamberlain" }
+        "subscribers": {
+          "value": 12041209,
+          "note": "Wikipedia infobox last updated December 24, 2025.",
+          "source": "https://en.wikipedia.org/wiki/Emma_Chamberlain"
+        },
+        "videos": {
+          "value": 308,
+          "note": "Third-party aggregate; not confirmed in Wikipedia.",
+          "source": "search aggregation"
+        },
+        "totalViews": {
+          "value": 1700000000,
+          "note": "",
+          "source": "https://en.wikipedia.org/wiki/Emma_Chamberlain"
+        }
       }
     },
     {
       "id": "james-charles",
       "name": "James Charles",
-      "stats": { "birthYear": 1999, "channelStartYear": 2015, "subscribers": 23877817, "videos": 703, "totalViews": 4767254644 },
-      "image": { "file": "images/james-charles.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1999,
+        "channelStartYear": 2015,
+        "subscribers": 23877817,
+        "videos": 703,
+        "totalViews": 4767254644
+      },
+      "image": {
+        "file": "images/james-charles.webp",
+        "licence": "CC BY 3.0",
+        "author": "Stay Tuned",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:James_Charles_-_GLAAD_Media_Awards_2024_(cropped).png"
+      },
       "_sources": {
         "birthYear": "Born May 23, 1999 - cited on Wikipedia to Kat Tenbarge, Insider, May 29, 2020, and Tess Garcia, Teen Vogue, May 25, 2019 - https://en.wikipedia.org/wiki/James_Charles",
         "channelStartYear": "December 1, 2015 (started posting makeup tutorials) - https://en.wikipedia.org/wiki/James_Charles, corroborated by a Washington Post article by Travis M. Andrews, Oct 12, 2016",
-        "subscribers": { "value": 23877817, "note": "Wikipedia infobox says 23.8 million, last updated July 1, 2026.", "source": "https://en.wikipedia.org/wiki/James_Charles and https://socialblade.com/youtube/handle/jamescharles" },
-        "videos": { "value": 703, "note": "Trackers range 699-707.", "source": "search aggregation" },
-        "totalViews": { "value": 4767254644, "note": "Wikipedia says 4.76 billion, consistent.", "source": "https://en.wikipedia.org/wiki/James_Charles" }
+        "subscribers": {
+          "value": 23877817,
+          "note": "Wikipedia infobox says 23.8 million, last updated July 1, 2026.",
+          "source": "https://en.wikipedia.org/wiki/James_Charles and https://socialblade.com/youtube/handle/jamescharles"
+        },
+        "videos": {
+          "value": 703,
+          "note": "Trackers range 699-707.",
+          "source": "search aggregation"
+        },
+        "totalViews": {
+          "value": 4767254644,
+          "note": "Wikipedia says 4.76 billion, consistent.",
+          "source": "https://en.wikipedia.org/wiki/James_Charles"
+        }
       }
     },
     {
       "id": "bella-poarch",
       "name": "Bella Poarch",
-      "stats": { "birthYear": 1997, "channelStartYear": 2020, "subscribers": 7100000, "videos": 103, "totalViews": 1017026005 },
-      "image": { "file": "images/bella-poarch.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1997,
+        "channelStartYear": 2020,
+        "subscribers": 7100000,
+        "videos": 103,
+        "totalViews": 1017026005
+      },
+      "image": {
+        "file": "images/bella-poarch.webp",
+        "licence": "CC BY 3.0",
+        "author": "Angie Freems",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bella_Poarch_-_Pink_Aura_Tour.jpg"
+      },
       "_sources": {
-        "birthYear": { "value": 1997, "note": "Wikipedia's specific 'Feb 9, 1997' date traces to a birthday-aggregator citation that fails this deck's sourcing bar. However, the year 1997 is independently corroborated by South China Morning Post, Jan 3, 2025 ('Poarch, 27'), a genuine news source - so only the year is used here, not the specific day.", "source": "https://www.scmp.com/magazines/style/entertainment/article/3293154/meet-bella-poarch-rising-music-star-behind-tiktoks-most-liked-video-tough-childhood-philippines" },
-        "channelStartYear": { "value": 2020, "note": "March 26, 2020 per aggregator synthesis - moderate confidence, not confirmed against a Wikipedia-tier source.", "source": "search aggregation" },
-        "subscribers": { "value": 7100000, "note": "Sources conflict notably (3.8M vs 7.1M depending on snapshot date); used the more recent ~7.1M figure from a June 2026 checkpoint.", "source": "https://socialblade.com/youtube/handle/bellapoarch" },
-        "videos": { "value": 103, "note": "Moderate confidence.", "source": "aggregator data" },
-        "totalViews": { "value": 1017026005, "note": "", "source": "aggregator data" }
+        "birthYear": {
+          "value": 1997,
+          "note": "Wikipedia's specific 'Feb 9, 1997' date traces to a birthday-aggregator citation that fails this deck's sourcing bar. However, the year 1997 is independently corroborated by South China Morning Post, Jan 3, 2025 ('Poarch, 27'), a genuine news source - so only the year is used here, not the specific day.",
+          "source": "https://www.scmp.com/magazines/style/entertainment/article/3293154/meet-bella-poarch-rising-music-star-behind-tiktoks-most-liked-video-tough-childhood-philippines"
+        },
+        "channelStartYear": {
+          "value": 2020,
+          "note": "March 26, 2020 per aggregator synthesis - moderate confidence, not confirmed against a Wikipedia-tier source.",
+          "source": "search aggregation"
+        },
+        "subscribers": {
+          "value": 7100000,
+          "note": "Sources conflict notably (3.8M vs 7.1M depending on snapshot date); used the more recent ~7.1M figure from a June 2026 checkpoint.",
+          "source": "https://socialblade.com/youtube/handle/bellapoarch"
+        },
+        "videos": {
+          "value": 103,
+          "note": "Moderate confidence.",
+          "source": "aggregator data"
+        },
+        "totalViews": {
+          "value": 1017026005,
+          "note": "",
+          "source": "aggregator data"
+        }
       }
     },
     {
       "id": "like-nastya",
       "name": "Like Nastya",
-      "stats": { "birthYear": 2014, "channelStartYear": 2016, "subscribers": 133090000, "videos": 1032, "totalViews": 122200000000 },
-      "image": { "file": "images/like-nastya.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2014,
+        "channelStartYear": 2016,
+        "subscribers": 133090000,
+        "videos": 1032,
+        "totalViews": 122200000000
+      },
+      "image": {
+        "file": "images/like-nastya.webp",
+        "licence": "CC BY-SA 2.0",
+        "author": "Like Nastya",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anastasia_Radzinskaya.png"
+      },
       "_sources": {
-        "birthYear": { "value": 2014, "note": "Anastasia Yuryevna Radzinskaya, born January 27, 2014 per Wikipedia infobox (day/month not independently sourced), but the year is corroborated by Bloomberg reporting she was 6 years old as of April 2020.", "source": "Mark Bergen & Lucas Shaw, 'How a 6-Year-Old Russian Girl Became YouTube's Most Popular Child Star,' Bloomberg, April 21, 2020 - https://en.wikipedia.org/wiki/Like_Nastya" },
-        "channelStartYear": { "value": 2016, "note": "Exact month/day not confirmed; cited to the same Bloomberg profile.", "source": "https://en.wikipedia.org/wiki/Like_Nastya" },
-        "subscribers": { "value": 133090000, "note": "Main channel only, as of July 28, 2026. Combined across all Like Nastya localized channels the total is ~202.94 million.", "source": "https://en.wikipedia.org/wiki/Like_Nastya" },
-        "videos": { "value": 1032, "note": "Main channel only; trackers range 1000-1064.", "source": "search aggregation" },
-        "totalViews": { "value": 122200000000, "note": "Main channel only. Combined across all channels the total is ~156.6 billion.", "source": "https://en.wikipedia.org/wiki/Like_Nastya" }
-      }
-    },
-    {
-      "id": "karina-garcia",
-      "name": "Karina Garcia",
-      "stats": { "birthYear": 1994, "channelStartYear": 2015, "subscribers": 9200000, "videos": 540, "totalViews": 1750000000 },
-      "image": { "file": "images/karina-garcia.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
-      "_sources": {
-        "birthYear": { "value": 1994, "note": "No Wikipedia article exists for her. Corroborated by two real news sources: CNBC (Jan 30, 2018) states she is 23, and Forbes (Jan 27, 2019) states she is 24 - both consistent with a 1994 birth year.", "source": "https://www.cnbc.com/2018/01/30/this-former-waitress-is-earning-millions-as-youtubes-slime-queen.html and https://www.forbes.com/sites/katetalbot/2019/01/27/how-slime-queen-karina-garcia-dominated-youtube-to-launch-an-empire/" },
-        "channelStartYear": { "value": 2015, "note": "Account created 2012 per her own About page text, but she reportedly didn't start actively posting until February 11, 2015 - this deck uses the active-posting-start year, consistent with its convention.", "source": "search synthesis of channel About text" },
-        "subscribers": { "value": 9200000, "note": "Trackers range 9.09M-9.27M across 2026 snapshots.", "source": "Social Blade, NoxInfluencer, Favikon, StarStat" },
-        "videos": { "value": 540, "note": "Trackers disagree significantly (434 vs 649); used a middle estimate, flagged as unresolved.", "source": "search aggregation" },
-        "totalViews": { "value": 1750000000, "note": "Trackers range 1.69-1.8 billion. Earlier baseline: CNBC (Jan 30, 2018) reported over 900 million at that time.", "source": "search aggregation" }
+        "birthYear": {
+          "value": 2014,
+          "note": "Anastasia Yuryevna Radzinskaya, born January 27, 2014 per Wikipedia infobox (day/month not independently sourced), but the year is corroborated by Bloomberg reporting she was 6 years old as of April 2020.",
+          "source": "Mark Bergen & Lucas Shaw, 'How a 6-Year-Old Russian Girl Became YouTube's Most Popular Child Star,' Bloomberg, April 21, 2020 - https://en.wikipedia.org/wiki/Like_Nastya"
+        },
+        "channelStartYear": {
+          "value": 2016,
+          "note": "Exact month/day not confirmed; cited to the same Bloomberg profile.",
+          "source": "https://en.wikipedia.org/wiki/Like_Nastya"
+        },
+        "subscribers": {
+          "value": 133090000,
+          "note": "Main channel only, as of July 28, 2026. Combined across all Like Nastya localized channels the total is ~202.94 million.",
+          "source": "https://en.wikipedia.org/wiki/Like_Nastya"
+        },
+        "videos": {
+          "value": 1032,
+          "note": "Main channel only; trackers range 1000-1064.",
+          "source": "search aggregation"
+        },
+        "totalViews": {
+          "value": 122200000000,
+          "note": "Main channel only. Combined across all channels the total is ~156.6 billion.",
+          "source": "https://en.wikipedia.org/wiki/Like_Nastya"
+        }
       }
     },
     {
       "id": "loren-gray",
       "name": "Loren Gray",
-      "stats": { "birthYear": 2002, "channelStartYear": 2015, "subscribers": 3700000, "videos": 228, "totalViews": 159400000 },
-      "image": { "file": "images/loren-gray.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2002,
+        "channelStartYear": 2015,
+        "subscribers": 3700000,
+        "videos": 228,
+        "totalViews": 159400000
+      },
+      "image": {
+        "file": "images/loren-gray.webp",
+        "licence": "CC BY 2.0",
+        "author": "Web Summit",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:2023_-_Centre_Stage_SAM_9438_(53331112032)_(cropped).jpg"
+      },
       "_sources": {
         "birthYear": "Born April 19, 2002 - self-reported via her own tweet (@iamlorengray, March 20, 2020): 'lockdown ends on my 18th birthday' - https://en.wikipedia.org/wiki/Loren_Gray",
-        "channelStartYear": { "value": 2015, "note": "Exact YouTube channel creation date not confirmed from a reliable source; Wikipedia lists her broader 'years active' as 2015-present.", "source": "https://en.wikipedia.org/wiki/Loren_Gray" },
-        "subscribers": { "value": 3700000, "note": "Sources range 3.6-3.86 million.", "source": "Wikipedia infobox and networthspot.com, checked May 2026" },
-        "videos": { "value": 228, "note": "Moderate confidence.", "source": "search aggregation" },
-        "totalViews": { "value": 159400000, "note": "Notably low relative to subscriber count, plausible for a creator whose primary fame is TikTok/music rather than YouTube.", "source": "https://en.wikipedia.org/wiki/Loren_Gray" }
+        "channelStartYear": {
+          "value": 2015,
+          "note": "Exact YouTube channel creation date not confirmed from a reliable source; Wikipedia lists her broader 'years active' as 2015-present.",
+          "source": "https://en.wikipedia.org/wiki/Loren_Gray"
+        },
+        "subscribers": {
+          "value": 3700000,
+          "note": "Sources range 3.6-3.86 million.",
+          "source": "Wikipedia infobox and networthspot.com, checked May 2026"
+        },
+        "videos": {
+          "value": 228,
+          "note": "Moderate confidence.",
+          "source": "search aggregation"
+        },
+        "totalViews": {
+          "value": 159400000,
+          "note": "Notably low relative to subscriber count, plausible for a creator whose primary fame is TikTok/music rather than YouTube.",
+          "source": "https://en.wikipedia.org/wiki/Loren_Gray"
+        }
       }
     },
     {
       "id": "lele-pons",
       "name": "Lele Pons",
-      "stats": { "birthYear": 1996, "channelStartYear": 2015, "subscribers": 17900000, "videos": 186, "totalViews": 5660485292 },
-      "image": { "file": "images/lele-pons.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1996,
+        "channelStartYear": 2015,
+        "subscribers": 17900000,
+        "videos": 186,
+        "totalViews": 5660485292
+      },
+      "image": {
+        "file": "images/lele-pons.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Toglenn",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lele_Pons_2019_by_Glenn_Francis_(cropped).jpg"
+      },
       "_sources": {
         "birthYear": "Born June 25, 1996 - https://en.wikipedia.org/wiki/Lele_Pons",
-        "channelStartYear": { "value": 2015, "note": "September 2015 for the current channel (day disputed, 18th vs 19th across trackers). Wikipedia separately lists her broader YouTube 'years active' as 2013-present, referring to her earlier Vine-era presence.", "source": "https://youtube.fandom.com/wiki/Lele_Pons and https://en.wikipedia.org/wiki/Lele_Pons" },
-        "subscribers": { "value": 17900000, "note": "Checked August 1, 2026.", "source": "https://us.youtubers.me/lele-pons/youtube-videos-stats" },
-        "videos": { "value": 186, "note": "", "source": "https://us.youtubers.me/lele-pons/youtube-videos-stats" },
-        "totalViews": { "value": 5660485292, "note": "", "source": "https://us.youtubers.me/lele-pons/youtube-videos-stats" }
+        "channelStartYear": {
+          "value": 2015,
+          "note": "September 2015 for the current channel (day disputed, 18th vs 19th across trackers). Wikipedia separately lists her broader YouTube 'years active' as 2013-present, referring to her earlier Vine-era presence.",
+          "source": "https://youtube.fandom.com/wiki/Lele_Pons and https://en.wikipedia.org/wiki/Lele_Pons"
+        },
+        "subscribers": {
+          "value": 17900000,
+          "note": "Checked August 1, 2026.",
+          "source": "https://us.youtubers.me/lele-pons/youtube-videos-stats"
+        },
+        "videos": {
+          "value": 186,
+          "note": "",
+          "source": "https://us.youtubers.me/lele-pons/youtube-videos-stats"
+        },
+        "totalViews": {
+          "value": 5660485292,
+          "note": "",
+          "source": "https://us.youtubers.me/lele-pons/youtube-videos-stats"
+        }
       }
     },
     {
       "id": "liza-koshy",
       "name": "Liza Koshy",
-      "stats": { "birthYear": 1996, "channelStartYear": 2013, "subscribers": 16600000, "videos": 104, "totalViews": 1313468542 },
-      "image": { "file": "images/liza-koshy.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1996,
+        "channelStartYear": 2013,
+        "subscribers": 16600000,
+        "videos": 104,
+        "totalViews": 1313468542
+      },
+      "image": {
+        "file": "images/liza-koshy.webp",
+        "licence": "CC BY 3.0",
+        "author": "Ashley Graham",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Liza_Koshy_on_Pretty_Big_Deal.png"
+      },
       "_sources": {
         "birthYear": "Born March 31, 1996 - https://en.wikipedia.org/wiki/Liza_Koshy",
         "channelStartYear": "September 2, 2013 - https://vidiq.com/youtube-stats/channel/@lizakoshy/",
-        "subscribers": { "value": 16600000, "note": "Checked August 1, 2026; Wikipedia independently states ~16.7M, consistent. She also runs a second channel 'Liza Koshy Too' (6.88M subs), not used here.", "source": "https://us.youtubers.me/liza-koshy/youtube-videos-stats" },
-        "videos": { "value": 104, "note": "A separate tracker (vidIQ) reported a close 105.", "source": "https://us.youtubers.me/liza-koshy/youtube-videos-stats" },
-        "totalViews": { "value": 1313468542, "note": "Wikipedia's prose separately states 'over 2 billion' as of 2021 - that figure looks stale/superseded; used the current tracker figure.", "source": "https://us.youtubers.me/liza-koshy/youtube-videos-stats" }
+        "subscribers": {
+          "value": 16600000,
+          "note": "Checked August 1, 2026; Wikipedia independently states ~16.7M, consistent. She also runs a second channel 'Liza Koshy Too' (6.88M subs), not used here.",
+          "source": "https://us.youtubers.me/liza-koshy/youtube-videos-stats"
+        },
+        "videos": {
+          "value": 104,
+          "note": "A separate tracker (vidIQ) reported a close 105.",
+          "source": "https://us.youtubers.me/liza-koshy/youtube-videos-stats"
+        },
+        "totalViews": {
+          "value": 1313468542,
+          "note": "Wikipedia's prose separately states 'over 2 billion' as of 2021 - that figure looks stale/superseded; used the current tracker figure.",
+          "source": "https://us.youtubers.me/liza-koshy/youtube-videos-stats"
+        }
       }
     },
     {
       "id": "jacob-sartorius",
       "name": "Jacob Sartorius",
-      "stats": { "birthYear": 2002, "channelStartYear": 2014, "subscribers": 2860000, "videos": 218, "totalViews": 386742787 },
-      "image": { "file": "images/jacob-sartorius.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2002,
+        "channelStartYear": 2014,
+        "subscribers": 2860000,
+        "videos": 218,
+        "totalViews": 386742787
+      },
+      "image": {
+        "file": "images/jacob-sartorius.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Carlos",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Jacob_Sartorius_(cropped)_(cropped).jpg"
+      },
       "_sources": {
         "birthYear": "Born October 2, 2002 (Tulsa, Oklahoma) - https://en.wikipedia.org/wiki/Jacob_Sartorius",
         "channelStartYear": "April 24, 2014 - https://socialblade.com/youtube/user/jacobsartorius/realtime",
-        "subscribers": { "value": 2860000, "note": "Checked August 1, 2026.", "source": "https://us.youtubers.me/jacob-sartorius/youtube-videos-stats" },
-        "videos": { "value": 218, "note": "", "source": "https://us.youtubers.me/jacob-sartorius/youtube-videos-stats" },
-        "totalViews": { "value": 386742787, "note": "", "source": "https://us.youtubers.me/jacob-sartorius/youtube-videos-stats" }
+        "subscribers": {
+          "value": 2860000,
+          "note": "Checked August 1, 2026.",
+          "source": "https://us.youtubers.me/jacob-sartorius/youtube-videos-stats"
+        },
+        "videos": {
+          "value": 218,
+          "note": "",
+          "source": "https://us.youtubers.me/jacob-sartorius/youtube-videos-stats"
+        },
+        "totalViews": {
+          "value": 386742787,
+          "note": "",
+          "source": "https://us.youtubers.me/jacob-sartorius/youtube-videos-stats"
+        }
       }
     },
     {
       "id": "zach-king",
       "name": "Zach King",
-      "stats": { "birthYear": 1990, "channelStartYear": 2013, "subscribers": 42900000, "videos": 850, "totalViews": 23000000000 },
-      "image": { "file": "images/zach-king.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 1990,
+        "channelStartYear": 2013,
+        "subscribers": 42900000,
+        "videos": 850,
+        "totalViews": 23000000000
+      },
+      "image": {
+        "file": "images/zach-king.webp",
+        "licence": "CC BY-SA 3.0",
+        "author": "Muhammad Ali Khalid",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Zach_King_Photo.jpg"
+      },
       "_sources": {
         "birthYear": "Born February 4, 1990 - https://en.wikipedia.org/wiki/Zach_King",
-        "channelStartYear": { "value": 2013, "note": "October 14, 2013 for the current 'Zach King'-branded channel. He originally began posting Final Cut Pro tutorials on an earlier channel, 'FinalCutKing,' in 2008.", "source": "https://socialblade.com/youtube/handle/zachking and https://en.wikipedia.org/wiki/Zach_King" },
-        "subscribers": { "value": 42900000, "note": "Checked August 1, 2026; vidIQ reported a close 43.2M.", "source": "https://us.youtubers.me/zach-king/youtube-videos-stats" },
-        "videos": { "value": 850, "note": "Trackers range 840-860.", "source": "https://us.youtubers.me/zach-king/youtube-videos-stats" },
-        "totalViews": { "value": 23000000000, "note": "Trackers range 22.8-23.4 billion.", "source": "https://us.youtubers.me/zach-king/youtube-videos-stats" }
+        "channelStartYear": {
+          "value": 2013,
+          "note": "October 14, 2013 for the current 'Zach King'-branded channel. He originally began posting Final Cut Pro tutorials on an earlier channel, 'FinalCutKing,' in 2008.",
+          "source": "https://socialblade.com/youtube/handle/zachking and https://en.wikipedia.org/wiki/Zach_King"
+        },
+        "subscribers": {
+          "value": 42900000,
+          "note": "Checked August 1, 2026; vidIQ reported a close 43.2M.",
+          "source": "https://us.youtubers.me/zach-king/youtube-videos-stats"
+        },
+        "videos": {
+          "value": 850,
+          "note": "Trackers range 840-860.",
+          "source": "https://us.youtubers.me/zach-king/youtube-videos-stats"
+        },
+        "totalViews": {
+          "value": 23000000000,
+          "note": "Trackers range 22.8-23.4 billion.",
+          "source": "https://us.youtubers.me/zach-king/youtube-videos-stats"
+        }
       }
     },
     {
       "id": "mackenzie-ziegler",
       "name": "Mackenzie Ziegler",
-      "stats": { "birthYear": 2004, "channelStartYear": 2015, "subscribers": 3839105, "videos": 375, "totalViews": 473334438 },
-      "image": { "file": "images/mackenzie-ziegler.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2004,
+        "channelStartYear": 2015,
+        "subscribers": 3839105,
+        "videos": 375,
+        "totalViews": 473334438
+      },
+      "image": {
+        "file": "images/mackenzie-ziegler.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Bryan Berlin",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mackenzie_Ziegler_She_Dances-26_(cropped).jpg"
+      },
       "_sources": {
         "birthYear": "Born June 4, 2004 - Wikipedia, citing Fabio Magnocavallo, 'Kenzie,' Euphoria Zine, March 28, 2024 - https://en.wikipedia.org/wiki/Mackenzie_Ziegler and https://www.euphoriazine.com/blog/2024/03/interviews-kenzie-ziegler",
-        "channelStartYear": { "value": 2015, "note": "October 2, 2015 per Wikidata, but that specific claim carries no attached citation - treated as plausible but not fully verified.", "source": "https://www.wikidata.org/wiki/Q18211858" },
-        "subscribers": { "value": 3839105, "note": "As of July 31, 2026; Wikidata separately recorded 3.72M as of Oct 22, 2025, consistent with the growth trend.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UC8AyTVmO6GWOrZHka8cLHQw" },
-        "videos": { "value": 375, "note": "", "source": "https://socialcounts.org/youtube-live-subscriber-count/UC8AyTVmO6GWOrZHka8cLHQw" },
-        "totalViews": { "value": 473334438, "note": "Wikidata separately recorded 454,932,278 as of Oct 22, 2025, consistent with the growth trend.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UC8AyTVmO6GWOrZHka8cLHQw" }
-      }
-    },
-    {
-      "id": "niki-and-gabi",
-      "name": "Niki and Gabi",
-      "stats": { "birthYear": 1995, "channelStartYear": 2013, "subscribers": 9254221, "videos": 562, "totalViews": 1379130514 },
-      "image": { "file": "images/niki-and-gabi.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
-      "_sources": {
-        "birthYear": "Nicole and Gabriela DeMartino - twins, born May 5, 1995 (shared birthday) - Wikipedia, citing Ellissa Bain, 'What happened with Niki and Gabi? OnlyFans drama explained!', HITC, December 4, 2020 - https://en.wikipedia.org/wiki/Niki_and_Gabi",
-        "channelStartYear": { "value": 2013, "note": "Not cleanly sourced to a Wikipedia-tier standard. Their earlier channel '00RemakeGirls' dates to approximately 2008-2010; the current 'Niki and Gabi' channel dates to approximately 2012-2013 based on indirect evidence (they signed with AwesomenessTV/StyleHaul in 2012, and a 2013 'Friday' parody helped launch their YouTube career).", "source": "https://en.wikipedia.org/wiki/Niki_and_Gabi" },
-        "subscribers": { "value": 9254221, "note": "As of July 31, 2026; Wikipedia's own infobox lists 9.26 million, consistent (dated April 23, 2026, flagged by editors as needing an update).", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCuVHOs0H5hvAHGr8O4yIBNQ" },
-        "videos": { "value": 562, "note": "", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCuVHOs0H5hvAHGr8O4yIBNQ" },
-        "totalViews": { "value": 1379130514, "note": "Wikipedia infobox lists 1.37 billion, consistent.", "source": "https://socialcounts.org/youtube-live-subscriber-count/UCuVHOs0H5hvAHGr8O4yIBNQ" }
+        "channelStartYear": {
+          "value": 2015,
+          "note": "October 2, 2015 per Wikidata, but that specific claim carries no attached citation - treated as plausible but not fully verified.",
+          "source": "https://www.wikidata.org/wiki/Q18211858"
+        },
+        "subscribers": {
+          "value": 3839105,
+          "note": "As of July 31, 2026; Wikidata separately recorded 3.72M as of Oct 22, 2025, consistent with the growth trend.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UC8AyTVmO6GWOrZHka8cLHQw"
+        },
+        "videos": {
+          "value": 375,
+          "note": "",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UC8AyTVmO6GWOrZHka8cLHQw"
+        },
+        "totalViews": {
+          "value": 473334438,
+          "note": "Wikidata separately recorded 454,932,278 as of Oct 22, 2025, consistent with the growth trend.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UC8AyTVmO6GWOrZHka8cLHQw"
+        }
       }
     },
     {
       "id": "dixie-damelio",
       "name": "Dixie D'Amelio",
-      "stats": { "birthYear": 2001, "channelStartYear": 2020, "subscribers": 6410000, "videos": 58, "totalViews": 324700000 },
-      "image": { "file": "images/dixie-damelio.webp", "licence": "Original illustration", "author": "Generated for this project", "sourceUrl": "N/A - original illustration, not a photograph of the real person" },
+      "stats": {
+        "birthYear": 2001,
+        "channelStartYear": 2020,
+        "subscribers": 6410000,
+        "videos": 58,
+        "totalViews": 324700000
+      },
+      "image": {
+        "file": "images/dixie-damelio.webp",
+        "licence": "CC BY 3.0",
+        "author": "Priyanka Pruthi",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dixie_D'Amelio_2.jpg"
+      },
       "_sources": {
         "birthYear": "Born August 12, 2001 - https://en.wikipedia.org/wiki/Dixie_D%27Amelio",
-        "channelStartYear": { "value": 2020, "note": "The D'Amelio family YouTube channel launched around August 2020; her individual channel's exact creation date is not clearly separated from the family channel in available sources.", "source": "https://www.justjaredjr.com/2020/08/26/charli-dixie-damelio-launch-family-youtube-channel-with-parents-marc-heidi/" },
-        "subscribers": { "value": 6410000, "note": "Per Wikipedia infobox, as of April 8, 2026. Other trackers show a range of 6.37-7.1 million depending on snapshot date.", "source": "https://en.wikipedia.org/wiki/Dixie_D%27Amelio" },
-        "videos": { "value": 58, "note": "Consistent across two independent trackers.", "source": "search aggregation, checked August 1, 2026" },
-        "totalViews": { "value": 324700000, "note": "Consistent across two independent trackers (324,680,379 and 324,707,800).", "source": "search aggregation, checked August 1, 2026" }
+        "channelStartYear": {
+          "value": 2020,
+          "note": "The D'Amelio family YouTube channel launched around August 2020; her individual channel's exact creation date is not clearly separated from the family channel in available sources.",
+          "source": "https://www.justjaredjr.com/2020/08/26/charli-dixie-damelio-launch-family-youtube-channel-with-parents-marc-heidi/"
+        },
+        "subscribers": {
+          "value": 6410000,
+          "note": "Per Wikipedia infobox, as of April 8, 2026. Other trackers show a range of 6.37-7.1 million depending on snapshot date.",
+          "source": "https://en.wikipedia.org/wiki/Dixie_D%27Amelio"
+        },
+        "videos": {
+          "value": 58,
+          "note": "Consistent across two independent trackers.",
+          "source": "search aggregation, checked August 1, 2026"
+        },
+        "totalViews": {
+          "value": 324700000,
+          "note": "Consistent across two independent trackers (324,680,379 and 324,707,800).",
+          "source": "search aggregation, checked August 1, 2026"
+        }
+      }
+    },
+    {
+      "id": "anna-mcnulty",
+      "name": "Anna McNulty",
+      "stats": {
+        "birthYear": 2002,
+        "channelStartYear": 2016,
+        "subscribers": 14504206,
+        "videos": 498,
+        "totalViews": 3808324011
+      },
+      "_sources": {
+        "birthYear": "Born April 26, 2002 - self-disclosed via her own Instagram post - https://www.instagram.com/p/Cc0HsGfLwaF, cited by https://en.wikipedia.org/wiki/Anna_McNulty",
+        "channelStartYear": "2016 - https://en.wikipedia.org/wiki/Anna_McNulty, corroborated by CBC News (Chisholm, 2019) and Tubefilter (Hale, 2020)",
+        "subscribers": {
+          "value": 14504206,
+          "note": "As of August 1, 2026; Wikipedia infobox shows 14.5M as of July 31, 2026, consistent.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCPIavfNa4DTfHXDBaFOHuKA"
+        },
+        "videos": {
+          "value": 498,
+          "note": "Wikipedia does not list a video count; single-sourced to this tracker.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCPIavfNa4DTfHXDBaFOHuKA"
+        },
+        "totalViews": {
+          "value": 3808324011,
+          "note": "As of August 1, 2026; Wikipedia infobox shows ~3.7B as of July 31, 2026, consistent.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCPIavfNa4DTfHXDBaFOHuKA"
+        }
+      },
+      "image": {
+        "file": "images/anna-mcnulty.webp",
+        "licence": "CC BY-SA 4.0",
+        "author": "Gryphussquadron",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:AnnaMcNultyKCA.jpg"
+      }
+    },
+    {
+      "id": "bethany-mota",
+      "name": "Bethany Mota",
+      "stats": {
+        "birthYear": 1995,
+        "channelStartYear": 2009,
+        "subscribers": 9297185,
+        "videos": 132,
+        "totalViews": 178278095
+      },
+      "_sources": {
+        "birthYear": "Born November 7, 1995 - self-disclosed in her own 'Draw My Life' video - https://www.youtube.com/watch?v=RywVBJKKlbg, cited by https://en.wikipedia.org/wiki/Bethany_Mota",
+        "channelStartYear": "Channel began as 'Macbarbie07'; first haul video posted June 2009 - https://en.wikipedia.org/wiki/Bethany_Mota",
+        "subscribers": {
+          "value": 9297185,
+          "note": "As of August 1, 2026; Wikipedia infobox shows 9.31M as of January 22, 2024 (flagged by editors as needing an update) - consistent with near-flat growth since.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCc6W7efUSkd9YYoxOnctlFg"
+        },
+        "videos": {
+          "value": 132,
+          "note": "Trackers disagree significantly - an unverified search snippet attributed 312 to a different tracker (SPEAKRJ) that could not be directly confirmed. Used the directly-verified figure of 132.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCc6W7efUSkd9YYoxOnctlFg"
+        },
+        "totalViews": {
+          "value": 178278095,
+          "note": "As of August 1, 2026; Wikipedia infobox shows 178M as of January 22, 2024, consistent.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCc6W7efUSkd9YYoxOnctlFg"
+        }
+      },
+      "image": {
+        "file": "images/bethany-mota.webp",
+        "licence": "CC BY-SA 3.0",
+        "author": "Gage Skidmore",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bethany_Mota_by_Gage_Skidmore.jpg"
+      }
+    },
+    {
+      "id": "michelle-phan",
+      "name": "Michelle Phan",
+      "stats": {
+        "birthYear": 1987,
+        "channelStartYear": 2007,
+        "subscribers": 8513524,
+        "videos": 295,
+        "totalViews": 1059966131
+      },
+      "_sources": {
+        "birthYear": "Born April 11, 1987 - Chavie Lieber/Vox Media, 'The Rebirth of YouTube Beauty Pioneer Michelle Phan,' Racked, April 10, 2017 - https://www.racked.com/2017/4/10/15185246/michelle-phan-giving-up-youtube-em-cosmetics",
+        "channelStartYear": "May 2007 (having posted tutorials on Xanga as 'Ricebunny' from 2005 before moving to YouTube) - Erin Sullivan/Tampa Bay Times, 'Michelle Phan, a YouTube sensation for her makeup tutorials,' Aug 22, 2009, archived: https://web.archive.org/web/20160304041424/http://www.tampabay.com/features/humaninterest/michelle-phan-a-youtube-sensation-for-her-makeup-tutorials-has-transformed/1029747",
+        "subscribers": {
+          "value": 8513524,
+          "note": "As of August 1, 2026; Wikipedia infobox shows a slight decline from 8.62M as of September 16, 2024, consistent with her largely-inactive channel.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCuYx81nzzz4OFQrhbKDzTng"
+        },
+        "videos": {
+          "value": 295,
+          "note": "Corroborated by both this tracker and an independent Social Blade snippet - good agreement.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCuYx81nzzz4OFQrhbKDzTng"
+        },
+        "totalViews": {
+          "value": 1059966131,
+          "note": "As of August 1, 2026; Wikipedia infobox shows 1.05B as of September 16, 2024, consistent.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCuYx81nzzz4OFQrhbKDzTng"
+        }
+      },
+      "image": {
+        "file": "images/michelle-phan.webp",
+        "licence": "CC BY-SA 2.0",
+        "author": "Gage Skidmore from Peoria, AZ, United States of America",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Michelle_Phan.jpg"
+      }
+    },
+    {
+      "id": "amanda-cerny",
+      "name": "Amanda Cerny",
+      "stats": {
+        "birthYear": 1991,
+        "channelStartYear": 2016,
+        "subscribers": 2572896,
+        "videos": 697,
+        "totalViews": 244138124
+      },
+      "_sources": {
+        "birthYear": "Born June 26, 1991 in Pittsburgh, Pennsylvania - Playboy.com profile, cited by https://en.wikipedia.org/wiki/Amanda_Cerny",
+        "channelStartYear": {
+          "value": 2016,
+          "note": "Per Wikipedia infobox ('2016-present'); the nearby citation supports her subscriber count rather than the start date itself, so this is moderate confidence, not a directly-dated event.",
+          "source": "https://en.wikipedia.org/wiki/Amanda_Cerny"
+        },
+        "subscribers": {
+          "value": 2572896,
+          "note": "Wikipedia infobox shows 2.59M as of December 6, 2025, consistent.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCbyGK5QKd3z0POnjEQ8jdtg"
+        },
+        "videos": {
+          "value": 697,
+          "note": "",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCbyGK5QKd3z0POnjEQ8jdtg"
+        },
+        "totalViews": {
+          "value": 244138124,
+          "note": "Wikipedia infobox shows 243M as of December 6, 2025, consistent.",
+          "source": "https://socialcounts.org/youtube-live-subscriber-count/UCbyGK5QKd3z0POnjEQ8jdtg"
+        }
+      },
+      "image": {
+        "file": "images/amanda-cerny.webp",
+        "licence": "CC BY-SA 2.0",
+        "author": "Drifta Beatz",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Amanda_cerny_2018_(cropped).jpg"
+      }
+    },
+    {
+      "id": "rosanna-pansino",
+      "name": "Rosanna Pansino",
+      "stats": {
+        "birthYear": 1985,
+        "channelStartYear": 2010,
+        "subscribers": 14800000,
+        "videos": 2078,
+        "totalViews": 5129000000
+      },
+      "_sources": {
+        "birthYear": "Born June 8, 1985 - self-disclosed via her own tweet, @RosannaPansino, June 8, 2017 ('Thank very much but I turn 32'), cited by https://en.wikipedia.org/wiki/Rosanna_Pansino",
+        "channelStartYear": "Channel created April 8, 2010 - https://en.wikipedia.org/wiki/Rosanna_Pansino (citing her own YouTube About page) and https://socialblade.com/youtube/handle/rosannapansino",
+        "subscribers": {
+          "value": 14800000,
+          "note": "Per Wikipedia infobox, as of June 29, 2026. Social Blade separately shows ~15M as of August 2, 2026 - consistent, slightly more current.",
+          "source": "https://en.wikipedia.org/wiki/Rosanna_Pansino"
+        },
+        "videos": {
+          "value": 2078,
+          "note": "Single-sourced to Social Blade; Wikipedia does not list a video count.",
+          "source": "https://socialblade.com/youtube/handle/rosannapansino"
+        },
+        "totalViews": {
+          "value": 5129000000,
+          "note": "Per Wikipedia infobox, as of June 29, 2026. Social Blade separately shows 5.1B as of August 2, 2026 - consistent.",
+          "source": "https://en.wikipedia.org/wiki/Rosanna_Pansino"
+        }
+      },
+      "image": {
+        "file": "images/rosanna-pansino.webp",
+        "licence": "CC BY 3.0",
+        "author": "Vlogbrothers",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rosanna_Pansino_at_VidCon_2025_(cropped).jpg"
+      }
+    },
+    {
+      "id": "lilly-singh",
+      "name": "Lilly Singh",
+      "stats": {
+        "birthYear": 1988,
+        "channelStartYear": 2010,
+        "subscribers": 14200000,
+        "videos": 1342,
+        "totalViews": 3580508401
+      },
+      "_sources": {
+        "birthYear": "Born September 26, 1988 - News18, 'On Lilly Singh's 32nd Birthday...', Sept 26, 2020, cited by https://en.wikipedia.org/wiki/Lilly_Singh; independently corroborated by Rotten Tomatoes' bio page.",
+        "channelStartYear": "Started her YouTube channel under the pseudonym 'IISuperwomanII' in October 2010 (exact date October 29, 2010 per Social Blade) - https://en.wikipedia.org/wiki/Lilly_Singh and https://socialblade.com/youtube/handle/lillysingh. Rebranded to her real name in 2019; this is the same underlying channel.",
+        "subscribers": {
+          "value": 14200000,
+          "note": "Per Wikipedia infobox, as of April 15, 2026. Independently corroborated by SocialBook.io (~14.2M, July 19, 2026).",
+          "source": "https://en.wikipedia.org/wiki/Lilly_Singh"
+        },
+        "videos": {
+          "value": 1342,
+          "note": "Weakest-sourced figure here - Wikipedia's infobox carries no video-count field; sourced to a cached Social Blade snippet rather than a directly-loaded page. Treated as good-but-not-first-party.",
+          "source": "https://socialblade.com/youtube/handle/lillysingh"
+        },
+        "totalViews": {
+          "value": 3580508401,
+          "note": "Per Social Blade, corroborated closely by Wikipedia (3.57B, April 15, 2026) and SocialBook.io (~3.6B, July 19, 2026).",
+          "source": "https://socialblade.com/youtube/handle/lillysingh"
+        }
+      },
+      "image": {
+        "file": "images/lilly-singh.webp",
+        "licence": "Public domain",
+        "author": "PMO Barbados",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lilly_Singh_SDG_2025.jpg"
       }
     }
   ],
   "conventions": {
-    "birthYear": "Every card's birth year is corroborated by at least one source better than a fan-wiki/'birthday aggregator' site (FamousBirthdays, IMDb-only bios, etc.) - most commonly a Wikipedia article that in turn cites real journalism, a self-disclosure by the creator themselves (a video, tweet or Instagram post), or a reputable news outlet. Several candidate creators researched for this deck were excluded entirely because no such source could be found for their age (see the WBS slice's Delivered notes for the full list). Where only the birth year (not exact date) is corroborated, only the year is stored.",
+    "birthYear": "Every card's birth year is corroborated by at least one source better than a fan-wiki/'birthday aggregator' site (FamousBirthdays, IMDb-only bios, public-records indexes, etc.) - most commonly a Wikipedia article that in turn cites real journalism, a self-disclosure by the creator themselves (a video, tweet or Instagram post), or a reputable news outlet. Several candidate creators researched for this deck were excluded because no such source could be found for their age, including three initially-selected replacement creators (Hannah Stocking, iJustine, Grace Helbig) whose birth years traced only to public-records aggregators or uncited Wikipedia infobox fields. Where only the birth year (not exact date) is corroborated, only the year is stored.",
     "channelStartYear": "The year the creator began actively posting under their current channel identity, not necessarily when a YouTube account was first registered (several creators' accounts predate their content by years, or migrated from an earlier channel name/identity). Several of these dates are lower-confidence than birthYear, since 'channel joined' dates are less consistently reported than birth dates; flagged per card where confidence is lower.",
     "subscribers": "A live, constantly-changing figure. Every card's value is anchored to a specific 'as of' date (late July/early August 2026) recorded in that card's _sources - re-verify before relying on these for anything beyond this deck's gameplay.",
-    "videos": "Total upload count on the creator's main channel only, excluding secondary/spin-off channels the same creator may also run. Third-party trackers frequently disagree by small margins on this figure; a middle estimate is used where sources conflict, flagged per card.",
-    "totalViews": "Lifetime view count on the creator's main channel only. This metric replaced an originally-planned 'Height' stat: reliable, cited height data exists for essentially none of these creators (fan-wiki guesses were the only source found for all but two), which conflicts with this deck's sourcing rule, so Total Views was used instead as a metric with genuinely available, cited data for the whole roster.",
-    "roster": "This deck originally targeted a different 30-name roster more closely matching the initial brief, but approximately a dozen candidates were swapped out during research because no source better than a fan-wiki/content-farm site could be found for their age, which this deck's sourcing rule treats as disqualifying. See the WBS slice's Delivered section for the full substitution history."
+    "videos": "Total upload count on the creator's main channel only, excluding secondary/spin-off channels the same creator may also run. Third-party trackers frequently disagree by small margins on this figure; a middle estimate is used where sources conflict, flagged per card. A few cards' video counts are single-sourced to one tracker with no independent corroboration, also flagged per card.",
+    "totalViews": "Lifetime view count on the creator's main channel only. This metric replaced an originally-planned 'Height' stat: reliable, cited height data exists for essentially none of these creators, which conflicts with this deck's sourcing rule, so Total Views was used instead as a metric with genuinely available, cited data for the whole roster.",
+    "roster": "This deck originally targeted a different 30-name roster more closely matching the initial brief, but candidates were swapped out during research in two separate passes: first, roughly a dozen were swapped because no source better than a fan-wiki/content-farm site could be found for their age; second, six more (Jayden Bartels, Karina Garcia, Kids Diana Show, LaurDIY, Niki and Gabi, Piper Rockelle) were swapped because no freely-licensed photo existed for them once the deck moved from illustrated avatars to real sourced photographs. Three interim replacement candidates (Hannah Stocking, iJustine, Grace Helbig) were themselves swapped out a stage later after their birth years failed the same age-sourcing bar. The final roster's replacements are: Anna McNulty, Bethany Mota, Michelle Phan, Amanda Cerny, Rosanna Pansino, and Lilly Singh.",
+    "images": "Every card image is a real, freely-licensed photograph of the creator, sourced from Wikimedia Commons (the same source and licensing model used by this project's Motorcycles deck) - not an AI-generated or illustrated likeness. Licence, photographer/author, and the Commons file page are recorded per card. Six creators from the original roster (Jayden Bartels, Karina Garcia, Kids Diana Show, LaurDIY, Niki and Gabi, Piper Rockelle) had no freely-licensed photo available anywhere on Commons - not even a non-free/fair-use image existed for most - and were swapped out for other on-theme creators who do have a genuinely free, citable photo, consistent with this deck's 'no invented/unavailable data' rule applied to images as well as stats."
   }
 }
