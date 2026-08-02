@@ -49,6 +49,16 @@ by two modules that have no tests.
 sdk=35
 ```
 
+**Override the emulated `Application` class** in the same file, to `android.app.Application`.
+`AndroidManifest.xml` declares `TopTrumpsApplication`, whose `onCreate()` builds a full
+`AppGraph` — NSD discovery, `ConnectivityManager`, a real Room database, sound setup. With
+`isIncludeAndroidResources = true` merging that manifest in, Robolectric would otherwise
+instantiate the real `TopTrumpsApplication` for every `:app` test, coupling even a trivial
+composable test to full app startup. The override applies to the whole `test` source set, not
+per-test, so a future test that switches to `createAndroidComposeRule<MainActivity>()` will hit a
+`ClassCastException` at `application as TopTrumpsApplication` — expected, given the override, not
+a bug in that test.
+
 **Add `--add-opens` JVM args** for `java.base/java.lang` and `java.base/java.util` on the test task:
 CI runs JDK 17 while the local Android Studio JBR is JDK 25, and Robolectric performs bytecode
 instrumentation. Without this the failure mode is "green in CI, `InaccessibleObjectException` in

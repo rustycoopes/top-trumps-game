@@ -43,6 +43,13 @@ android {
 
     // Deck content lives at the repo root, outside every module — see the deck-storage ADR.
     sourceSets.getByName("main").assets.srcDir(rootProject.file("decks"))
+
+    // :app diverges to JUnit 4 + Robolectric + Compose UI testing here — see the app-test-framework
+    // ADR. Still defaults to false under AGP 9; without it Robolectric can't resolve the merged
+    // manifest/resources it needs for a real Context.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -69,4 +76,21 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.coil.compose)
+
+    // JUnit4, not the rest of the repo's Jupiter — createComposeRule() is a JUnit 4 TestRule and
+    // RobolectricTestRunner is a JUnit 4 Runner. Confined to :app; :core:* stays on Jupiter.
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.junit4)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.compose.ui.test.junit4)
+    // debugImplementation, not testImplementation: this contributes the ComponentActivity
+    // declaration createComposeRule() launches, so it must reach the merged debug manifest.
+    debugImplementation(libs.compose.ui.test.manifest)
+}
+
+tasks.withType<Test>().configureEach {
+    // CI runs JDK 17; the local Android Studio JBR is JDK 25. Robolectric's bytecode
+    // instrumentation needs these opens on newer JDKs, or it's "green in CI,
+    // InaccessibleObjectException in Studio" (or the reverse) — see the app-test-framework ADR.
+    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.util=ALL-UNNAMED")
 }
