@@ -1,7 +1,9 @@
 package com.toptrumps.app.theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import com.toptrumps.rules.ArgbColor
+import com.toptrumps.rules.DeckTheme
 
 /**
  * [ArgbColor] → Compose [Color] — total, not partial: every [ArgbColor] that reaches `:app` has
@@ -10,3 +12,14 @@ import com.toptrumps.rules.ArgbColor
  * no invalid-state branch to handle here. See the deck-theme-block ADR.
  */
 public fun ArgbColor.toComposeColor(): Color = Color(argb)
+
+/**
+ * The card composable's only source of colour — an explicit parameter, never a
+ * `CompositionLocal`, so `TrumpCard`/`TrumpCardBack` can never reach for `MaterialTheme.colorScheme`
+ * by accident (card-visual-identity TDD decision 1: story 20's dark-mode invariance depends on
+ * this staying structurally impossible to break).
+ */
+@Immutable
+internal data class CardPalette(val accent: Color, val onAccent: Color)
+
+internal fun DeckTheme.toCardPalette(): CardPalette = CardPalette(accent.toComposeColor(), onAccent.toComposeColor())

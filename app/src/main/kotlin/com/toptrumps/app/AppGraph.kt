@@ -150,6 +150,15 @@ public class AppGraph(context: Context) {
     }
 
     /**
+     * The full [Deck] behind [deckId], for the debug card gallery ([CardGalleryScreen]) —
+     * [listDecks] only keeps enough to populate [DeckSummary] (id/name), not [Deck.cards] or
+     * [Deck.metrics]. `null` if [deckId] doesn't resolve to a valid deck. Not cached: unlike
+     * [deckTheme], the gallery is the only caller and only ever loads one deck at a time.
+     */
+    public fun loadDeck(deckId: String): Deck? =
+        (DeckLoader.load(deckSource, deckId) as? DeckValidationResult.Valid)?.deck
+
+    /**
      * The human's session for a fresh solo match against the chosen deck. Callable again for a
      * rematch — the returned [MatchSession.close] tears down everything this match started,
      * including the guest side and its [AiOpponentDriver] collector, which otherwise outlive the

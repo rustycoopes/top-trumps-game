@@ -28,6 +28,17 @@ internal data class CardGeometry(
     val height: Dp,
 )
 
+/**
+ * The image window's *actual rendered* height — for [CardVariant.MINI], which renders no stat
+ * table, [TrumpCard][com.toptrumps.app.card.TrumpCard] reallocates [CardGeometry.tableHeight] into
+ * the image window (the mini reading of Open Question 4), so [imageHeight] alone understates it.
+ * A single source of truth for that reallocation: both the layout and
+ * [AssetTrumpCard][com.toptrumps.app.card.AssetTrumpCard]'s Coil decode-size request derive from
+ * this, so they can't silently drift apart the way a duplicated `if (variant == MINI)` would.
+ */
+internal val CardGeometry.imageZoneHeight: Dp
+    get() = if (variant == CardVariant.MINI) imageHeight + tableHeight else imageHeight
+
 /** `row = max(0.12w, minRow)` — the nominal row height at the ADR's `h = 1.5w`, banner 10% / image 50% / table 40% split. */
 private const val ROW_WIDTH_COEFFICIENT = 0.12f
 
