@@ -58,6 +58,9 @@ private data object Lobby
 private data object Settings
 
 @Serializable
+private data object CardGallery
+
+@Serializable
 private data object History
 
 @Serializable
@@ -184,7 +187,17 @@ private fun AppRoot(appGraph: AppGraph) {
                 onBack = { navController.popBackStack() },
                 muted = muted,
                 onSetMuted = { value -> scope.launch { appGraph.soundPreferences.setMuted(value) } },
+                onOpenCardGallery = if (BuildConfig.DEBUG) ({ navController.navigate(CardGallery) }) else null,
             )
+        }
+
+        // Debug-build-only (card-visual-identity WBS slice 3) — the route itself is never
+        // registered in a release build, not just hidden behind a Settings button that happens
+        // not to appear.
+        if (BuildConfig.DEBUG) {
+            composable<CardGallery> {
+                CardGalleryScreen(appGraph = appGraph, onBack = { navController.popBackStack() })
+            }
         }
 
         composable<ManualConnect> {

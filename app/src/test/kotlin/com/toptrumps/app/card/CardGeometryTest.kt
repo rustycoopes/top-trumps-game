@@ -62,6 +62,18 @@ class CardGeometryTest {
     }
 
     @Test
+    fun `imageZoneHeight reallocates tableHeight into the image window only for the mini variant`() {
+        // Slice 3's TrumpCard renders no stat table for MINI, giving that space to the image
+        // window instead — AssetTrumpCard's Coil decode-size request must agree, or mini cards
+        // silently decode at less than their rendered resolution (found and fixed during slice 3).
+        val mini = cardGeometry(width = 96.dp, variant = CardVariant.MINI)
+        assertEquals(mini.imageHeight + mini.tableHeight, mini.imageZoneHeight)
+
+        val hero = cardGeometry(width = 380.dp, variant = CardVariant.HERO, minRowHeight = 48.dp)
+        assertEquals(hero.imageHeight, hero.imageZoneHeight)
+    }
+
+    @Test
     fun `solveCardWidth is width-bound on a phone-sized budget`() {
         // A tall, narrow budget: width is the binding constraint, not height.
         val width = solveCardWidth(maxWidth = 300.dp, maxHeight = 1000.dp, minRowHeight = 48.dp)

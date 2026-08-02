@@ -20,7 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/** Story 2's "editable later" route — changing the name here means re-registering the NSD service the next time the lobby starts. */
+/**
+ * Story 2's "editable later" route — changing the name here means re-registering the NSD service
+ * the next time the lobby starts. [onOpenCardGallery], when non-null, renders a debug-only entry
+ * point to the card gallery — `null` in a release build, gated at the `MainActivity` call site.
+ */
 @Composable
 public fun SettingsScreen(
     currentName: String,
@@ -29,6 +33,7 @@ public fun SettingsScreen(
     muted: Boolean,
     onSetMuted: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenCardGallery: (() -> Unit)? = null,
 ) {
     var name by remember { mutableStateOf(currentName) }
 
@@ -44,6 +49,10 @@ public fun SettingsScreen(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Mute sound effects")
             Switch(checked = muted, onCheckedChange = onSetMuted)
+        }
+
+        if (onOpenCardGallery != null) {
+            TextButton(onClick = onOpenCardGallery) { Text("Card gallery (debug)") }
         }
     }
 }

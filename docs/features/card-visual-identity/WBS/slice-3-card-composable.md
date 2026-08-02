@@ -109,3 +109,51 @@ the first Compose test, built on Slice 1's proven configuration.
 **Not covered by automated tests, by design:** colour, crop quality, spacing, font rendering, contrast.
 These are `@Preview`, the debug gallery, and a manual on-device pass — matching this project's
 standing convention for anything visual.
+
+## Delivered
+
+Issue: [#28](https://github.com/rustycoopes/top-trumps-game/issues/28) · Branch:
+`slice-3-card-composable` · Date: 2026-08-02
+
+Built as designed, on top of Slice 2's `CardGeometry`/`CardPalette`-adjacent plumbing (merged as
+part of this session, since #27's PR had landed on its own branch but not yet into `master`). The
+two-layer split from the card-image-slot ADR — a pure `TrumpCard`/`TrumpCardBack` in
+`app/src/main/kotlin/com/toptrumps/app/card/` taking the photo as an inline `@Composable (Modifier)
+-> Unit` slot, plus a thin `AssetTrumpCard` wrapper owning the only `file:///android_asset/...`
+reference and the Coil decode-size guarantee — landed exactly as specified. `CardContent.kt`'s pure
+`cardContentOf(card, metrics, now: Clock, ...)` maps `RemoteCardFace`/`RemoteMetricSpec` into
+`@Immutable` `CardContent`/`StatRow`, taking an injectable `Clock` so the `YEARS_SINCE_VALUE`
+derivation never touches `Clock.System` inside the card itself. Font-scale is capped at 1.3× inside
+both `TrumpCard`/`TrumpCardBack` per TDD decision 3's exact `Density` shape. A debug-build-only
+`CardGalleryScreen`, reachable from Settings and gated at the `MainActivity` nav-graph level (not
+just hidden behind a button), renders every card of a real deck at real size from real assets, plus
+an opened-card view showing front and back side by side at one shared `CardGeometry` instance for
+the geometric-identity acceptance criterion. `CardPreviews.kt` covers hero/reveal/mini widths, a
+long name, and all three reveal outcomes. `MatchScreen.kt`'s `CardImage`/`WinPileGrid` are
+deliberately untouched — out of this slice's scope per its own "touches no screen a player currently
+sees," left for the match-screen slice.
+
+Code review (`code-review-master` and `code-quality-guardian`, run in parallel) found one real bug
+before it shipped: `AssetTrumpCard`'s Coil decode-size request was derived from `geometry.imageHeight`
+alone, but `TrumpCard` reallocates the stat table's height into the image window for the `MINI`
+variant (no table renders there) — so every mini card (the win-pile grid / deck-tile production
+case) would have decoded at roughly half its rendered resolution. Fixed with a single
+`CardGeometry.imageZoneHeight` extension consumed identically by both the layout and the decode-size
+request, plus a `CardGeometryTest` case pinning it down. Also applied: a second Robolectric test for
+the full-variant (non-mini) read-only case, a test-visibility cleanup to match the repo's existing
+`DeckThemeResolutionTest`-style implicit visibility instead of explicit `public`, and hoisting a
+per-grid-item `remember` in `CardGalleryScreen` to per-screen. Two non-blocking findings were filed
+rather than fixed here: [#34](https://github.com/rustycoopes/top-trumps-game/issues/34) (the
+gallery's local `RemoteCardFace`/`RemoteMetricSpec` mapping duplicates two private mappers already in
+`:core:session` — a cross-module visibility change out of this slice's footprint) and
+[#35](https://github.com/rustycoopes/top-trumps-game/issues/35) (this file's own Testing section,
+above, claims `Modifier.clickable(enabled = false)` emits no `OnClick` action — decompiled bytecode
+and a failing test during implementation showed that's false for this Compose version; the shipped
+`StatRowView` re-checks `enabled` inside the callback itself rather than relying on that claim).
+
+`./gradlew :app:testDebugUnitTest` (24 tests: `CardContentTest`, `CardGeometryTest`, `TrumpCardTest`,
+`DeckThemeResolutionTest`), `:app:lintDebug` ("No issues found"), `:app:assembleDebug`, and
+`checkCoreDependencyAllowlist` for all four `:core:*` modules all pass. The device-only acceptance
+criteria (front/back seamlessness, font-scale-changed-in-system-settings row alignment, and judging
+actual photo crops in the gallery) were not verified on a physical device this session — none was
+available — consistent with this project's standing convention for anything visual.
