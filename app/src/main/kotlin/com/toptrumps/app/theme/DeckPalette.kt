@@ -17,9 +17,12 @@ public fun ArgbColor.toComposeColor(): Color = Color(argb)
  * The card composable's only source of colour — an explicit parameter, never a
  * `CompositionLocal`, so `TrumpCard`/`TrumpCardBack` can never reach for `MaterialTheme.colorScheme`
  * by accident (card-visual-identity TDD decision 1: story 20's dark-mode invariance depends on
- * this staying structurally impossible to break).
+ * this staying structurally impossible to break). `public`, not `internal`: [MatchScreen]'s own
+ * `public` signature takes one directly (its call sites resolve the deck's theme before this
+ * screen is reached, per card-visual-identity TDD decision 6), and a public function can't expose
+ * an internal parameter type.
  */
 @Immutable
-internal data class CardPalette(val accent: Color, val onAccent: Color)
+public data class CardPalette(val accent: Color, val onAccent: Color)
 
 internal fun DeckTheme.toCardPalette(): CardPalette = CardPalette(accent.toComposeColor(), onAccent.toComposeColor())

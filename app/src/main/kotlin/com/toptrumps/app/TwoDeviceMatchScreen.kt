@@ -9,17 +9,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
+import com.toptrumps.app.theme.toCardPalette
+import com.toptrumps.rules.DeckTheme
 import com.toptrumps.session.ConnectionState
 
 /**
  * The whole two-device journey from a freshly connected socket to a playing match — story
  * 18/PRD's "handshake", then [MatchScreen] once [MatchPhase.InMatch] is reached. [peerDisplayName]
  * is shown throughout since it's known from the lobby invitation well before the handshake
- * confirms anything about the peer's build or deck.
+ * confirms anything about the peer's build or deck. [deckTheme] is [AppGraph.deckTheme] passed as
+ * a plain function reference rather than the whole [AppGraph] — this screen only ever needs one
+ * cache read from it, once [MatchPhase.InMatch.deckId] is known.
  */
 @Composable
 public fun TwoDeviceMatchScreen(
@@ -28,6 +33,7 @@ public fun TwoDeviceMatchScreen(
     onLeave: () -> Unit,
     soundEffects: SoundEffects,
     imageLoader: ImageLoader,
+    deckTheme: (deckId: String) -> DeckTheme?,
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(controller) { controller.start() }
@@ -72,12 +78,14 @@ public fun TwoDeviceMatchScreen(
             // about a drop *during* play (the heartbeat only starts once a session exists); a
             // drop during the handshake above already has its own ConnectionLost dead end.
             val connectionState by current.session.connectionState.collectAsStateWithLifecycle()
+            val palette = remember(current.deckId) { (deckTheme(current.deckId) ?: DeckTheme.DEFAULT).toCardPalette() }
             when (val connection = connectionState) {
                 is ConnectionState.Connected ->
                     MatchScreen(
                         session = current.session,
                         deckId = current.deckId,
                         imageLoader = imageLoader,
+                        palette = palette,
                         localSeat = current.localSeat,
                         rematchLabel = "Back to lobby",
                         onRematch = onLeave,
