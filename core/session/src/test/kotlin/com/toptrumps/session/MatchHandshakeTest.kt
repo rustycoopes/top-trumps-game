@@ -90,6 +90,61 @@ class MatchHandshakeTest {
     }
 
     @Test
+    fun `the host times out instead of hanging forever if no Hello ever arrives`() = runTest {
+        val (host, guest) = LoopbackTransport.createPair()
+
+        val hostResult = HostHandshake.awaitHello(host, timeout = 10.milliseconds)
+
+        assertEquals(HostHandshake.HelloResult.TimedOut, hostResult)
+
+        host.close()
+        guest.close()
+    }
+
+    @Test
+    fun `the guest times out instead of hanging forever if no HelloAck ever arrives`() = runTest {
+        val (host, guest) = LoopbackTransport.createPair()
+
+        val guestResult = GuestHandshake.run(
+            guest,
+            "Guest",
+            "instance-id",
+            localDeckHash = { error("must not be reached") },
+            timeout = 10.milliseconds,
+        )
+
+        assertEquals(GuestHandshake.Result.TimedOut, guestResult)
+
+        host.close()
+        guest.close()
+    }
+
+    @Test
+    fun `the guest times out if MatchStart never follows an accepted deck, but never times out waiting on the host's deck pick itself`() = runTest {
+        val (host, guest) = LoopbackTransport.createPair()
+        val config = WireMatchConfig("test-deck", "CHOOSER_WINS")
+
+        val guestResult = async {
+            GuestHandshake.run(guest, "Guest", "instance-id", localDeckHash = { "same-hash" }, timeout = 10.milliseconds)
+        }
+
+        val helloResult = HostHandshake.awaitHello(host)
+        check(helloResult is HostHandshake.HelloResult.Ready)
+        // The guest's deck-pick wait is unbounded, so it's still alive well past `timeout` here —
+        // only once the deck is actually chosen does the (bounded) MatchStart wait start ticking.
+        assertEquals(
+            HostHandshake.DeckResult.Accepted,
+            HostHandshake.chooseDeck(host, "test-deck", "same-hash", config, confirmWindow = 50.milliseconds),
+        )
+        // Deliberately never send MatchStart.
+
+        assertEquals(GuestHandshake.Result.TimedOut, guestResult.await())
+
+        host.close()
+        guest.close()
+    }
+
+    @Test
     fun `each handshake mints a fresh session token, so a rematch can't collide with a finished match's resume`() = runTest {
         fun tokenOf(handshakeResult: HostHandshake.HelloResult): String =
             (handshakeResult as HostHandshake.HelloResult.Ready).sessionToken

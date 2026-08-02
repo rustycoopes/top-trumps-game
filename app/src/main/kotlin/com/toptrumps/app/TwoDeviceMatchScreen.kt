@@ -73,6 +73,14 @@ public fun TwoDeviceMatchScreen(
                 onLeave,
             )
 
+        is MatchPhase.HandshakeTimedOut ->
+            StatusScreen(
+                modifier,
+                "Couldn't confirm compatibility",
+                "Didn't hear back from $peerDisplayName in time — make sure you're both updated to the same version, then reconnect.",
+                onLeave,
+            )
+
         is MatchPhase.InMatch -> {
             // Only InMatch has a live session — the countdown/abandon/left story is entirely
             // about a drop *during* play (the heartbeat only starts once a session exists); a

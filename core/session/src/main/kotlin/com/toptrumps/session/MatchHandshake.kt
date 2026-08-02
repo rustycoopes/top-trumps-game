@@ -18,20 +18,28 @@ public object HostHandshake {
     /** How long [chooseDeck] waits for a possible [GuestToHost.DeckMismatch] before dealing — same-Wi-Fi round trips are single-digit milliseconds, so this is generous rather than tight. */
     public val DEFAULT_DECK_CONFIRM_WINDOW: Duration = 500.milliseconds
 
+    /** How long [awaitHello] waits for the guest's [GuestToHost.Hello] before giving up — this is an automatic, near-instant exchange (no human decision in the way, unlike the deck pick), so a bounded wait can't misfire on a slow human; without it, a peer that never sends a recognizable `Hello` (an incompatible build whose wire *schema*, not just [PROTOCOL_VERSION], changed) hangs the handshake screen forever with no warning. */
+    public val DEFAULT_HELLO_TIMEOUT: Duration = 5000.milliseconds
+
     public sealed interface HelloResult {
         /** The guest is running an incompatible build; the caller must not offer a deck to pick. */
         public data class Refused(val guestVersion: Int) : HelloResult
 
         /** [sessionToken] is what a later [GuestToHost.Resume] on this match must present — the caller hands it to [HostMatchSession]. */
         public data class Ready(val sessionToken: String) : HelloResult
+
+        /** Nothing recognizable arrived within [DEFAULT_HELLO_TIMEOUT] — the caller should show a warning rather than hang. */
+        public data object TimedOut : HelloResult
     }
 
-    /** Gate 1: blocks deck selection until the guest's [GuestToHost.Hello] is seen and its protocol version matches ours. */
-    public suspend fun awaitHello(transport: Transport): HelloResult {
-        val hello = transport.incoming
-            .map { ProtocolCodec.decodeGuestToHost(it) }
-            .filterIsInstance<GuestToHost.Hello>()
-            .first()
+    /** Gate 1: blocks deck selection until the guest's [GuestToHost.Hello] is seen and its protocol version matches ours, or [timeout] elapses with nothing recognizable heard. */
+    public suspend fun awaitHello(transport: Transport, timeout: Duration = DEFAULT_HELLO_TIMEOUT): HelloResult {
+        val hello = withTimeoutOrNull(timeout) {
+            transport.incoming
+                .map { ProtocolCodec.decodeGuestToHost(it) }
+                .filterIsInstance<GuestToHost.Hello>()
+                .first()
+        } ?: return HelloResult.TimedOut
         return if (hello.protocolVersion != PROTOCOL_VERSION) {
             transport.send(ProtocolCodec.encodeHostToGuest(HostToGuest.VersionMismatch(PROTOCOL_VERSION)))
             HelloResult.Refused(hello.protocolVersion)
@@ -91,6 +99,9 @@ public object GuestHandshake {
             val roundCount: Int,
             val sessionToken: String,
         ) : Result
+
+        /** Nothing recognizable arrived within [timeout] at one of the two automatic exchanges (Hello/Ack, or MatchStart right after a deck is accepted) — the caller should show a warning rather than hang. The deck-pick wait itself is never subject to this, since that one is genuinely paced by the host's human decision. */
+        public data object TimedOut : Result
     }
 
     /**
@@ -98,7 +109,9 @@ public object GuestHandshake {
      * guest's own copy of [HostToGuest.DeckChosen.deckId]'s manifest — `null` (deck not found or
      * unreadable) is treated the same as a hash mismatch. [protocolVersion] defaults to this
      * build's [PROTOCOL_VERSION]; a test overrides it to simulate the "one phone auto-updated
-     * before the other" scenario the version gate exists for.
+     * before the other" scenario the version gate exists for. [timeout] bounds only the two
+     * automatic exchanges (Hello/Ack and MatchStart) — the [HostToGuest.DeckChosen] wait in between
+     * is deliberately unbounded, since that one waits on the host tapping a deck, not on the wire.
      */
     public suspend fun run(
         transport: Transport,
@@ -106,11 +119,14 @@ public object GuestHandshake {
         instanceId: String,
         localDeckHash: (deckId: String) -> String?,
         protocolVersion: Int = PROTOCOL_VERSION,
+        timeout: Duration = HostHandshake.DEFAULT_HELLO_TIMEOUT,
     ): Result {
         transport.send(ProtocolCodec.encodeGuestToHost(GuestToHost.Hello(protocolVersion, displayName, instanceId)))
         val messages = transport.incoming.map { ProtocolCodec.decodeHostToGuest(it) }
 
-        val afterHello = messages.first { it is HostToGuest.VersionMismatch || it is HostToGuest.HelloAck }
+        val afterHello = withTimeoutOrNull(timeout) {
+            messages.first { it is HostToGuest.VersionMismatch || it is HostToGuest.HelloAck }
+        } ?: return Result.TimedOut
         if (afterHello is HostToGuest.VersionMismatch) return Result.VersionRefused(afterHello.hostVersion)
         val sessionToken = (afterHello as HostToGuest.HelloAck).sessionToken
 
@@ -121,7 +137,9 @@ public object GuestHandshake {
             return Result.DeckRefused(deckChosen.deckId)
         }
 
-        val matchStart = messages.filterIsInstance<HostToGuest.MatchStart>().first()
+        val matchStart = withTimeoutOrNull(timeout) {
+            messages.filterIsInstance<HostToGuest.MatchStart>().first()
+        } ?: return Result.TimedOut
         return Result.Ready(deckChosen.deckId, deckChosen.config, matchStart.yourHand, matchStart.roundCount, sessionToken)
     }
 }

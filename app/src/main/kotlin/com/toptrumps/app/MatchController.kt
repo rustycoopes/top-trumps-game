@@ -35,6 +35,9 @@ public sealed interface MatchPhase {
 
     /** The peer vanished mid-handshake (backgrounded, crashed, walked out of Wi-Fi range) — the same recoverable-elsewhere gap slice 6's heartbeat/reconnect story closes for good; for now this is a clean dead end rather than a crash. */
     public data object ConnectionLost : MatchPhase
+
+    /** Nothing recognizable arrived within [HostHandshake.DEFAULT_HELLO_TIMEOUT] at one of the handshake's automatic exchanges — a distinct dead end from [ConnectionLost] (the transport is still open; the peer just never sent anything decodable) so the two don't get confused when triaging a stuck pairing. */
+    public data object HandshakeTimedOut : MatchPhase
 }
 
 /**
@@ -94,6 +97,7 @@ public class MatchController(
     private suspend fun runHost() {
         when (val result = HostHandshake.awaitHello(transport)) {
             is HostHandshake.HelloResult.Refused -> _phase.value = MatchPhase.VersionMismatch(result.guestVersion)
+            HostHandshake.HelloResult.TimedOut -> _phase.value = MatchPhase.HandshakeTimedOut
             is HostHandshake.HelloResult.Ready -> {
                 sessionToken = result.sessionToken
                 _phase.value = MatchPhase.PickingDeck(listDecks())
@@ -141,6 +145,7 @@ public class MatchController(
         when (result) {
             is GuestHandshake.Result.VersionRefused -> _phase.value = MatchPhase.VersionMismatch(result.hostVersion)
             is GuestHandshake.Result.DeckRefused -> _phase.value = MatchPhase.DeckMismatch(result.deckId)
+            GuestHandshake.Result.TimedOut -> _phase.value = MatchPhase.HandshakeTimedOut
             is GuestHandshake.Result.Ready -> {
                 val session = GuestMatchSession(transport, scope, result.sessionToken, peerDisplayName)
                 watchConnection(session)
