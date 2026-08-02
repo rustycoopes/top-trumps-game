@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.ImageLoader
 import com.toptrumps.session.ConnectionState
 
 /**
@@ -26,6 +27,7 @@ public fun TwoDeviceMatchScreen(
     peerDisplayName: String,
     onLeave: () -> Unit,
     soundEffects: SoundEffects,
+    imageLoader: ImageLoader,
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(controller) { controller.start() }
@@ -75,6 +77,7 @@ public fun TwoDeviceMatchScreen(
                     MatchScreen(
                         session = current.session,
                         deckId = current.deckId,
+                        imageLoader = imageLoader,
                         localSeat = current.localSeat,
                         rematchLabel = "Back to lobby",
                         onRematch = onLeave,

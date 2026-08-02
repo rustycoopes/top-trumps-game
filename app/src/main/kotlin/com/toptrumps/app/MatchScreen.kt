@@ -26,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -55,12 +54,15 @@ import kotlinx.datetime.Clock
  * [onLeaveMatch], when non-null, renders a deliberate-quit affordance during play — two-device
  * only; solo has no peer to notify and no drop to distinguish from a quit. [soundEffects] fires the
  * six cues WBS slice-7-polish calls for; [rememberAnimationGate] (shared across the whole match,
- * not per-round) decides whether a given reveal/slide/sound plays or hard-cuts.
+ * not per-round) decides whether a given reveal/slide/sound plays or hard-cuts. [imageLoader] is
+ * the app's single shared instance ([AppGraph.imageLoader]) — this screen no longer builds or
+ * shuts down its own (slice 2's ImageLoader-ownership move).
  */
 @Composable
 public fun MatchScreen(
     session: MatchSession,
     deckId: String,
+    imageLoader: ImageLoader,
     onRematch: () -> Unit,
     soundEffects: SoundEffects,
     modifier: Modifier = Modifier,
@@ -77,12 +79,6 @@ public fun MatchScreen(
         localView.keepScreenOn = true
         onDispose { localView.keepScreenOn = false }
     }
-
-    // Disk cache disabled — the source is already local asset storage (TDD §7) — and shared for
-    // the lifetime of the screen rather than rebuilt per image.
-    val context = LocalContext.current
-    val imageLoader = remember(context) { ImageLoader.Builder(context).diskCache(null).build() }
-    DisposableEffect(imageLoader) { onDispose { imageLoader.shutdown() } }
 
     val animationGate = rememberAnimationGate()
 

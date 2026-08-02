@@ -1,6 +1,11 @@
 {
   "id": "motorcycles",
   "name": "Motorcycles",
+  "theme": {
+    "accent": "#C8102E",
+    "onAccent": "#FFFFFF",
+    "heroCardId": "kawasaki-ninja-h2"
+  },
   "metrics": [
     {
       "key": "engineCapacity",

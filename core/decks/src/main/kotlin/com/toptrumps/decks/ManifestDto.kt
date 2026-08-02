@@ -1,5 +1,6 @@
 package com.toptrumps.decks
 
+import com.toptrumps.rules.DeckTheme
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -28,6 +29,13 @@ internal data class CardDto(
 )
 
 @Serializable
+internal data class DeckThemeDto(
+    val accent: String? = null,
+    val onAccent: String? = null,
+    val heroCardId: String? = null,
+)
+
+@Serializable
 internal data class DeckManifestDto(
     val id: String,
     val name: String,
@@ -39,4 +47,6 @@ internal data class DeckManifestDto(
      * "Deck format and content" section. Documentation only; not consumed by [DeckLoader].
      */
     val conventions: Map<String, String> = emptyMap(),
+    /** Optional deck visual identity — see the deck-theme-block ADR. Absent means [DeckTheme.DEFAULT]. */
+    val theme: DeckThemeDto? = null,
 )

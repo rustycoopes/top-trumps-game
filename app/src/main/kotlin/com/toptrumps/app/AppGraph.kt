@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
+import coil3.ImageLoader
 import com.toptrumps.ai.AiOpponentDriver
 import com.toptrumps.decks.DeckLoader
 import com.toptrumps.decks.DeckValidationResult
@@ -16,6 +17,8 @@ import com.toptrumps.feature.history.Outcome
 import com.toptrumps.platform.net.NsdLobbyDiscovery
 import com.toptrumps.platform.net.NsdLobbyRegistration
 import com.toptrumps.platform.net.WifiNetworkProvider
+import com.toptrumps.rules.Deck
+import com.toptrumps.rules.DeckTheme
 import com.toptrumps.rules.MatchConfig
 import com.toptrumps.rules.MatchResult
 import com.toptrumps.rules.PlayerIntent
@@ -48,6 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 /** The opponent name recorded for a solo match — there's no real display name to decorate it with. */
@@ -93,16 +97,56 @@ public class AppGraph(context: Context) {
     public val soundEffects: SoundEffects = SoundEffects(appContext, soundPreferences.muted)
 
     /**
+     * The app's one Coil [ImageLoader] — every card image comes from local assets (TDD §7), so the
+     * disk cache is disabled. Owned here rather than built per-screen: once the deck picker shows
+     * images too, a second loader would mean a second decode pool and memory cache, and sharing
+     * one screen's loader would leave that screen's own teardown shutting it down out from under
+     * the other. Released in [close].
+     */
+    public val imageLoader: ImageLoader = ImageLoader.Builder(appContext).diskCache(null).build()
+
+    /**
+     * Resolved themes for every deck seen so far — [listDecks] runs on the caller's own thread
+     * (a plain `remember {}` call from Compose's main thread), while [deckTheme] can also be
+     * reached from a [MatchController]'s `matchScope` (a background dispatcher — see
+     * `AppGraph.scope`), so this must tolerate concurrent access. `ConcurrentHashMap`, not a
+     * `MutableMap` guarded by `getOrPut`: an invalid `deckId` simply isn't cached (see [deckTheme])
+     * rather than needing a null-vs-absent sentinel, and every write here is idempotent — two
+     * threads resolving the same valid deck concurrently always compute the same [DeckTheme].
+     */
+    private val deckThemeCache = ConcurrentHashMap<String, DeckTheme>()
+
+    /**
      * Every deck folder under `/decks` that actually validates, at launch — the picker's entire
      * data source, per the PRD's "adding a deck later needs no new UI" requirement (see the
      * deck-storage ADR). A folder whose manifest fails validation is excluded rather than shown
-     * broken; [DeckLoader] already refuses it loudly via its own validation errors.
+     * broken; [DeckLoader] already refuses it loudly via its own validation errors. Populates
+     * [deckThemeCache] from the same [Deck] load, rather than [deckTheme] re-loading it later.
      */
     public fun listDecks(): List<DeckSummary> = deckSource.listDecks().mapNotNull { id ->
         when (val result = DeckLoader.load(deckSource, id)) {
-            is DeckValidationResult.Valid -> DeckSummary(id, result.deck.name)
+            is DeckValidationResult.Valid -> {
+                deckThemeCache.computeIfAbsent(id) { resolveDeckTheme(result.deck) }
+                DeckSummary(id, result.deck.name)
+            }
             is DeckValidationResult.Invalid -> null
         }
+    }
+
+    /**
+     * [deckId]'s resolved theme — colours plus a [DeckTheme.heroCardId] guaranteed to name an
+     * actual card (see [resolveDeckTheme]). `null` only if [deckId] doesn't resolve to a valid
+     * deck — that case is deliberately never cached, since it's the rare/degenerate path and
+     * caching it would need a null-vs-absent sentinel for no real benefit. `MatchScreen`/the guest
+     * path only ever have a `deckId: String`, never a loaded [Deck] (the guest never loads one
+     * locally — TDD decision 6), so this is the only route to a theme from that call site. A
+     * *valid* [deckId] already resolved — by [listDecks] or a prior call here — never re-invokes
+     * [DeckLoader.load].
+     */
+    public fun deckTheme(deckId: String): DeckTheme? {
+        deckThemeCache[deckId]?.let { return it }
+        val deck = (DeckLoader.load(deckSource, deckId) as? DeckValidationResult.Valid)?.deck ?: return null
+        return deckThemeCache.computeIfAbsent(deckId) { resolveDeckTheme(deck) }
     }
 
     /**
@@ -310,6 +354,7 @@ public class AppGraph(context: Context) {
     /** Cancels every coroutine this graph started. Call from the owning component's teardown. */
     public fun close() {
         soundEffects.release()
+        imageLoader.shutdown()
         scope.cancel()
     }
 }

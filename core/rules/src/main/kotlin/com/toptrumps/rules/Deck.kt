@@ -18,6 +18,8 @@ public data class Deck(
     val cards: List<Card>,
     /** The picker's display label (story 19) — defaults to [id] for fixtures that don't set it. */
     val name: String = id,
+    /** This deck's visual identity — defaults to the classic yellow-on-black look for a manifest with no `theme` block. See the deck-theme-block ADR. */
+    val theme: DeckTheme = DeckTheme.DEFAULT,
 )
 
 /**
