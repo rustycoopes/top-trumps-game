@@ -24,7 +24,7 @@
     {
       "key": "subscribers",
       "label": "Subscribers",
-      "unit": "subscribers",
+      "unit": "M subscribers",
       "direction": "HIGH_WINS"
     },
     {
@@ -36,7 +36,7 @@
     {
       "key": "totalViews",
       "label": "Total Views",
-      "unit": "views",
+      "unit": "B views",
       "direction": "HIGH_WINS"
     }
   ],
@@ -47,9 +47,9 @@
       "stats": {
         "birthYear": 1998,
         "channelStartYear": 2012,
-        "subscribers": 510966601,
+        "subscribers": 510.966601,
         "videos": 995,
-        "totalViews": 132000000000
+        "totalViews": 132.0
       },
       "image": {
         "file": "images/mrbeast.webp",
@@ -83,9 +83,9 @@
       "stats": {
         "birthYear": 1997,
         "channelStartYear": 2012,
-        "subscribers": 20002090,
+        "subscribers": 20.00209,
         "videos": 1130,
-        "totalViews": 12270000000
+        "totalViews": 12.27
       },
       "image": {
         "file": "images/unspeakable.webp",
@@ -119,9 +119,9 @@
       "stats": {
         "birthYear": 2009,
         "channelStartYear": 2023,
-        "subscribers": 4240504,
+        "subscribers": 4.240504,
         "videos": 15,
-        "totalViews": 155000000
+        "totalViews": 0.155
       },
       "image": {
         "file": "images/salish-matter.webp",
@@ -155,9 +155,9 @@
       "stats": {
         "birthYear": 1998,
         "channelStartYear": 2009,
-        "subscribers": 43492102,
+        "subscribers": 43.492102,
         "videos": 898,
-        "totalViews": 13260000000
+        "totalViews": 13.26
       },
       "image": {
         "file": "images/brent-rivera.webp",
@@ -195,9 +195,9 @@
       "stats": {
         "birthYear": 2003,
         "channelStartYear": 2015,
-        "subscribers": 12016325,
+        "subscribers": 12.016325,
         "videos": 726,
-        "totalViews": 4000000000
+        "totalViews": 4.0
       },
       "image": {
         "file": "images/jojo-siwa.webp",
@@ -231,9 +231,9 @@
       "stats": {
         "birthYear": 1984,
         "channelStartYear": 2014,
-        "subscribers": 22997882,
+        "subscribers": 22.997882,
         "videos": 1197,
-        "totalViews": 10500000000
+        "totalViews": 10.5
       },
       "image": {
         "file": "images/rebecca-zamolo.webp",
@@ -271,9 +271,9 @@
       "stats": {
         "birthYear": 2004,
         "channelStartYear": 2017,
-        "subscribers": 4200000,
+        "subscribers": 4.2,
         "videos": 351,
-        "totalViews": 392000000
+        "totalViews": 0.392
       },
       "image": {
         "file": "images/jules-leblanc.webp",
@@ -315,9 +315,9 @@
       "stats": {
         "birthYear": 2000,
         "channelStartYear": 2015,
-        "subscribers": 2820000,
+        "subscribers": 2.82,
         "videos": 244,
-        "totalViews": 325257564
+        "totalViews": 0.325257564
       },
       "image": {
         "file": "images/baby-ariel.webp",
@@ -355,9 +355,9 @@
       "stats": {
         "birthYear": 1994,
         "channelStartYear": 2018,
-        "subscribers": 17800000,
+        "subscribers": 17.8,
         "videos": 1200,
-        "totalViews": 8500000000
+        "totalViews": 8.5
       },
       "image": {
         "file": "images/prestonplayz.webp",
@@ -399,9 +399,9 @@
       "stats": {
         "birthYear": 1992,
         "channelStartYear": 2013,
-        "subscribers": 35000000,
+        "subscribers": 35.0,
         "videos": 4100,
-        "totalViews": 27000000000
+        "totalViews": 27.0
       },
       "image": {
         "file": "images/sssniperwolf.webp",
@@ -443,9 +443,9 @@
       "stats": {
         "birthYear": 2001,
         "channelStartYear": 2016,
-        "subscribers": 10100000,
+        "subscribers": 10.1,
         "videos": 510,
-        "totalViews": 2200000000
+        "totalViews": 2.2
       },
       "image": {
         "file": "images/sofie-dossi.webp",
@@ -483,9 +483,9 @@
       "stats": {
         "birthYear": 2004,
         "channelStartYear": 2019,
-        "subscribers": 8950000,
+        "subscribers": 8.95,
         "videos": 460,
-        "totalViews": 403700000
+        "totalViews": 0.4037
       },
       "image": {
         "file": "images/charli-damelio.webp",
@@ -519,9 +519,9 @@
       "stats": {
         "birthYear": 2000,
         "channelStartYear": 2016,
-        "subscribers": 4420000,
+        "subscribers": 4.42,
         "videos": 43,
-        "totalViews": 282293202
+        "totalViews": 0.282293202
       },
       "image": {
         "file": "images/addison-rae.webp",
@@ -555,9 +555,9 @@
       "stats": {
         "birthYear": 2001,
         "channelStartYear": 2016,
-        "subscribers": 12041209,
+        "subscribers": 12.041209,
         "videos": 308,
-        "totalViews": 1700000000
+        "totalViews": 1.7
       },
       "image": {
         "file": "images/emma-chamberlain.webp",
@@ -591,9 +591,9 @@
       "stats": {
         "birthYear": 1999,
         "channelStartYear": 2015,
-        "subscribers": 23877817,
+        "subscribers": 23.877817,
         "videos": 703,
-        "totalViews": 4767254644
+        "totalViews": 4.767254644
       },
       "image": {
         "file": "images/james-charles.webp",
@@ -627,9 +627,9 @@
       "stats": {
         "birthYear": 1997,
         "channelStartYear": 2020,
-        "subscribers": 7100000,
+        "subscribers": 7.1,
         "videos": 103,
-        "totalViews": 1017026005
+        "totalViews": 1.017026005
       },
       "image": {
         "file": "images/bella-poarch.webp",
@@ -671,9 +671,9 @@
       "stats": {
         "birthYear": 2014,
         "channelStartYear": 2016,
-        "subscribers": 133090000,
+        "subscribers": 133.09,
         "videos": 1032,
-        "totalViews": 122200000000
+        "totalViews": 122.2
       },
       "image": {
         "file": "images/like-nastya.webp",
@@ -715,9 +715,9 @@
       "stats": {
         "birthYear": 2002,
         "channelStartYear": 2015,
-        "subscribers": 3700000,
+        "subscribers": 3.7,
         "videos": 228,
-        "totalViews": 159400000
+        "totalViews": 0.1594
       },
       "image": {
         "file": "images/loren-gray.webp",
@@ -755,9 +755,9 @@
       "stats": {
         "birthYear": 1996,
         "channelStartYear": 2015,
-        "subscribers": 17900000,
+        "subscribers": 17.9,
         "videos": 186,
-        "totalViews": 5660485292
+        "totalViews": 5.660485292
       },
       "image": {
         "file": "images/lele-pons.webp",
@@ -795,9 +795,9 @@
       "stats": {
         "birthYear": 1996,
         "channelStartYear": 2013,
-        "subscribers": 16600000,
+        "subscribers": 16.6,
         "videos": 104,
-        "totalViews": 1313468542
+        "totalViews": 1.313468542
       },
       "image": {
         "file": "images/liza-koshy.webp",
@@ -831,9 +831,9 @@
       "stats": {
         "birthYear": 2002,
         "channelStartYear": 2014,
-        "subscribers": 2860000,
+        "subscribers": 2.86,
         "videos": 218,
-        "totalViews": 386742787
+        "totalViews": 0.386742787
       },
       "image": {
         "file": "images/jacob-sartorius.webp",
@@ -867,9 +867,9 @@
       "stats": {
         "birthYear": 1990,
         "channelStartYear": 2013,
-        "subscribers": 42900000,
+        "subscribers": 42.9,
         "videos": 850,
-        "totalViews": 23000000000
+        "totalViews": 23.0
       },
       "image": {
         "file": "images/zach-king.webp",
@@ -907,9 +907,9 @@
       "stats": {
         "birthYear": 2004,
         "channelStartYear": 2015,
-        "subscribers": 3839105,
+        "subscribers": 3.839105,
         "videos": 375,
-        "totalViews": 473334438
+        "totalViews": 0.473334438
       },
       "image": {
         "file": "images/mackenzie-ziegler.webp",
@@ -947,9 +947,9 @@
       "stats": {
         "birthYear": 2001,
         "channelStartYear": 2020,
-        "subscribers": 6410000,
+        "subscribers": 6.41,
         "videos": 58,
-        "totalViews": 324700000
+        "totalViews": 0.3247
       },
       "image": {
         "file": "images/dixie-damelio.webp",
@@ -987,9 +987,9 @@
       "stats": {
         "birthYear": 2002,
         "channelStartYear": 2016,
-        "subscribers": 14504206,
+        "subscribers": 14.504206,
         "videos": 498,
-        "totalViews": 3808324011
+        "totalViews": 3.808324011
       },
       "_sources": {
         "birthYear": "Born April 26, 2002 - self-disclosed via her own Instagram post - https://www.instagram.com/p/Cc0HsGfLwaF, cited by https://en.wikipedia.org/wiki/Anna_McNulty",
@@ -1023,9 +1023,9 @@
       "stats": {
         "birthYear": 1995,
         "channelStartYear": 2009,
-        "subscribers": 9297185,
+        "subscribers": 9.297185,
         "videos": 132,
-        "totalViews": 178278095
+        "totalViews": 0.178278095
       },
       "_sources": {
         "birthYear": "Born November 7, 1995 - self-disclosed in her own 'Draw My Life' video - https://www.youtube.com/watch?v=RywVBJKKlbg, cited by https://en.wikipedia.org/wiki/Bethany_Mota",
@@ -1059,9 +1059,9 @@
       "stats": {
         "birthYear": 1987,
         "channelStartYear": 2007,
-        "subscribers": 8513524,
+        "subscribers": 8.513524,
         "videos": 295,
-        "totalViews": 1059966131
+        "totalViews": 1.059966131
       },
       "_sources": {
         "birthYear": "Born April 11, 1987 - Chavie Lieber/Vox Media, 'The Rebirth of YouTube Beauty Pioneer Michelle Phan,' Racked, April 10, 2017 - https://www.racked.com/2017/4/10/15185246/michelle-phan-giving-up-youtube-em-cosmetics",
@@ -1095,9 +1095,9 @@
       "stats": {
         "birthYear": 1991,
         "channelStartYear": 2016,
-        "subscribers": 2572896,
+        "subscribers": 2.572896,
         "videos": 697,
-        "totalViews": 244138124
+        "totalViews": 0.244138124
       },
       "_sources": {
         "birthYear": "Born June 26, 1991 in Pittsburgh, Pennsylvania - Playboy.com profile, cited by https://en.wikipedia.org/wiki/Amanda_Cerny",
@@ -1135,9 +1135,9 @@
       "stats": {
         "birthYear": 1985,
         "channelStartYear": 2010,
-        "subscribers": 14800000,
+        "subscribers": 14.8,
         "videos": 2078,
-        "totalViews": 5129000000
+        "totalViews": 5.129
       },
       "_sources": {
         "birthYear": "Born June 8, 1985 - self-disclosed via her own tweet, @RosannaPansino, June 8, 2017 ('Thank very much but I turn 32'), cited by https://en.wikipedia.org/wiki/Rosanna_Pansino",
@@ -1171,9 +1171,9 @@
       "stats": {
         "birthYear": 1988,
         "channelStartYear": 2010,
-        "subscribers": 14200000,
+        "subscribers": 14.2,
         "videos": 1342,
-        "totalViews": 3580508401
+        "totalViews": 3.580508401
       },
       "_sources": {
         "birthYear": "Born September 26, 1988 - News18, 'On Lilly Singh's 32nd Birthday...', Sept 26, 2020, cited by https://en.wikipedia.org/wiki/Lilly_Singh; independently corroborated by Rotten Tomatoes' bio page.",
@@ -1205,9 +1205,9 @@
   "conventions": {
     "birthYear": "Every card's birth year is corroborated by at least one source better than a fan-wiki/'birthday aggregator' site (FamousBirthdays, IMDb-only bios, public-records indexes, etc.) - most commonly a Wikipedia article that in turn cites real journalism, a self-disclosure by the creator themselves (a video, tweet or Instagram post), or a reputable news outlet. Several candidate creators researched for this deck were excluded because no such source could be found for their age, including three initially-selected replacement creators (Hannah Stocking, iJustine, Grace Helbig) whose birth years traced only to public-records aggregators or uncited Wikipedia infobox fields. Where only the birth year (not exact date) is corroborated, only the year is stored.",
     "channelStartYear": "The year the creator began actively posting under their current channel identity, not necessarily when a YouTube account was first registered (several creators' accounts predate their content by years, or migrated from an earlier channel name/identity). Several of these dates are lower-confidence than birthYear, since 'channel joined' dates are less consistently reported than birth dates; flagged per card where confidence is lower.",
-    "subscribers": "A live, constantly-changing figure. Every card's value is anchored to a specific 'as of' date (late July/early August 2026) recorded in that card's _sources - re-verify before relying on these for anything beyond this deck's gameplay.",
+    "subscribers": "A live, constantly-changing figure. Stored in millions for display readability (e.g. 2,820,000 subscribers is stored as 2.82) - the underlying real-world count and its citation are unchanged and remain in that card's _sources. Every card's value is anchored to a specific 'as of' date (late July/early August 2026) recorded in that card's _sources - re-verify before relying on these for anything beyond this deck's gameplay.",
     "videos": "Total upload count on the creator's main channel only, excluding secondary/spin-off channels the same creator may also run. Third-party trackers frequently disagree by small margins on this figure; a middle estimate is used where sources conflict, flagged per card. A few cards' video counts are single-sourced to one tracker with no independent corroboration, also flagged per card.",
-    "totalViews": "Lifetime view count on the creator's main channel only. This metric replaced an originally-planned 'Height' stat: reliable, cited height data exists for essentially none of these creators, which conflicts with this deck's sourcing rule, so Total Views was used instead as a metric with genuinely available, cited data for the whole roster.",
+    "totalViews": "Lifetime view count on the creator's main channel only. Stored in billions for display readability (e.g. 93,922,905 views is stored as 0.093922905) - the underlying real-world count and its citation are unchanged and remain in that card's _sources. This metric replaced an originally-planned 'Height' stat: reliable, cited height data exists for essentially none of these creators, which conflicts with this deck's sourcing rule, so Total Views was used instead as a metric with genuinely available, cited data for the whole roster.",
     "roster": "This deck originally targeted a different 30-name roster more closely matching the initial brief, but candidates were swapped out during research in two separate passes: first, roughly a dozen were swapped because no source better than a fan-wiki/content-farm site could be found for their age; second, six more (Jayden Bartels, Karina Garcia, Kids Diana Show, LaurDIY, Niki and Gabi, Piper Rockelle) were swapped because no freely-licensed photo existed for them once the deck moved from illustrated avatars to real sourced photographs. Three interim replacement candidates (Hannah Stocking, iJustine, Grace Helbig) were themselves swapped out a stage later after their birth years failed the same age-sourcing bar. The final roster's replacements are: Anna McNulty, Bethany Mota, Michelle Phan, Amanda Cerny, Rosanna Pansino, and Lilly Singh.",
     "images": "Every card image is a real, freely-licensed photograph of the creator, sourced from Wikimedia Commons (the same source and licensing model used by this project's Motorcycles deck) - not an AI-generated or illustrated likeness. Licence, photographer/author, and the Commons file page are recorded per card. Six creators from the original roster (Jayden Bartels, Karina Garcia, Kids Diana Show, LaurDIY, Niki and Gabi, Piper Rockelle) had no freely-licensed photo available anywhere on Commons - not even a non-free/fair-use image existed for most - and were swapped out for other on-theme creators who do have a genuinely free, citable photo, consistent with this deck's 'no invented/unavailable data' rule applied to images as well as stats."
   }
