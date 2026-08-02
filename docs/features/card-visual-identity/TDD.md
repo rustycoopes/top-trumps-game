@@ -231,6 +231,22 @@ mode** once a dark theme exists (fix with `res/values/themes.xml` + `values-nigh
 hairline outer edge must read against both a light and a dark surround (give it a permanent light
 halo rather than letting `edge` vary, which preserves the invariance claim literally).
 
+### 8. Themed card backgrounds (Slice 6)
+
+**This supersedes the PRD's "flat saturated accent colour... no texture or gloss bitmaps."** See the
+[themed card backgrounds ADR](../../adr/card-visual-identity-themed-card-backgrounds.md) for the full
+reasoning — in short, a static bitmap decoded once and shared across a deck's 30 cards is the same
+cost shape as the framed photo this feature already draws during animation, not the per-frame-recompute
+cost that motivated banning `Modifier.shadow`.
+
+`theme.backgroundImage` is a new optional field alongside `heroCardId`, resolved and Coil-decoded
+**once per deck**, not per card — the win-pile grid must reuse the one decoded bitmap rather than
+decode it 30 times. Rendered full-bleed behind the card face at a fixed reduced opacity, with a
+semi-transparent scrim between it and the stat table so text keeps the existing 4.5:1 contrast bar.
+Retrofitted onto both decks that shipped before this slice (Motorcycles, `lucys-youtubers`) as well as
+applied to new decks going forward. Follows TDD decision 7's existing validation posture unchanged:
+degrades to no background at runtime, fails CI on a bad reference.
+
 ## Component/Data Flow
 
 ```mermaid
