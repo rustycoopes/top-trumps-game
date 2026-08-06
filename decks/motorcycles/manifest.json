@@ -4,7 +4,8 @@
   "theme": {
     "accent": "#C8102E",
     "onAccent": "#FFFFFF",
-    "heroCardId": "kawasaki-ninja-h2"
+    "heroCardId": "kawasaki-ninja-h2",
+    "backgroundImage": "background.webp"
   },
   "metrics": [
     {

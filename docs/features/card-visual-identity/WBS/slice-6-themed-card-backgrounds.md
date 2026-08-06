@@ -91,4 +91,59 @@ Testing Decisions section).
 
 ## Delivered
 
-_Not yet delivered._
+Issue [#41](https://github.com/rustycoopes/top-trumps-game/issues/41), branch
+`slice-6-themed-card-backgrounds`, 2026-08-06.
+
+`theme.backgroundImage` is a new optional field on `DeckThemeDto`/`DeckTheme` (`:core:decks`,
+`:core:rules`), resolved and validated exactly the way `heroCardId` already is: `DeckLoader.load`
+degrades an unresolvable reference to `null` at runtime (deck still loads and plays), while
+`AllDecksThemeTest` fails the build in CI on the same condition. `DeckLoader`'s per-card image
+resolve check and the new background-image resolve check now share one `DeckSource.resolves()`
+extension rather than duplicating the try/open/catch.
+
+On the render side, `CardPalette` (`:app`) gained a `backgroundImage: String?` field alongside its
+existing colours, so every existing call site that already threads a `CardPalette` through
+(`MatchScreen`, `DeckPickerScreen`, `CardGalleryScreen`, the two-device match screen) picks up the
+new background automatically via `DeckTheme.toCardPalette()` — no new parameter was threaded through
+any screen. `AssetTrumpCard` renders it as a new `background` slot on `TrumpCard`/`CardChrome`,
+full-bleed behind the card face at a fixed 25% alpha, with a fixed-alpha scrim (`CardTextScrimAlpha
+= 0.85f`) applied unconditionally to the title banner and stat-table backgrounds — compositing that
+scrim over the identical opaque accent colour already filling the card is a no-op when there's no
+background image, so no deck-with-no-`backgroundImage` regression was possible by construction (also
+confirmed by the full existing card/screen test suite passing unchanged). The background request is
+sized from the same shared `CardGeometry` instance every grid/tile already hoists once, so Coil's own
+memory cache (keyed by request data + size) naturally decodes it once per deck rather than once per
+card — no hand-rolled cache was needed.
+
+A new static drop shadow (`Modifier.shadow`, applied before `.clip()`) was wired via a `withShadow`
+parameter threaded through `CardChrome`/`TrumpCard`/`AssetTrumpCard`, set `true` at exactly the four
+acceptance-criteria call sites — the hero card, the win-pile mini-card grid, an opened full-size pile
+card, and deck-picker tiles — and left at its default `false` everywhere else (the reveal pair, the
+flip animation, the slide overlay, and the debug-only `CardGalleryScreen`). One correction to the
+WBS's framing: the PRD's original "static drop shadow on the non-animating hero card only" was never
+actually implemented in any prior slice (verified — no `Modifier.shadow` existed anywhere in the
+codebase before this one), so this slice adds the shadow fresh at all four surfaces simultaneously
+rather than literally extending a pre-existing hero shadow.
+
+Background art for Motorcycles and `lucys-youtubers` was hand-composed with Python/Pillow (flat
+vector shapes — a dashed lane-line and concentric gear rings for Motorcycles, a scattered
+play-button/feed-card grid for `lucys-youtubers`) rather than sourced from an AI image generator: no
+such service was available/authorized for this session. This is a divergence from the ADR's stated
+preference for "illustrated" art over a procedural pattern, though the underlying architecture (a
+static bitmap asset, decoded once per deck, committed alongside the manifest) is unaffected either
+way — the art itself can be swapped for a better-illustrated asset later with no code change.
+
+A code review (code-review-master + code-quality-guardian) caught and fixed one real bug before
+merge: `CardGeometry.width`/`height` can legitimately round to `0.dp` during a transient
+zero-constraint layout pass (`solveCardWidth`'s own `coerceAtLeast(0.dp)` floor), and Coil's
+`ImageRequest.size(Int, Int)` throws `IllegalArgumentException` synchronously (not just failing the
+async load) if either dimension is `<= 0`. This diff's new background request doubled that
+pre-existing exposure by adding a second `.size()` call with the same unguarded inputs, so both the
+foreground and background decode-size calculations in `AssetTrumpCard` now `coerceAtLeast(1)`.
+
+Not independently verified in this session (both are the same manual/on-device boundary the PRD's
+Testing Decisions section already draws): flip/slide frame-rate regression, and whether the
+background image reads as visible "atmosphere" at the shipped alpha constants (0.25 image ×
+0.85 scrim ≈ 3.75% of the stat-table zone's final pixel colour) rather than effectively invisible —
+if it turns out too faint on-device, the fix is tuning `BackgroundImageAlpha`/`CardTextScrimAlpha`
+in `CardFrame.kt`, not a code-structure change.

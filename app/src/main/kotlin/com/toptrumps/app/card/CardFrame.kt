@@ -4,13 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -32,16 +35,36 @@ private val CardHairlineWidth = 1.dp
 internal val CardImageBorderColor = Color.White
 internal val CardImageBorderWidth = 2.dp
 
+/** Static elevation for a card shown at rest — never applied mid-flip/mid-slide, see the themed-card-backgrounds ADR. */
+private val CardElevation = 4.dp
+
+/** Fixed, not per-deck-configurable — a consistent faded look everywhere, per the themed-card-backgrounds ADR. */
+private const val BackgroundImageAlpha = 0.25f
+
+/**
+ * Alpha for the scrim [TrumpCard] lays over the background image behind the title banner and stat
+ * table, to hold the existing 4.5:1 contrast bar — `palette.accent.copy(alpha = CardTextScrimAlpha)`.
+ * Compositing this over the *same* [CardPalette.accent] the box is already filled with is a visual
+ * no-op when there's no background image, so [TrumpCard] applies it unconditionally rather than
+ * threading a "has a background" flag down to the banner/table.
+ */
+internal const val CardTextScrimAlpha = 0.85f
+
 /**
  * The outer card box every front/back shares: fixed to [geometry]'s size, [palette]'s accent fill,
- * rounded corners, hairline edge. Two calls with the same [geometry] instance produce the same
- * size, which is what makes front/back pixel identity structural (see [CardGeometry]'s doc).
+ * rounded corners, hairline edge, and an optional faded [background] image (themed-card-backgrounds
+ * ADR). Two calls with the same [geometry] instance produce the same size, which is what makes
+ * front/back pixel identity structural (see [CardGeometry]'s doc). [withShadow] is only ever true
+ * for a card shown at rest — never mid-flip/mid-slide, where a per-frame `Modifier.shadow` would
+ * reintroduce the recompute cost the original PRD banned.
  */
 @Composable
 internal fun CardChrome(
     palette: CardPalette,
     geometry: CardGeometry,
     modifier: Modifier = Modifier,
+    withShadow: Boolean = false,
+    background: (@Composable (Modifier) -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(CardCornerRadius)
@@ -49,11 +72,14 @@ internal fun CardChrome(
         modifier = modifier
             .width(geometry.width)
             .height(geometry.height)
+            .let { if (withShadow) it.shadow(CardElevation, shape) else it }
             .clip(shape)
             .background(palette.accent)
             .border(CardHairlineWidth, CardHairlineColor, shape),
-        content = content,
-    )
+    ) {
+        background?.invoke(Modifier.fillMaxSize().alpha(BackgroundImageAlpha))
+        content()
+    }
 }
 
 /**
