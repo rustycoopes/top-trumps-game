@@ -147,3 +147,37 @@ background image reads as visible "atmosphere" at the shipped alpha constants (0
 0.85 scrim ≈ 3.75% of the stat-table zone's final pixel colour) rather than effectively invisible —
 if it turns out too faint on-device, the fix is tuning `BackgroundImageAlpha`/`CardTextScrimAlpha`
 in `CardFrame.kt`, not a code-structure change.
+
+### Follow-up: real illustrated art
+
+Issue [#45](https://github.com/rustycoopes/top-trumps-game/issues/45), branch
+`slice-6-illustrated-backgrounds`, 2026-08-06.
+
+Replaced both hand-composed Pillow placeholders with real AI-generated illustrations via
+pollinations.ai (`flux` model, HD quality): `decks/motorcycles/background.webp` is now a stylised
+sunset road illustration (dark charcoal ground, a bold red sun over a curving asphalt road with
+dashed lane markings), and `decks/lucys-youtubers/background.webp` is a scattered grid of play-button
+video-feed cards and hearts on a dark maroon ground. Both are 768×1280 WebP — a different source
+resolution than the placeholders' 800×1200, which needs no code change since `AssetTrumpCard` requests
+these at `ContentScale.Crop` against the live `CardGeometry` size, not the asset's native resolution.
+No manifest, source, or test file changed — both decks' `theme.backgroundImage` still resolves to
+`"background.webp"` by filename, and `AllDecksThemeTest` was re-run (pinned JDK 17) to confirm.
+
+The public Hugging Face FLUX.1-schnell space (the originally-planned free/anonymous path) failed 4/4
+generation attempts with a ~30-minute silent timeout each, pointing at anonymous-queue congestion
+rather than a transient blip; pollinations.ai was used instead once its API key had a funded balance.
+
+Code review (code-review-master + code-quality-guardian, run in parallel) found no issues — this is a
+two-binary-file asset swap with no source changes, both files validated as well-formed WebP at a
+consistent 768×1280, and no lint/static-analysis rule applies to binary assets. One non-blocking
+observation carried forward rather than acted on: `lucys-youtubers/background.webp` is visually busier
+(more, smaller shapes) than `motorcycles/background.webp`'s sparser scene — both read clearly at full
+opacity, but which reads better at the shipped 25%-alpha/scrim composite is the same on-device call
+already deferred above, not something to guess at without a physical device.
+
+A physical device became available after the above was written, closing out that deferred check: built
+and installed via `./gradlew :app:installDebug`, launched, and driven through the deck picker into a
+live `lucys-youtubers` card. The background reads clearly as intended atmosphere at the shipped alpha
+— visible but subordinate to the stat text, which stays fully legible — confirming the 25%-image ×
+85%-scrim composite is not too faint on-device, the open question the original slice-6 delivery left
+outstanding.
