@@ -174,3 +174,10 @@ observation carried forward rather than acted on: `lucys-youtubers/background.we
 (more, smaller shapes) than `motorcycles/background.webp`'s sparser scene — both read clearly at full
 opacity, but which reads better at the shipped 25%-alpha/scrim composite is the same on-device call
 already deferred above, not something to guess at without a physical device.
+
+A physical device became available after the above was written, closing out that deferred check: built
+and installed via `./gradlew :app:installDebug`, launched, and driven through the deck picker into a
+live `lucys-youtubers` card. The background reads clearly as intended atmosphere at the shipped alpha
+— visible but subordinate to the stat text, which stays fully legible — confirming the 25%-image ×
+85%-scrim composite is not too faint on-device, the open question the original slice-6 delivery left
+outstanding.
