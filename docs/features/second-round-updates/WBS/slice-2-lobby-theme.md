@@ -65,4 +65,44 @@ underneath it, alongside the visual review of the chosen mockup direction.
 
 ## Delivered
 
-_Not yet delivered._
+Issue [#40](https://github.com/rustycoopes/top-trumps-game/issues/40), branch
+`slice-2-lobby-theme`, 2026-08-06.
+
+Three visual directions (dark competitive "Face-Off", warm tabletop "The Pack", clean minimalist
+"Signal") were mocked up as an interactive HTML artifact with real lobby copy and state toggles
+(empty/populated peer list, inbound/outbound invite) and reviewed before any Compose code was
+written, per this slice's own first-step requirement. "The Pack" was signed off.
+
+`LobbyScreen.kt` was rewritten around a new `LobbyPalette` (`app/src/main/kotlin/com/toptrumps/app/theme/LobbyPalette.kt`)
+— a warm parchment background/surface pair plus `DeckTheme.DEFAULT`'s accent/onAccent reused
+directly for the theme's yellow-on-ink identity, rather than inventing a new colour, per the WBS's
+"extend, don't replace" requirement. Peer rows are card-shaped (rounded corners, 2dp ink border,
+Anton-font "INVITE" chip) with a hard-offset accent box composed behind them for a drop-shadow
+effect matching the tabletop direction; the peer list, empty-lobby hint, and the play-solo CTA all
+picked up the same dashed-border/divider motif via a custom `drawWithContent`/`Canvas` treatment
+(now sharing one `LobbyDashPattern` constant). The inbound-invite and outbound-pending dialogs were
+re-themed onto `LobbyPalette`/`DisplayFontFamily` without changing their structure. Name entry,
+settings, and manual-connect were left untouched, as scoped.
+
+`TwoDeviceMatchScreen.kt`'s `StatusScreen` was deliberately left un-themed rather than folded into
+this slice's diff — filed as a follow-up, [#42](https://github.com/rustycoopes/top-trumps-game/issues/42).
+
+Code review (`code-review-master` and `code-quality-guardian`, run in parallel) found and fixed:
+a `LobbyPalette` doc comment that overstated how closely it mirrors `CardPalette`'s explicit-
+parameter-injection pattern (corrected to describe it honestly as a bare singleton, since the lobby
+has exactly one visual direction with nothing to inject); two independently hand-rolled dash-pattern
+arrays with unexplained differing magic numbers (unified into one `LobbyDashPattern` constant);
+a missing `.clip(shape)` on the peer row that let its ripple indication draw past the card's rounded
+corners; missing `role = Role.Button` on both `Modifier.clickable` call sites that replaced Material
+`Button`s (a real TalkBack/semantics regression); the "Play Solo" CTA's touch target sitting under
+the 48dp accessibility minimum (Material's `Button` guarantees this for free, `Modifier.clickable`
+does not); and the invite dialog's "Accept" button having been silently downgraded from a filled
+`Button` to a `TextButton`, weakening its primary-action visual weight against "Decline" — restored
+as a filled, palette-coloured `Button`. `code-review-master`'s first attempt failed mid-run on a
+weekly API rate limit and was re-run to completion once the window reset; nothing else was found
+beyond what's listed here.
+
+`:app:compileDebugKotlin` and `:app:testDebugUnitTest` both pass with no regressions. No physical
+device was available this session to run the two-device manual verification this slice's acceptance
+criteria call for (discovery, invite/accept/decline, and the tiebreak path underneath the new
+visuals) — that pass is still outstanding and should be done on the next two-device session.
