@@ -39,15 +39,30 @@ public object DeckLoader {
         val deck = (result as DeckValidationResult.Valid).deck
 
         val imageErrors = deck.cards.mapNotNull { card ->
-            try {
-                source.open(deckId, card.image.file).close()
-                null
-            } catch (e: IOException) {
-                "card '${card.id}' image reference '${card.image.file}' does not resolve"
-            }
+            if (source.resolves(deckId, card.image.file)) null
+            else "card '${card.id}' image reference '${card.image.file}' does not resolve"
         }
-        return if (imageErrors.isEmpty()) result else DeckValidationResult.Invalid(imageErrors)
+        if (imageErrors.isNotEmpty()) return DeckValidationResult.Invalid(imageErrors)
+
+        // theme.backgroundImage is cosmetic (themed-card-backgrounds ADR): unlike a card's own
+        // image above, an unresolvable reference degrades the deck's theme rather than failing
+        // the whole deck — the all-decks CI test is what catches this at commit time instead.
+        val backgroundImage = deck.theme.backgroundImage
+        val resolvedDeck = if (backgroundImage != null && !source.resolves(deckId, backgroundImage)) {
+            deck.copy(theme = deck.theme.copy(backgroundImage = null))
+        } else {
+            deck
+        }
+        return DeckValidationResult.Valid(resolvedDeck)
     }
+
+    private fun DeckSource.resolves(deckId: String, path: String): Boolean =
+        try {
+            open(deckId, path).close()
+            true
+        } catch (_: IOException) {
+            false
+        }
 
     /**
      * [load], but for the common call site where [deckId] came from [DeckSource.listDecks] and
@@ -164,6 +179,8 @@ public object DeckLoader {
      * deck-theme-block ADR. `null` (block absent, or a field within it absent) degrades the same
      * way as a value that fails to parse. An unmatched `heroCardId` degrades to `null` here — not
      * to the deck's first card, which needs [Deck.cards] and is `AppGraph`'s job (TDD decision 6).
+     * [backgroundImage] passes through unvalidated here — [parse] has no [DeckSource], so an
+     * unresolvable file reference is caught by [load] instead (themed-card-backgrounds ADR).
      */
     private fun DeckThemeDto?.toDeckTheme(knownCardIds: List<String>): DeckTheme {
         if (this == null) return DeckTheme.DEFAULT
@@ -171,6 +188,7 @@ public object DeckLoader {
             accent = accent?.let(::parseArgbHex) ?: DeckTheme.DEFAULT.accent,
             onAccent = onAccent?.let(::parseArgbHex) ?: DeckTheme.DEFAULT.onAccent,
             heroCardId = heroCardId?.takeIf { it in knownCardIds },
+            backgroundImage = backgroundImage,
         )
     }
 

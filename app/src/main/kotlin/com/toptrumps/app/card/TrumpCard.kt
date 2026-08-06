@@ -51,11 +51,13 @@ internal fun TrumpCard(
     palette: CardPalette,
     geometry: CardGeometry,
     modifier: Modifier = Modifier,
+    withShadow: Boolean = false,
     onChooseStat: ((metricKey: String) -> Unit)? = null,
+    background: (@Composable (Modifier) -> Unit)? = null,
     image: @Composable (Modifier) -> Unit,
 ) {
     CompositionLocalProvider(LocalDensity provides rememberCappedDensity()) {
-        CardChrome(palette = palette, geometry = geometry, modifier = modifier) {
+        CardChrome(palette = palette, geometry = geometry, modifier = modifier, withShadow = withShadow, background = background) {
             Column(Modifier.fillMaxSize()) {
                 CardTitleBanner(title = content.title, palette = palette, height = geometry.bannerHeight)
 
@@ -72,7 +74,7 @@ internal fun TrumpCard(
                 }
 
                 if (!isMini) {
-                    Column(Modifier.fillMaxWidth().height(geometry.tableHeight)) {
+                    Column(Modifier.fillMaxWidth().height(geometry.tableHeight).background(palette.accent.copy(alpha = CardTextScrimAlpha))) {
                         content.rows.forEach { row ->
                             StatRowView(row = row, height = geometry.rowHeight, palette = palette, onChooseStat = onChooseStat)
                         }
@@ -85,7 +87,10 @@ internal fun TrumpCard(
 
 @Composable
 private fun CardTitleBanner(title: String, palette: CardPalette, height: Dp) {
-    Box(Modifier.fillMaxWidth().height(height).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier.fillMaxWidth().height(height).background(palette.accent.copy(alpha = CardTextScrimAlpha)).padding(horizontal = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
         Text(
             text = title,
             color = palette.onAccent,

@@ -220,6 +220,27 @@ class DeckLoaderTest {
         assertNull((result as DeckValidationResult.Valid).deck.theme.heroCardId)
     }
 
+    @Test
+    fun `a backgroundImage that resolves loads with that theme`(@TempDir tempDir: File) {
+        val source = writeDeckFixture(tempDir, "themed-bg", """{ "backgroundImage": "background.webp" }""")
+        File(File(tempDir, "themed-bg"), "background.webp").writeBytes(ByteArray(0))
+
+        val result = DeckLoader.load(source, "themed-bg")
+
+        assertTrue(result is DeckValidationResult.Valid, "expected Valid, got $result")
+        assertEquals("background.webp", (result as DeckValidationResult.Valid).deck.theme.backgroundImage)
+    }
+
+    @Test
+    fun `an unresolvable backgroundImage degrades to null and the deck stays valid`(@TempDir tempDir: File) {
+        val source = writeDeckFixture(tempDir, "bad-bg", """{ "backgroundImage": "does-not-exist.webp" }""")
+
+        val result = DeckLoader.load(source, "bad-bg")
+
+        assertTrue(result is DeckValidationResult.Valid, "expected Valid, got $result")
+        assertNull((result as DeckValidationResult.Valid).deck.theme.backgroundImage)
+    }
+
     /**
      * A full 30-card, 5-metric manifest under [deckId], in a throwaway temp dir rather than the
      * shared `/decks` root — that root is bundled wholesale into the app's assets (deck-storage

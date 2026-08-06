@@ -33,6 +33,8 @@ internal data class DeckThemeDto(
     val accent: String? = null,
     val onAccent: String? = null,
     val heroCardId: String? = null,
+    /** A filename resolved the same way [CardImageDto.file] is — see the themed-card-backgrounds ADR. */
+    val backgroundImage: String? = null,
 )
 
 @Serializable

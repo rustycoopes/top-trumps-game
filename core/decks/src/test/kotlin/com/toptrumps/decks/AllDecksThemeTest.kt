@@ -30,7 +30,8 @@ class AllDecksThemeTest {
     }
 
     private fun themeErrorsFor(deckId: String): List<String> {
-        val manifestFile = File(File(rootDir, deckId), "manifest.json")
+        val deckDir = File(rootDir, deckId)
+        val manifestFile = File(deckDir, "manifest.json")
         val dto = json.decodeFromString(DeckManifestDto.serializer(), manifestFile.readText())
         val theme = dto.theme ?: return emptyList()
         val cardIds = dto.cards.map { it.id }.toSet()
@@ -39,6 +40,9 @@ class AllDecksThemeTest {
         theme.accent?.let { hex -> if (parseArgbHex(hex) == null) errors += "$deckId: theme.accent '$hex' is not a valid #RRGGBB colour" }
         theme.onAccent?.let { hex -> if (parseArgbHex(hex) == null) errors += "$deckId: theme.onAccent '$hex' is not a valid #RRGGBB colour" }
         theme.heroCardId?.let { id -> if (id !in cardIds) errors += "$deckId: theme.heroCardId '$id' does not match any card id" }
+        theme.backgroundImage?.let { file ->
+            if (!File(deckDir, file).isFile) errors += "$deckId: theme.backgroundImage '$file' does not resolve"
+        }
         return errors
     }
 }

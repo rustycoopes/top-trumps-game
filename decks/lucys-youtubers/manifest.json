@@ -4,7 +4,8 @@
   "theme": {
     "accent": "#C2185B",
     "onAccent": "#FFFFFF",
-    "heroCardId": "mrbeast"
+    "heroCardId": "mrbeast",
+    "backgroundImage": "background.webp"
   },
   "metrics": [
     {

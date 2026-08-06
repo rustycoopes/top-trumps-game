@@ -69,6 +69,7 @@ public fun DeckPickerScreen(
                     // into the square layout box behind it — CardChrome's own `clip` only reaches
                     // content drawn inside it, not this caller-supplied modifier.
                     modifier = Modifier.padding(4.dp).clip(RoundedCornerShape(CardCornerRadius)).clickable(onClickLabel = deck.name) { onPick(deck) },
+                    withShadow = true,
                     onChooseStat = null,
                 )
             }

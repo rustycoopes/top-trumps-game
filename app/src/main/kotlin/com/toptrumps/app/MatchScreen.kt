@@ -292,6 +292,9 @@ private fun HeroCard(
         palette = palette,
         geometry = geometry,
         imageLoader = imageLoader,
+        // The hero card is shown at rest (never mid-flip/mid-slide) — one of the four surfaces
+        // the themed-card-backgrounds ADR calls out for a static drop shadow.
+        withShadow = true,
         // Dims the whole card, not just its rows, whenever it isn't interactive at all (the
         // opponent's turn) — StatRowView's own per-row dimming only ever runs when `onChooseStat`
         // is non-null, so without this the card would otherwise look identically tappable whether
@@ -547,7 +550,7 @@ private fun WinPileGrid(
                     cardGeometry(solveCardWidth(maxWidth, maxHeight, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
                 }
                 val content = remember(opened, metrics) { cardContentOf(opened, metrics) }
-                AssetTrumpCard(deckId, opened.imageFile, content, palette, geometry, imageLoader, onChooseStat = null)
+                AssetTrumpCard(deckId, opened.imageFile, content, palette, geometry, imageLoader, withShadow = true, onChooseStat = null)
             }
         }
         return
@@ -574,6 +577,7 @@ private fun WinPileGrid(
                     // into the square layout box behind it — CardChrome's own `clip` only reaches
                     // content drawn inside it, not this caller-supplied modifier.
                     modifier = Modifier.padding(4.dp).clip(RoundedCornerShape(CardCornerRadius)).clickable(onClickLabel = card.name) { openedCard = card },
+                    withShadow = true,
                     onChooseStat = null,
                 )
             }
