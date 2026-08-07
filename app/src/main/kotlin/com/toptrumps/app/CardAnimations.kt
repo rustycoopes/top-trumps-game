@@ -84,12 +84,15 @@ internal class AnimationGate {
 }
 
 /**
- * The opponent's card, face-down until [skipAnimation] is false and this composable is freshly
- * mounted — [InProgressScreen]'s `when (round)` branch swap means a fresh mount *is* "just
- * resolved" (Compose disposes the awaiting-choice composition and starts this one from scratch
- * every time a round resolves), so a plain `LaunchedEffect(Unit)` is the whole trigger; no
- * round-number bookkeeping needed. Driven by [Animatable] rather than `animateFloatAsState` so a
- * hard-cut is a `snapTo`, not an animation to skip framing around (WBS design notes).
+ * A card, face-down until it flips to [front] — used both for the opponent's card (auto-starts,
+ * [started] left at its default `true`) and the local hero card (issue #47: face-down until the
+ * player taps it, caller flips [started] `true` in response to that tap). Face-down until
+ * [skipAnimation] is false and [started] is true — for the opponent, [InProgressScreen]'s
+ * `when (round)` branch swap means a fresh mount *is* "just resolved" (Compose disposes the
+ * awaiting-choice composition and starts this one from scratch every time a round resolves), so
+ * `started = true` from the first composition is the whole trigger; no round-number bookkeeping
+ * needed. Driven by [Animatable] rather than `animateFloatAsState` so a hard-cut is a `snapTo`,
+ * not an animation to skip framing around (WBS design notes).
  *
  * Takes two content slots — [back]/[front] — instead of `RemoteCardFace`/`deckId`/`ImageLoader`/
  * `size: Dp` (card-visual-identity TDD decision 4): this composable no longer knows what a card
@@ -102,10 +105,21 @@ internal class AnimationGate {
  * per flip once the leaf became a five-row stat table instead of one `AsyncImage`). A bonus of
  * composing both faces from the start: the front's photo decodes during the back-facing half of
  * the flip, fixing the empty-window flash on the first reveal frames.
+ *
+ * [rotation] itself carries no key — it resets only because both current callers happen to be
+ * fully disposed and remounted every time the card they show changes identity: for both the
+ * opponent and the hero card, a genuinely new deal always passes through `RemoteRoundState
+ * .Resolved` first, and `InProgressScreen`'s `when (round)` branch swap disposes whichever of
+ * `HeroCard`/`RevealPair` was composing before starting the other fresh (`HeroCard`'s own
+ * `remember(view.self.id)` for `started`/`revealed` is redundant-but-defensive on top of that, not
+ * what causes the remount). If a future caller ever reused one `FlippableCard` instance across a
+ * card change without a remount in between, `rotation` would need its own key to avoid rendering
+ * the new content already-flipped from the previous card's finished animation.
  */
 @Composable
-internal fun FlippableOpponentCard(
+internal fun FlippableCard(
     skipAnimation: Boolean,
+    started: Boolean = true,
     modifier: Modifier = Modifier,
     onRevealed: () -> Unit = {},
     back: @Composable (Modifier) -> Unit,
@@ -114,7 +128,8 @@ internal fun FlippableOpponentCard(
     val rotation = remember { Animatable(0f) }
     val density = LocalDensity.current
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(started) {
+        if (!started) return@LaunchedEffect
         if (skipAnimation) {
             rotation.snapTo(180f)
         } else {

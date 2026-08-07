@@ -260,6 +260,13 @@ private fun MatchTopBar(
  * turn to choose; every row disables itself while [pending], folding
  * `spec.key in round.remainingMetrics` and `session.hasPendingIntent` into one `availableMetrics`
  * set rather than a per-row `enabled && !pending` check (card-visual-identity TDD decision 5).
+ *
+ * Face-down until tapped (issue #47) — mimics being dealt a real card instead of it landing
+ * face-up. [started]/[revealed] are `remember`ed keyed on [RemoteCardFace.id], not just `Unit`:
+ * this composable isn't remounted between successive `AwaitingChoice` rounds (same `when`-branch
+ * in [InProgressScreen] — see [FlippableCard]'s doc), so a plain unkeyed `remember` would stay
+ * flipped forever after the player's first card. Keying on the dealt card's own id resets both
+ * flags the instant a new card arrives.
  */
 @Composable
 private fun HeroCard(
@@ -280,29 +287,55 @@ private fun HeroCard(
     val geometry = remember(maxWidth, maxHeight) {
         cardGeometry(solveCardWidth(maxWidth, maxHeight, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
     }
-    val availableMetrics = if (isMyTurn && !pending) round.remainingMetrics.toSet() else emptySet()
+    // A guest resync can remount this composable straight onto an AwaitingChoice round the player
+    // had already flipped before disconnecting (TwoDeviceMatchScreen tears MatchScreen down while
+    // the peer is unreachable) — session.lastResync is the guest-only signal ("Set before `_view`"
+    // — MatchSession.kt) that distinguishes *that exact view arrived via a resume* from an ordinary
+    // new deal. Deliberately not gate.shouldHardCut(): that's also true on every match's very first
+    // composition (AnimationGate.hasSeenAwaitingChoice starts false regardless of cause), which
+    // would wrongly skip the required flip on round one.
+    val resynced = remember(view.self.id) { session.lastResync.value == view.revision }
+    var started by remember(view.self.id) { mutableStateOf(resynced) }
+    var revealed by remember(view.self.id) { mutableStateOf(false) }
+    val availableMetrics = if (isMyTurn && revealed && !pending) round.remainingMetrics.toSet() else emptySet()
     val content = remember(view.self, view.metrics, availableMetrics) {
         cardContentOf(card = view.self, metrics = view.metrics, availableMetrics = availableMetrics)
     }
 
-    AssetTrumpCard(
-        deckId = deckId,
-        imageFile = view.self.imageFile,
-        content = content,
-        palette = palette,
-        geometry = geometry,
-        imageLoader = imageLoader,
-        // The hero card is shown at rest (never mid-flip/mid-slide) — one of the four surfaces
-        // the themed-card-backgrounds ADR calls out for a static drop shadow.
-        withShadow = true,
+    FlippableCard(
+        skipAnimation = resynced,
+        started = started,
+        onRevealed = { revealed = true },
         // Dims the whole card, not just its rows, whenever it isn't interactive at all (the
         // opponent's turn) — StatRowView's own per-row dimming only ever runs when `onChooseStat`
         // is non-null, so without this the card would otherwise look identically tappable whether
-        // or not it actually is.
-        modifier = Modifier.reportGlobalPosition { positions.selfCard = it }.alpha(if (isMyTurn) 1f else HeroInertAlpha),
-        onChooseStat = if (!isMyTurn) null else { metricKey ->
-            soundEffects.play(SoundEffects.Cue.SELECT)
-            session.submit(PlayerIntent.ChooseMetric(MetricKey(metricKey)))
+        // or not it actually is. The flip itself stays tappable regardless of whose turn it is —
+        // it's always your own card, so peeking at it doesn't depend on whether you can act on it.
+        modifier = Modifier
+            .reportGlobalPosition { positions.selfCard = it }
+            .alpha(if (isMyTurn) 1f else HeroInertAlpha)
+            .clickable(enabled = !started, onClickLabel = "Reveal your card") { started = true },
+        back = { mod ->
+            val backModifier = if (revealed) mod.clearAndSetSemantics {} else mod
+            TrumpCardBack(deckName = deckId, palette = palette, geometry = geometry, caption = "Tap to reveal", modifier = backModifier)
+        },
+        front = { mod ->
+            AssetTrumpCard(
+                deckId = deckId,
+                imageFile = view.self.imageFile,
+                content = content,
+                palette = palette,
+                geometry = geometry,
+                imageLoader = imageLoader,
+                // Matches the flip-animation default of no shadow (themed-card-backgrounds ADR)
+                // while mid-flip; once settled this is functionally the old static hero card again.
+                withShadow = revealed,
+                modifier = mod,
+                onChooseStat = if (!isMyTurn || !revealed) null else { metricKey ->
+                    soundEffects.play(SoundEffects.Cue.SELECT)
+                    session.submit(PlayerIntent.ChooseMetric(MetricKey(metricKey)))
+                },
+            )
         },
     )
 }
@@ -310,7 +343,7 @@ private fun HeroCard(
 /**
  * Both full cards side by side at reveal, stat rows aligned for free because [geometry] is a
  * single instance shared by both (card-visual-identity TDD decision 5) — the opponent's flips in
- * via [FlippableOpponentCard]; the player's own card is already on screen and simply hard-cuts
+ * via [FlippableCard]; the player's own card is already on screen and simply hard-cuts
  * down to reveal size (the hero-to-reveal size jump isn't animated this slice — WBS design notes).
  */
 @Composable
@@ -378,7 +411,7 @@ private fun RevealPair(
             onChooseStat = null,
             modifier = Modifier.reportGlobalPosition { positions.selfCard = it },
         )
-        FlippableOpponentCard(
+        FlippableCard(
             skipAnimation = skipAnimation,
             modifier = Modifier.reportGlobalPosition { positions.opponentCard = it },
             onRevealed = {
