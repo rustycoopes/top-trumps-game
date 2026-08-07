@@ -38,8 +38,17 @@ internal val CardImageBorderWidth = 2.dp
 /** Static elevation for a card shown at rest — never applied mid-flip/mid-slide, see the themed-card-backgrounds ADR. */
 private val CardElevation = 4.dp
 
-/** Fixed, not per-deck-configurable — a consistent faded look everywhere, per the themed-card-backgrounds ADR. */
-private const val BackgroundImageAlpha = 0.25f
+/**
+ * Fixed, not per-deck-configurable — a consistent faded look everywhere, per the themed-card-backgrounds
+ * ADR. Raised from the original 0.25 (card-visual-identity #46 follow-up): the banner/stat-table are
+ * the only zones a background is ever visible through at all (the image zone's own opaque per-card
+ * photo covers the rest), and those zones additionally sit under [CardTextScrimAlpha]'s 0.85 scrim —
+ * so the *actually rendered* image contribution there is `(1 - CardTextScrimAlpha) * BackgroundImageAlpha`,
+ * not this value directly. At the original 0.25 that worked out to under 4% of the pixel colour,
+ * effectively invisible on a real screen. [CardTextScrimAlpha] is left untouched since it's what holds
+ * the 4.5:1 text-contrast bar regardless of the image underneath.
+ */
+private const val BackgroundImageAlpha = 0.7f
 
 /**
  * Alpha for the scrim [TrumpCard] lays over the background image behind the title banner and stat
