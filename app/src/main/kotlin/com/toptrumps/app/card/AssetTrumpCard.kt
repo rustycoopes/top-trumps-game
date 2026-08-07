@@ -41,28 +41,6 @@ internal fun AssetTrumpCard(
     // dimension is <= 0, which would crash the composition rather than degrade gracefully.
     val imageWidthPx = with(density) { geometry.width.roundToPx() }.coerceAtLeast(1)
     val imageHeightPx = with(density) { geometry.imageZoneHeight.roundToPx() }.coerceAtLeast(1)
-    // The full card box, not just the image zone — the background fills the whole face. Width is
-    // the same as imageWidthPx by construction (the image zone spans the card's full width), so
-    // only height needs its own value. Every caller sharing one geometry instance (a grid's mini
-    // cards, the deck picker's tiles) requests this same size, so Coil's memory cache decodes it
-    // once per deck, not once per card.
-    val cardHeightPx = with(density) { geometry.height.roundToPx() }.coerceAtLeast(1)
-    val backgroundFile = palette.backgroundImage
-    // Explicitly typed — Kotlin doesn't infer a lambda as @Composable from the `background`
-    // parameter's declared type once it's produced inside an `if`/`let` rather than passed
-    // directly at the call site, unlike the `image` slot below.
-    val background: (@Composable (Modifier) -> Unit)? = if (backgroundFile == null) null else { bgModifier ->
-        AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data("file:///android_asset/$deckId/$backgroundFile")
-                .size(imageWidthPx, cardHeightPx)
-                .build(),
-            contentDescription = null,
-            imageLoader = imageLoader,
-            contentScale = ContentScale.Crop,
-            modifier = bgModifier,
-        )
-    }
 
     TrumpCard(
         content = content,
@@ -71,7 +49,6 @@ internal fun AssetTrumpCard(
         modifier = modifier,
         withShadow = withShadow,
         onChooseStat = onChooseStat,
-        background = background,
         image = { imageModifier ->
             AsyncImage(
                 model = ImageRequest.Builder(context)

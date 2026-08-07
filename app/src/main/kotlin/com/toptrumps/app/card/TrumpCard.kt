@@ -53,11 +53,10 @@ internal fun TrumpCard(
     modifier: Modifier = Modifier,
     withShadow: Boolean = false,
     onChooseStat: ((metricKey: String) -> Unit)? = null,
-    background: (@Composable (Modifier) -> Unit)? = null,
     image: @Composable (Modifier) -> Unit,
 ) {
     CompositionLocalProvider(LocalDensity provides rememberCappedDensity()) {
-        CardChrome(palette = palette, geometry = geometry, modifier = modifier, withShadow = withShadow, background = background) {
+        CardChrome(palette = palette, geometry = geometry, modifier = modifier, withShadow = withShadow) {
             Column(Modifier.fillMaxSize()) {
                 CardTitleBanner(title = content.title, palette = palette, height = geometry.bannerHeight)
 

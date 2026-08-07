@@ -1,8 +1,15 @@
 # Themed card backgrounds are a static, per-deck, shared bitmap layer — not a per-frame effect
 
-**Status:** Proposed
+**Status:** Proposed (compositing target superseded — see note below)
 **Date:** 2026-08-02
 **Feature:** [`card-visual-identity`](../features/card-visual-identity/TDD.md), slice 6
+
+> **Slice 8 update:** the "rendered full-bleed behind the whole card face... the stat-table zone is
+> where it actually shows through" line in the Decision below no longer holds — on-device testing
+> found that compositing effectively invisible, so slice 8 (issue #51) moved the background image off
+> the card face entirely and onto the match screen behind it. The rest of this ADR — a static,
+> per-deck, shared bitmap resolved once via the manifest, not a per-card or per-frame asset — is
+> unaffected; only *where* the resolved image gets composited changed.
 
 ## Context
 

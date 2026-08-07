@@ -1,5 +1,6 @@
 package com.toptrumps.app
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,12 +31,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.toptrumps.app.card.AssetTrumpCard
 import com.toptrumps.app.card.CardCornerRadius
 import com.toptrumps.app.card.CardOuterBorderWidth
@@ -70,6 +75,12 @@ private val RevealSpacing = 12.dp
 
 /** How much the hero card dims when it's not [MatchScreen]'s own player's turn — the whole card is inert then, not just individual rows. */
 private const val HeroInertAlpha = 0.6f
+
+/** Deck backdrop opacity — card-visual-identity WBS slice 8: "dominant," not a faint tint. */
+private const val MatchBackdropAlpha = 0.6f
+
+/** Opacity of the panel behind [MatchTopBar]/[MatchActionStrip] text, to hold contrast against the backdrop. */
+private const val MatchChromeScrimAlpha = 0.85f
 
 /**
  * [localSeat] is the wire-level seat string ("HOST"/"GUEST") the local player occupies — solo
@@ -153,79 +164,105 @@ private fun InProgressScreen(
     // since `view` keeps updating underneath it regardless of which branch is showing.
     var showingPile by remember { mutableStateOf(false) }
 
-    if (showingPile) {
-        WinPileGrid(
-            pile = view.myPile,
-            deckId = deckId,
-            metrics = view.metrics,
-            palette = palette,
-            imageLoader = imageLoader,
-            onBack = { showingPile = false },
-            modifier = modifier,
-        )
-        return
-    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        MatchBackdrop(deckId = deckId, palette = palette, imageLoader = imageLoader)
 
-    // Shared by MatchTopBar (targets) and the reveal region (sources) so the slide overlay can
-    // animate between them — hoisted here since they're siblings, not ancestor/descendant.
-    val positions = remember { CardSlotPositions() }
-    val slideOverlay = remember { SlideOverlayState() }
-    var overlayOrigin by remember { mutableStateOf<Rect?>(null) }
-
-    // Disabled while a choice/advance is already in flight — a second tap wouldn't be resent
-    // anyway (the reconnect-resync ADR's at-most-one-intent invariant), but this is what makes
-    // every row/button on the card and the strip say so.
-    val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
-
-    Box(modifier = modifier.fillMaxSize().reportGlobalPosition { overlayOrigin = it }) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            MatchTopBar(view = view, onTapMyPile = { showingPile = true }, onLeaveMatch = onLeaveMatch, positions = positions)
-
-            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                // Never inside the card composable itself — that would mean a subcomposition per
-                // grid cell elsewhere (WBS design notes). One BoxWithConstraints, right here.
-                BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    when (val round = view.round) {
-                        is RemoteRoundState.AwaitingChoice ->
-                            HeroCard(
-                                session = session,
-                                view = view,
-                                round = round,
-                                localSeat = localSeat,
-                                deckId = deckId,
-                                imageLoader = imageLoader,
-                                palette = palette,
-                                pending = pending,
-                                soundEffects = soundEffects,
-                                maxWidth = maxWidth,
-                                maxHeight = maxHeight,
-                                positions = positions,
-                            )
-                        is RemoteRoundState.Resolved ->
-                            RevealPair(
-                                session = session,
-                                view = view,
-                                round = round,
-                                deckId = deckId,
-                                localSeat = localSeat,
-                                imageLoader = imageLoader,
-                                palette = palette,
-                                soundEffects = soundEffects,
-                                gate = gate,
-                                positions = positions,
-                                slideOverlay = slideOverlay,
-                                maxWidth = maxWidth,
-                                maxHeight = maxHeight,
-                            )
-                    }
-                }
-            }
-
-            MatchActionStrip(session = session, view = view, localSeat = localSeat, pending = pending)
+        if (showingPile) {
+            WinPileGrid(
+                pile = view.myPile,
+                deckId = deckId,
+                metrics = view.metrics,
+                palette = palette,
+                imageLoader = imageLoader,
+                onBack = { showingPile = false },
+                modifier = modifier,
+            )
+            return@Box
         }
 
-        SlideOverlay(state = slideOverlay, overlayOrigin = overlayOrigin)
+        // Shared by MatchTopBar (targets) and the reveal region (sources) so the slide overlay can
+        // animate between them — hoisted here since they're siblings, not ancestor/descendant.
+        val positions = remember { CardSlotPositions() }
+        val slideOverlay = remember { SlideOverlayState() }
+        var overlayOrigin by remember { mutableStateOf<Rect?>(null) }
+
+        // Disabled while a choice/advance is already in flight — a second tap wouldn't be resent
+        // anyway (the reconnect-resync ADR's at-most-one-intent invariant), but this is what makes
+        // every row/button on the card and the strip say so.
+        val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
+
+        Box(modifier = modifier.fillMaxSize().reportGlobalPosition { overlayOrigin = it }) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                MatchTopBar(view = view, onTapMyPile = { showingPile = true }, onLeaveMatch = onLeaveMatch, positions = positions)
+
+                Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    // Never inside the card composable itself — that would mean a subcomposition per
+                    // grid cell elsewhere (WBS design notes). One BoxWithConstraints, right here.
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                        when (val round = view.round) {
+                            is RemoteRoundState.AwaitingChoice ->
+                                HeroCard(
+                                    session = session,
+                                    view = view,
+                                    round = round,
+                                    localSeat = localSeat,
+                                    deckId = deckId,
+                                    imageLoader = imageLoader,
+                                    palette = palette,
+                                    pending = pending,
+                                    soundEffects = soundEffects,
+                                    maxWidth = maxWidth,
+                                    maxHeight = maxHeight,
+                                    positions = positions,
+                                )
+                            is RemoteRoundState.Resolved ->
+                                RevealPair(
+                                    session = session,
+                                    view = view,
+                                    round = round,
+                                    deckId = deckId,
+                                    localSeat = localSeat,
+                                    imageLoader = imageLoader,
+                                    palette = palette,
+                                    soundEffects = soundEffects,
+                                    gate = gate,
+                                    positions = positions,
+                                    slideOverlay = slideOverlay,
+                                    maxWidth = maxWidth,
+                                    maxHeight = maxHeight,
+                                )
+                        }
+                    }
+                }
+
+                MatchActionStrip(session = session, view = view, localSeat = localSeat, pending = pending)
+            }
+
+            SlideOverlay(state = slideOverlay, overlayOrigin = overlayOrigin)
+        }
     }
+}
+
+/**
+ * The deck's `background.webp`, full-bleed behind the whole match screen — top bar, card region,
+ * and action strip (card-visual-identity WBS slice 8). Replaces the old per-card wash
+ * ([com.toptrumps.app.card.CardChrome] no longer renders one): that wash was structurally
+ * near-invisible squeezed behind stat-row text, whereas this is the scope the art was made for.
+ * Renders nothing for a deck with no [CardPalette.backgroundImage] (e.g. `test-deck`) — the same
+ * plain-screen look as before this slice, not a new code path to special-case.
+ */
+@Composable
+private fun MatchBackdrop(deckId: String, palette: CardPalette, imageLoader: ImageLoader) {
+    val backgroundFile = palette.backgroundImage ?: return
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data("file:///android_asset/$deckId/$backgroundFile")
+            .build(),
+        contentDescription = null,
+        imageLoader = imageLoader,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.fillMaxSize().alpha(MatchBackdropAlpha),
+    )
 }
 
 @Composable
@@ -236,9 +273,12 @@ private fun MatchTopBar(
     positions: CardSlotPositions,
 ) {
     // Insets (status bar, nav bar, IME) are handled once, at the NavHost root — see MainActivity's
-    // `safeDrawingPadding()` comment — so this bar only needs its own visual padding.
+    // `safeDrawingPadding()` comment — so this bar only needs its own visual padding. The scrim
+    // background holds the 4.5:1 contrast bar against the deck backdrop now behind it (WBS slice 8).
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = MatchChromeScrimAlpha))
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -514,8 +554,12 @@ private fun RevealPair(
  */
 @Composable
 private fun MatchActionStrip(session: MatchSession, view: MatchView.InProgress, localSeat: String, pending: Boolean) {
+    // Same scrim treatment as MatchTopBar, for the same reason — this strip sits directly on the
+    // deck backdrop too (WBS slice 8).
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = MatchChromeScrimAlpha))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         when (val round = view.round) {
@@ -600,7 +644,14 @@ private fun WinPileGrid(
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = onBack) { Text("Back to match") }
-        Text("Your pile (${pile.size} cards)")
+        // Scrimmed like MatchTopBar/MatchActionStrip — this text sits directly on the deck backdrop
+        // too (WBS slice 8), unlike the Button above it, which already has its own Material container.
+        Text(
+            "Your pile (${pile.size} cards)",
+            modifier = Modifier.fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = MatchChromeScrimAlpha))
+                .padding(8.dp),
+        )
         // One instance shared by every tile, not recomputed per cell — same discipline as the
         // card gallery's own mini grid (CardGalleryScreen.kt). Width nets out to 96dp of rendered
         // footprint (card + slice-7 border) — GridCells.Fixed(3) has no adaptive slack to absorb
