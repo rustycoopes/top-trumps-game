@@ -1,5 +1,6 @@
 package com.toptrumps.app
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,21 +9,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.toptrumps.app.theme.DisplayFontFamily
+import com.toptrumps.app.theme.LobbyPalette
 import com.toptrumps.feature.history.CardWinCount
 import com.toptrumps.feature.history.HeadToHeadRecord
 import com.toptrumps.feature.history.MatchHistoryRepository
 import com.toptrumps.feature.history.OverallRecord
 import kotlin.math.roundToInt
 
-/** Stories 79–81: head-to-head per opponent, overall record and win rate, and the cards that have won you the most rounds. */
+/**
+ * Stories 79–81: head-to-head per opponent, overall record and win rate, and the cards that have
+ * won you the most rounds. Themed as "The Pack" (second-round-updates#53), reusing [LobbyScreen]'s
+ * [LobbyTextLink], [DashedDivider] and [LobbyHintBox] rather than restyling from scratch.
+ */
 @Composable
 public fun StatsScreen(
     repository: MatchHistoryRepository,
@@ -39,46 +47,78 @@ public fun StatsScreen(
     // constraints. Both lists are small in absolute terms (one row per opponent/card, not per
     // match), so the lazy-loading Column buys nothing a plain one wouldn't already give for free.
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
+        modifier = modifier
+            .fillMaxSize()
+            .background(LobbyPalette.background)
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        TextButton(onClick = onBack) { Text("Back") }
-        Text("Stats")
+        LobbyTextLink("Back", onBack)
 
-        Text("Overall record: ${overall.wins}W ${overall.losses}L ${overall.draws}D")
-        Text("Win rate: ${overall.winRate.toDisplayPercent()}")
+        Text(
+            "Stats",
+            style = TextStyle(fontFamily = DisplayFontFamily, fontWeight = FontWeight.Normal, fontSize = 34.sp),
+            color = LobbyPalette.ink,
+        )
 
-        HorizontalDivider()
-        Text("Head-to-head")
+        Text(
+            "Overall record: ${overall.wins}W ${overall.losses}L ${overall.draws}D",
+            color = LobbyPalette.ink,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+        )
+        Text("Win rate: ${overall.winRate.toDisplayPercent()}", color = LobbyPalette.inkDim, fontSize = 13.sp)
+
+        DashedDivider()
+        StatsSectionHeader("Head-to-head")
         if (headToHead.isEmpty()) {
-            Text("No matches played yet.")
+            LobbyHintBox("No matches played yet.")
         } else {
-            headToHead.forEach { record -> HeadToHeadRow(record) }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                headToHead.forEach { record -> HeadToHeadRow(record) }
+            }
         }
 
-        HorizontalDivider()
-        Text("Most-won cards")
+        DashedDivider()
+        StatsSectionHeader("Most-won cards")
         if (mostWonCards.isEmpty()) {
-            Text("No cards won yet.")
+            LobbyHintBox("No cards won yet.")
         } else {
-            mostWonCards.forEach { card -> CardWinRow(card) }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                mostWonCards.forEach { card -> CardWinRow(card) }
+            }
         }
     }
+}
+
+@Composable
+private fun StatsSectionHeader(label: String) {
+    Text(
+        label,
+        style = TextStyle(fontFamily = DisplayFontFamily, fontWeight = FontWeight.Normal, fontSize = 18.sp),
+        color = LobbyPalette.ink,
+    )
 }
 
 @Composable
 private fun HeadToHeadRow(record: HeadToHeadRecord) {
-    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-        Text(record.opponentName)
-        Text("${record.wins}W ${record.losses}L ${record.draws}D")
-    }
+    StatsRow(record.opponentName, "${record.wins}W ${record.losses}L ${record.draws}D")
 }
 
 @Composable
 private fun CardWinRow(card: CardWinCount) {
-    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-        Text(card.cardName)
-        Text("${card.winCount} round${if (card.winCount == 1) "" else "s"} won")
+    StatsRow(card.cardName, "${card.winCount} round${if (card.winCount == 1) "" else "s"} won")
+}
+
+@Composable
+private fun StatsRow(label: String, value: String) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth().lobbyCard(),
+    ) {
+        Text(label, color = LobbyPalette.ink, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(value, color = LobbyPalette.inkDim, fontSize = 13.sp)
     }
 }
 

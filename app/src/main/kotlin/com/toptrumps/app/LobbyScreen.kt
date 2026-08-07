@@ -52,6 +52,9 @@ import com.toptrumps.session.Role
 /** Shared dash rhythm for every hand-drawn dashed line in this screen — [DashedDivider] and [dashedBorder]. */
 private val LobbyDashPattern = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
 
+/** Shared rounded-card shape — [PeerRow] and, via [lobbyCard], [HistoryScreen]/[StatsScreen]'s list rows. */
+private val LobbyCardShape = RoundedCornerShape(14.dp)
+
 /**
  * Story 3–9: advertises this device and browses for others simultaneously, tap-to-invite with an
  * accept/decline round trip, and the success condition for this whole slice — a connected socket
@@ -106,7 +109,7 @@ public fun LobbyScreen(
         }
 
         if (peers.isEmpty()) {
-            EmptyLobbyHint()
+            LobbyHintBox("No one else here yet — make sure both devices are on the same Wi-Fi.")
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 items(peers, key = LobbyPeer::instanceId) { peer ->
@@ -147,7 +150,7 @@ internal fun LobbyTextLink(label: String, onClick: () -> Unit) {
 /** A card-shaped row, echoing [com.toptrumps.app.card.TrumpCard]'s bordered/rounded language rather than a bare list item. The whole row is the tap target, matching the original plain `Button`'s behaviour. */
 @Composable
 private fun PeerRow(displayName: String, enabled: Boolean, onInvite: () -> Unit) {
-    val shape = RoundedCornerShape(14.dp)
+    val shape = LobbyCardShape
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -200,8 +203,9 @@ private fun PeerRow(displayName: String, enabled: Boolean, onInvite: () -> Unit)
     }
 }
 
+/** Dashed-border empty-state box — [LobbyScreen]'s no-peers hint and, since second-round-updates#53, [HistoryScreen] and [StatsScreen]'s empty-list hints. */
 @Composable
-private fun EmptyLobbyHint() {
+internal fun LobbyHintBox(message: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,7 +214,7 @@ private fun EmptyLobbyHint() {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            "No one else here yet — make sure both devices are on the same Wi-Fi.",
+            message,
             color = LobbyPalette.inkDim,
             textAlign = TextAlign.Center,
             fontSize = 13.sp,
@@ -235,8 +239,9 @@ internal fun LobbyPrimaryButton(label: String, onClick: () -> Unit) {
     }
 }
 
+/** Hand-drawn section divider — [LobbyScreen]'s pre-Play-Solo rule and, since second-round-updates#53, [HistoryScreen] and [StatsScreen]'s section breaks. */
 @Composable
-private fun DashedDivider() {
+internal fun DashedDivider() {
     val color = LobbyPalette.divider
     Canvas(modifier = Modifier.fillMaxWidth().height(2.dp)) {
         drawLine(
@@ -257,6 +262,12 @@ private fun Modifier.dashedBorder(color: Color, width: Dp, cornerRadius: Dp): Mo
         style = Stroke(width = width.toPx(), pathEffect = LobbyDashPattern),
     )
 }
+
+/** The bordered/rounded static-row treatment shared by [HistoryScreen]'s match rows and [StatsScreen]'s stat rows — [PeerRow] keeps its own chain since it also needs `clip`+`clickable` ordering for its ripple and offset shadow. */
+internal fun Modifier.lobbyCard(): Modifier = this
+    .background(LobbyPalette.surface, LobbyCardShape)
+    .border(2.dp, LobbyPalette.ink, LobbyCardShape)
+    .padding(horizontal = 14.dp, vertical = 12.dp)
 
 @Composable
 private fun InboundInviteDialog(fromDisplayName: String, onAccept: () -> Unit, onDecline: () -> Unit) {
