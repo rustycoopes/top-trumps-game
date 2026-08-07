@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -35,6 +36,19 @@ private val CardHairlineWidth = 1.dp
 internal val CardImageBorderColor = Color.White
 internal val CardImageBorderWidth = 2.dp
 
+/**
+ * The visible white "card-stock" margin framing the whole card, front and back — card-visual-identity
+ * slice 7. Additive outside [CardHairlineColor]'s printed-edge hairline, not a replacement for it.
+ * Grows [CardChrome]'s total footprint rather than insetting the accent content into the existing
+ * [CardGeometry] size, so the banner/image/table zone heights (which sum to exactly `geometry.height`
+ * by construction, see [cardGeometry]) never overflow their box. Callers that solve a geometry to
+ * exactly fit an available space (`solveCardWidth` in `MatchScreen.kt`) must budget `2 *
+ * CardOuterBorderWidth` out of that space themselves. Width is an on-device visual tuning call, not
+ * specified in the WBS.
+ */
+internal val CardOuterBorderColor = Color.White
+internal val CardOuterBorderWidth = 6.dp
+
 /** Static elevation for a card shown at rest — never applied mid-flip/mid-slide, see the themed-card-backgrounds ADR. */
 private val CardElevation = 4.dp
 
@@ -60,11 +74,14 @@ private const val BackgroundImageAlpha = 0.7f
 internal const val CardTextScrimAlpha = 0.85f
 
 /**
- * The outer card box every front/back shares: fixed to [geometry]'s size, [palette]'s accent fill,
- * rounded corners, hairline edge, and an optional faded [background] image (themed-card-backgrounds
- * ADR). Two calls with the same [geometry] instance produce the same size, which is what makes
- * front/back pixel identity structural (see [CardGeometry]'s doc). [withShadow] is only ever true
- * for a card shown at rest — never mid-flip/mid-slide, where a per-frame `Modifier.shadow` would
+ * The outer card box every front/back shares: a [CardOuterBorderWidth] white margin around
+ * [geometry]'s exact size (so the accent-filled content zone inside it is completely unaffected by
+ * the border, avoiding any need to touch the banner/image/table zone arithmetic in [cardGeometry]),
+ * [palette]'s accent fill, rounded corners, hairline edge, and an optional faded [background] image
+ * (themed-card-backgrounds ADR). Two calls with the same [geometry] instance produce the same size,
+ * which is what makes front/back pixel identity structural (see [CardGeometry]'s doc) — the border
+ * is derived from that same instance both times, so this holds for it too. [withShadow] is only ever
+ * true for a card shown at rest — never mid-flip/mid-slide, where a per-frame `Modifier.shadow` would
  * reintroduce the recompute cost the original PRD banned.
  */
 @Composable
@@ -76,18 +93,28 @@ internal fun CardChrome(
     background: (@Composable (Modifier) -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(CardCornerRadius)
+    val outerShape = RoundedCornerShape(CardCornerRadius)
+    val innerShape = RoundedCornerShape((CardCornerRadius - CardOuterBorderWidth).coerceAtLeast(0.dp))
     Box(
         modifier = modifier
-            .width(geometry.width)
-            .height(geometry.height)
-            .let { if (withShadow) it.shadow(CardElevation, shape) else it }
-            .clip(shape)
-            .background(palette.accent)
-            .border(CardHairlineWidth, CardHairlineColor, shape),
+            .width(geometry.width + CardOuterBorderWidth * 2)
+            .height(geometry.height + CardOuterBorderWidth * 2)
+            .let { if (withShadow) it.shadow(CardElevation, outerShape) else it }
+            .clip(outerShape)
+            .background(CardOuterBorderColor),
     ) {
-        background?.invoke(Modifier.fillMaxSize().alpha(BackgroundImageAlpha))
-        content()
+        Box(
+            modifier = Modifier
+                .padding(CardOuterBorderWidth)
+                .width(geometry.width)
+                .height(geometry.height)
+                .clip(innerShape)
+                .background(palette.accent)
+                .border(CardHairlineWidth, CardHairlineColor, innerShape),
+        ) {
+            background?.invoke(Modifier.fillMaxSize().alpha(BackgroundImageAlpha))
+            content()
+        }
     }
 }
 

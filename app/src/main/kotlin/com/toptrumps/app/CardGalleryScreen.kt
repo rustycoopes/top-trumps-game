@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
 import com.toptrumps.app.card.AssetTrumpCard
+import com.toptrumps.app.card.CardOuterBorderWidth
 import com.toptrumps.app.card.CardVariant
 import com.toptrumps.app.card.TrumpCardBack
 import com.toptrumps.app.card.cardContentOf
@@ -88,7 +89,9 @@ internal fun CardGalleryScreen(appGraph: AppGraph, onBack: () -> Unit, modifier:
     val remoteMetrics = remember(deck) { deck.remoteMetrics() }
     // Every mini tile in the grid shares one geometry — hoisted above the grid, not recomputed per
     // item, the same "one instance" discipline that gives front/back their identity elsewhere.
-    val miniGeometry = remember { cardGeometry(width = 96.dp, variant = CardVariant.MINI) }
+    // Width nets out to 96dp of rendered footprint (card + slice-7 border) — this grid's Adaptive
+    // minSize below has no more slack to give than it already had pre-slice-7.
+    val miniGeometry = remember { cardGeometry(width = 96.dp - CardOuterBorderWidth * 2, variant = CardVariant.MINI) }
 
     Column(modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = { deckId = null }) { Text("Back to decks") }
