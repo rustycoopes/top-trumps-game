@@ -46,9 +46,6 @@ private val PreviewClock = object : Clock {
 
 private val PreviewImageSlot: @Composable (Modifier) -> Unit = { modifier -> Box(modifier.background(Color(0x33000000))) }
 
-/** Stands in for a deck's `backgroundImage` — a real asset URL can't resolve in Studio, same reason [PreviewImageSlot] exists. */
-private val PreviewBackgroundSlot: @Composable (Modifier) -> Unit = { modifier -> Box(modifier.background(Color(0xFF2A2A2A))) }
-
 @Preview(name = "Hero — 380dp, choosable, one row disabled")
 @Composable
 private fun TrumpCardHeroPreview() {
@@ -102,22 +99,6 @@ private fun RevealPreview(outcome: RowOutcome) {
         decidedOutcome = outcome,
     )
     TrumpCard(content = content, palette = PreviewPalette, geometry = geometry, image = PreviewImageSlot)
-}
-
-@Preview(name = "Hero — background image + static shadow (slice 6)")
-@Composable
-private fun TrumpCardHeroBackgroundPreview() {
-    val geometry = cardGeometry(width = 380.dp, variant = CardVariant.HERO, minRowHeight = 48.dp)
-    val content = cardContentOf(card = PreviewCard, metrics = PreviewMetrics, now = PreviewClock)
-    TrumpCard(
-        content = content,
-        palette = PreviewPalette,
-        geometry = geometry,
-        withShadow = true,
-        onChooseStat = {},
-        background = PreviewBackgroundSlot,
-        image = PreviewImageSlot,
-    )
 }
 
 @Preview(name = "Back — 380dp, geometrically identical to the hero front")
