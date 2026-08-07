@@ -145,9 +145,11 @@ size. The deck picker shows each deck as a themed card tile instead of a plain b
   font. This replaces today's hardcoded navy/gold placeholder (`CardBack`) and guarantees the back
   and front are always geometrically identical, which the flip animation depends on.
 - **Physicality:** flat saturated accent colour, a white inner border around the image window, rounded
-  corners, a hairline outer edge, and a static drop shadow on the non-animating hero card only. No
-  texture or gloss bitmaps, and no `Modifier.shadow` on anything mid-animation (it re-renders every
-  frame — a constraint already called out in the `top-trumps-core-game` WBS for this exact reason).
+  corners, a hairline outer edge, and a static drop shadow on the hero card whenever it's at rest (not
+  mid-flip — issue #47 made the hero card itself flip on a tap, so "hero card" here means the state,
+  not a card that's categorically exempt from animation). No texture or gloss bitmaps, and no
+  `Modifier.shadow` on anything mid-animation (it re-renders every frame — a constraint already called
+  out in the `top-trumps-core-game` WBS for this exact reason).
 
 ### Per-deck theming
 
