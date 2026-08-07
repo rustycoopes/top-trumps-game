@@ -19,6 +19,7 @@ import coil3.ImageLoader
 import com.toptrumps.app.card.AssetTrumpCard
 import com.toptrumps.app.card.CardContent
 import com.toptrumps.app.card.CardCornerRadius
+import com.toptrumps.app.card.CardOuterBorderWidth
 import com.toptrumps.app.card.CardVariant
 import com.toptrumps.app.card.cardGeometry
 import com.toptrumps.app.theme.toCardPalette
@@ -51,8 +52,10 @@ public fun DeckPickerScreen(
             return@Column
         }
         // One instance shared by every tile, not recomputed per cell — same discipline as the
-        // card gallery's own mini grid (CardGalleryScreen.kt).
-        val miniGeometry = remember { cardGeometry(width = DeckTileWidth, variant = CardVariant.MINI) }
+        // card gallery's own mini grid (CardGalleryScreen.kt). Width nets out to DeckTileWidth of
+        // rendered footprint (card + slice-7 border), preserving the "little breathing room" the
+        // tile grid's minSize below was originally sized around.
+        val miniGeometry = remember { cardGeometry(width = DeckTileWidth - CardOuterBorderWidth * 2, variant = CardVariant.MINI) }
         LazyVerticalGrid(columns = GridCells.Adaptive(minSize = DeckTileWidth + 20.dp), modifier = Modifier.fillMaxSize()) {
             items(decks, key = { it.id }) { deck ->
                 val palette = remember(deck.id) { (deckTheme(deck.id) ?: DeckTheme.DEFAULT).toCardPalette() }

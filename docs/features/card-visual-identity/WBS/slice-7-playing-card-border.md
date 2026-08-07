@@ -62,17 +62,17 @@ None — can start immediately, independent of slice 8.
 
 ## Acceptance criteria
 
-- [ ] Every card — front and back, all three variants (hero/mini/reveal) — renders a clearly visible
+- [x] Every card — front and back, all three variants (hero/mini/reveal) — renders a clearly visible
       white border around its outer edge, in addition to the existing hairline
-- [ ] The card back renders a diagonal-stripe pattern in the deck's accent colour, in place of today's
+- [x] The card back renders a diagonal-stripe pattern in the deck's accent colour, in place of today's
       flat colour fill
-- [ ] The pattern is drawn programmatically (`Canvas`/`Path`), not a bundled image asset
-- [ ] The deck name and "Tap to reveal" caption still render on the back, inside a clearly bordered
+- [x] The pattern is drawn programmatically (`Canvas`/`Path`), not a bundled image asset
+- [x] The deck name and "Tap to reveal" caption still render on the back, inside a clearly bordered
       medallion/badge, at a visibly larger size than today's 22sp/14sp
-- [ ] The back's front/back geometry identity (same `CardGeometry` instance, same `CardChrome` frame)
+- [x] The back's front/back geometry identity (same `CardGeometry` instance, same `CardChrome` frame)
       is unchanged — the flip animation still has no shape jump
-- [ ] No regression to the existing flip animation frame rate, verified manually on-device
-- [ ] Every existing card/screen test (`TrumpCardTest`, `CardAnimationsTest`, etc.) still passes
+- [x] No regression to the existing flip animation frame rate, verified manually on-device
+- [x] Every existing card/screen test (`TrumpCardTest`, `CardAnimationsTest`, etc.) still passes
 
 ## Testing
 
@@ -81,3 +81,48 @@ beyond what a Robolectric/Compose semantics test can already cover (e.g. the med
 carries the "Tap to reveal" click affordance, same as `CardAnimationsTest`'s existing coverage
 pattern). Visual appearance (pattern legibility, border weight, medallion contrast) is a manual,
 on-device concern — same boundary this feature has held throughout.
+
+## Delivered
+
+Issue [#50](https://github.com/rustycoopes/top-trumps-game/issues/50), branch
+`slice-7-playing-card-border`, 2026-08-07.
+
+`CardChrome` (`CardFrame.kt`) now draws a 6dp white `CardOuterBorderWidth` margin *around*
+`CardGeometry`'s existing size rather than inset into it — the outer `Box` grows to
+`geometry.width/height + 2 * CardOuterBorderWidth`, while the inner accent-filled content `Box`
+(and everything inside it: banner, image window, stat table, hairline) stays pinned to the original
+`geometry` size unchanged. That was the deliberate choice over insetting the border into the
+existing geometry: the banner/image/table zone heights are fixed `Dp` values that sum to exactly
+`geometry.height` by construction (`cardGeometry`'s own arithmetic), so shrinking the box they render
+into would have overflowed and clipped the bottom stat row — tightest on the reveal variant's 28dp
+row floor. Growing the footprint instead means every existing zone-height calculation is completely
+untouched.
+
+That growth has to come from somewhere, though: the three `MatchScreen.kt` call sites that use
+`solveCardWidth` to solve a geometry that exactly fills an available `BoxWithConstraints`
+(`HeroCard`, `RevealPair`, `WinPileGrid`'s opened-card view) now subtract `CardOuterBorderWidth * 2`
+from the available space before solving, so the grown card still fits on-screen. A code-review pass
+(`code-review-master`) caught that the same reasoning applies to every *fixed*-width mini-card grid
+too, not just the solved ones — `WinPileGrid`'s pile grid (a live gameplay screen, `GridCells.Fixed(3)`
+with no adaptive slack) would have squeezed mini cards narrower than their baked-in zone heights
+expect on phones under ~380dp wide, and `CardGalleryScreen`'s debug gallery grid was tight
+independent of screen width. Fixed by subtracting `CardOuterBorderWidth * 2` from the *requested*
+width at all three fixed-width mini-geometry call sites (`WinPileGrid`, `CardGalleryScreen`,
+`DeckPickerScreen`) instead, restoring each grid's pre-slice-7 rendered footprint exactly.
+
+`TrumpCardBack.kt`'s back face replaces the flat `Box`/`Text` content with a `Canvas`-drawn diagonal
+stripe pattern (opaque `Color.Black.copy(alpha = 0.12f)` bands tiled across a generously-overshot
+rectangle, then rotated 45°) directly over the existing `palette.accent` fill, plus an opaque
+bordered "medallion" `Column` (white 2dp border, rounded shape) holding the deck name (22sp → 30sp)
+and optional caption (14sp → 18sp) — the medallion draws after the stripes so it fully covers
+whatever pattern falls behind it rather than being clipped around it.
+
+Verified on a connected physical device (Galaxy Tab S7 FE, debug build) via the debug card gallery
+(mini grid, side-by-side front/back) and a live solo match (hero card back/flip/front, reveal pair
+side by side) — border, stripe pattern, medallion, and the mini-grid fix all rendered correctly with
+no clipping. Frame-rate regression and behaviour on screens narrower than the test tablet couldn't be
+directly measured in this session; reasoned through algebraically instead (see the review notes above)
+and left as a standard on-device follow-up if anything looks off on a real phone. All existing
+JVM/Robolectric tests (`TrumpCardTest`, `CardAnimationsTest`, `CardGeometryTest`, full multi-module
+suite) pass unchanged — no test needed updating since the pure `cardGeometry`/`solveCardWidth`
+functions themselves were never touched, only their callers' inputs.

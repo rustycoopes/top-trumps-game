@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
 import com.toptrumps.app.card.AssetTrumpCard
 import com.toptrumps.app.card.CardCornerRadius
+import com.toptrumps.app.card.CardOuterBorderWidth
 import com.toptrumps.app.card.CardVariant
 import com.toptrumps.app.card.RowOutcome
 import com.toptrumps.app.card.TrumpCardBack
@@ -285,7 +286,10 @@ private fun HeroCard(
 ) {
     val isMyTurn = round.chooser == localSeat
     val geometry = remember(maxWidth, maxHeight) {
-        cardGeometry(solveCardWidth(maxWidth, maxHeight, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
+        // CardChrome now draws a CardOuterBorderWidth margin outside geometry's own size (slice 7),
+        // so the space solved for here must leave room for it on top of the card content itself.
+        val borderAllowance = CardOuterBorderWidth * 2
+        cardGeometry(solveCardWidth(maxWidth - borderAllowance, maxHeight - borderAllowance, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
     }
     // A guest resync can remount this composable straight onto an AwaitingChoice round the player
     // had already flipped before disconnecting (TwoDeviceMatchScreen tears MatchScreen down while
@@ -365,8 +369,11 @@ private fun RevealPair(
     val opponentCard = (view.opponent as? RemoteOpponentView.Revealed)?.card ?: return
 
     val geometry = remember(maxWidth, maxHeight) {
-        val perCardMaxWidth = (maxWidth - RevealSpacing) / 2
-        cardGeometry(solveCardWidth(perCardMaxWidth, maxHeight, RevealMinRowHeight), CardVariant.REVEAL, RevealMinRowHeight)
+        // See HeroCard's matching comment — CardChrome's slice-7 outer border must be budgeted out
+        // of the space solved for, not just the inter-card spacing.
+        val borderAllowance = CardOuterBorderWidth * 2
+        val perCardMaxWidth = (maxWidth - RevealSpacing) / 2 - borderAllowance
+        cardGeometry(solveCardWidth(perCardMaxWidth, maxHeight - borderAllowance, RevealMinRowHeight), CardVariant.REVEAL, RevealMinRowHeight)
     }
 
     val myOutcome = when (round.winner) {
@@ -580,7 +587,9 @@ private fun WinPileGrid(
             Button(onClick = { openedCard = null }) { Text("Back to pile") }
             BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 val geometry = remember(maxWidth, maxHeight) {
-                    cardGeometry(solveCardWidth(maxWidth, maxHeight, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
+                    // See HeroCard's matching comment.
+                    val borderAllowance = CardOuterBorderWidth * 2
+                    cardGeometry(solveCardWidth(maxWidth - borderAllowance, maxHeight - borderAllowance, HeroMinRowHeight), CardVariant.HERO, HeroMinRowHeight)
                 }
                 val content = remember(opened, metrics) { cardContentOf(opened, metrics) }
                 AssetTrumpCard(deckId, opened.imageFile, content, palette, geometry, imageLoader, withShadow = true, onChooseStat = null)
@@ -593,8 +602,11 @@ private fun WinPileGrid(
         Button(onClick = onBack) { Text("Back to match") }
         Text("Your pile (${pile.size} cards)")
         // One instance shared by every tile, not recomputed per cell — same discipline as the
-        // card gallery's own mini grid (CardGalleryScreen.kt).
-        val miniGeometry = remember { cardGeometry(width = 96.dp, variant = CardVariant.MINI) }
+        // card gallery's own mini grid (CardGalleryScreen.kt). Width nets out to 96dp of rendered
+        // footprint (card + slice-7 border) — GridCells.Fixed(3) has no adaptive slack to absorb
+        // the border's growth the way solveCardWidth's callers do, so the *requested* width is
+        // shrunk here instead, matching this grid's pre-slice-7 fit on a narrow phone.
+        val miniGeometry = remember { cardGeometry(width = 96.dp - CardOuterBorderWidth * 2, variant = CardVariant.MINI) }
         LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.fillMaxSize()) {
             items(pile, key = { it.id }) { card ->
                 val content = remember(card, metrics) { cardContentOf(card, metrics) }
