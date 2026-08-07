@@ -120,7 +120,7 @@ public fun LobbyScreen(
         }
 
         DashedDivider()
-        PlaySoloButton(onPlaySolo)
+        LobbyPrimaryButton("Play Solo", onPlaySolo)
     }
 
     when (val state = invitation) {
@@ -138,7 +138,7 @@ public fun LobbyScreen(
 }
 
 @Composable
-private fun LobbyTextLink(label: String, onClick: () -> Unit) {
+internal fun LobbyTextLink(label: String, onClick: () -> Unit) {
     TextButton(onClick = onClick, colors = ButtonDefaults.textButtonColors(contentColor = LobbyPalette.inkDim)) {
         Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
@@ -218,8 +218,9 @@ private fun EmptyLobbyHint() {
     }
 }
 
+/** Shared filled-button treatment for "The Pack" theme — [LobbyScreen]'s Play Solo action and, since second-round-updates#52, [SettingsScreen]'s Save action. */
 @Composable
-private fun PlaySoloButton(onClick: () -> Unit) {
+internal fun LobbyPrimaryButton(label: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -230,7 +231,7 @@ private fun PlaySoloButton(onClick: () -> Unit) {
             .padding(vertical = 13.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text("Play Solo", color = LobbyPalette.accent, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(label, color = LobbyPalette.accent, fontWeight = FontWeight.Bold, fontSize = 14.sp)
     }
 }
 
