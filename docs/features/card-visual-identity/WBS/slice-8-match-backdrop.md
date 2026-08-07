@@ -61,22 +61,24 @@ in different, non-overlapping ways (frame border vs. screen-level composite), so
 
 ## Acceptance criteria
 
-- [ ] The deck's `background.webp` renders full-bleed behind the entire in-match screen — top bar,
+- [x] The deck's `background.webp` renders full-bleed behind the entire in-match screen — top bar,
       card region, and action strip — not just inside the card
-- [ ] This applies across every state reachable from `InProgressScreen`: the hero card
+- [x] This applies across every state reachable from `InProgressScreen`: the hero card
       (`AwaitingChoice`), the reveal pair (`Resolved`), the win-pile grid, and an opened full-size
       pile card
-- [ ] The deck picker's flat/default look is unchanged — no per-deck backdrop there
-- [ ] Opacity starts at 60%, visibly reads as a dominant scene (not a faint tint) — tune down from
+- [x] The deck picker's flat/default look is unchanged — no per-deck backdrop there
+- [x] Opacity starts at 60%, visibly reads as a dominant scene (not a faint tint) — tune down from
       there only if legibility genuinely requires it
 - [ ] `MatchTopBar` and `MatchActionStrip` text stays at the existing ≥4.5:1 contrast bar against the
-      backdrop, via whatever scrim/backing treatment the implementer finds cleanest
-- [ ] The existing per-card `BackgroundImageAlpha` wash in `CardFrame.kt` is removed (including
+      backdrop, via whatever scrim/backing treatment the implementer finds cleanest — scrim
+      implemented, actual on-device contrast measurement still pending (see Delivered notes)
+- [x] The existing per-card `BackgroundImageAlpha` wash in `CardFrame.kt` is removed (including
       discarding the uncommitted 0.25→0.7 experiment, which becomes moot)
-- [ ] A deck with no `backgroundImage` shows no backdrop, with no visual regression to the current
+- [x] A deck with no `backgroundImage` shows no backdrop, with no visual regression to the current
       (pre-this-slice) plain screen look
-- [ ] No regression to flip/slide animation frame rate on the oldest available test device
-- [ ] Every existing card/screen test still passes
+- [ ] No regression to flip/slide animation frame rate on the oldest available test device — not
+      verified in this environment, no physical device available (see Delivered notes)
+- [x] Every existing card/screen test still passes
 
 ## Testing
 
@@ -84,3 +86,45 @@ The composite (image + scrim + opacity) is a manual, on-device visual concern, s
 feature has held throughout. Any asset-resolution logic reused from slice 6 is already covered by
 `AllDecksThemeTest`/`DeckLoader` tests — no new JVM-testable surface is introduced by moving where
 the same resolved image gets rendered.
+
+## Delivered
+
+Issue [#51](https://github.com/rustycoopes/top-trumps-game/issues/51), branch
+`slice-8-match-backdrop`, 2026-08-07.
+
+`InProgressScreen` (`MatchScreen.kt`) now wraps its whole subtree — the top bar, the hero/reveal card
+region, the action strip, and (as a sibling branch of the same outer `Box`) the win-pile grid and an
+opened pile card — in one `MatchBackdrop` composable that renders the deck's `background.webp`
+full-bleed at 60% opacity (`MatchBackdropAlpha`) behind everything. `MatchBackdrop` reuses the same
+`file:///android_asset/$deckId/$backgroundFile` resolution `AssetTrumpCard` already had — no new
+asset-loading path — and returns early (rendering nothing) for a deck with no
+`CardPalette.backgroundImage`, same as before this slice. The deck picker was left untouched, as
+scoped.
+
+The old per-card wash is gone, not layered underneath: `CardChrome`'s `background` slot,
+`CardFrame.kt`'s `BackgroundImageAlpha` constant (including the just-committed 0.25→0.7 experiment
+from the prior session, which this slice's scoping conversation had already flagged as moot), and
+`TrumpCard`/`AssetTrumpCard`'s plumbing for it are all deleted, along with the now-orphaned
+`CardPreviews.kt` preview that exercised it. `CardTextScrimAlpha` (the stat-table legibility scrim)
+was left alone per the WBS's explicit call-out, with its doc comment updated to stop referencing the
+deleted background-compositing math.
+
+`MatchTopBar` and `MatchActionStrip` each gained a `MaterialTheme.colorScheme.surface`-at-85%-alpha
+scrim panel (`MatchChromeScrimAlpha`) behind their `Row`/`Column`, since both used to sit on a plain
+surface and now sit on a busy image. A code-review pass (`code-review-master`) caught that
+`WinPileGrid`'s own "Your pile (N cards)" header line — reachable through the same backdrop, since
+the win-pile grid is a sibling branch under the same `Box` — had the identical exposure and no scrim;
+fixed the same way. The same pass also caught that `WinPileGrid`'s `modifier` parameter had stopped
+being forwarded once the backdrop wrapper was introduced (the incoming `modifier` was landing on the
+wrapper `Box` instead) — restored so it flows to whichever branch (win-pile grid or the live-round
+content) is actually on screen, matching the pre-slice contract. `docs/adr/card-visual-identity-themed-card-backgrounds.md`
+(slice 6's ADR) got a short pointer note, in the same style as its own existing PRD pointer, since
+this slice partially reopens its "rendered full-bleed behind the whole card face" decision.
+
+**Diverged from the plan / left open:** two acceptance criteria are inherently on-device visual
+checks — this environment has no physical Android device — and are left unchecked above rather than
+claimed: (1) the scrim's actual measured contrast ratio against both shipped decks'
+(`motorcycles`, `lucys-youtubers`) backgrounds in both light and dark theme, and (2) flip/slide
+animation frame rate with the new full-screen `AsyncImage` composing underneath. Everything else
+(compile, the full JVM test suite across all modules, and structural/logic review by both
+`code-review-master` and `code-quality-guardian`) is verified.

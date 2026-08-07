@@ -164,7 +164,7 @@ private fun InProgressScreen(
     // since `view` keeps updating underneath it regardless of which branch is showing.
     var showingPile by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         MatchBackdrop(deckId = deckId, palette = palette, imageLoader = imageLoader)
 
         if (showingPile) {
@@ -175,6 +175,7 @@ private fun InProgressScreen(
                 palette = palette,
                 imageLoader = imageLoader,
                 onBack = { showingPile = false },
+                modifier = modifier,
             )
             return@Box
         }
@@ -190,7 +191,7 @@ private fun InProgressScreen(
         // every row/button on the card and the strip say so.
         val pending by session.hasPendingIntent.collectAsStateWithLifecycle()
 
-        Box(modifier = Modifier.fillMaxSize().reportGlobalPosition { overlayOrigin = it }) {
+        Box(modifier = modifier.fillMaxSize().reportGlobalPosition { overlayOrigin = it }) {
             Column(modifier = Modifier.fillMaxSize()) {
                 MatchTopBar(view = view, onTapMyPile = { showingPile = true }, onLeaveMatch = onLeaveMatch, positions = positions)
 
@@ -643,7 +644,14 @@ private fun WinPileGrid(
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = onBack) { Text("Back to match") }
-        Text("Your pile (${pile.size} cards)")
+        // Scrimmed like MatchTopBar/MatchActionStrip — this text sits directly on the deck backdrop
+        // too (WBS slice 8), unlike the Button above it, which already has its own Material container.
+        Text(
+            "Your pile (${pile.size} cards)",
+            modifier = Modifier.fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = MatchChromeScrimAlpha))
+                .padding(8.dp),
+        )
         // One instance shared by every tile, not recomputed per cell — same discipline as the
         // card gallery's own mini grid (CardGalleryScreen.kt). Width nets out to 96dp of rendered
         // footprint (card + slice-7 border) — GridCells.Fixed(3) has no adaptive slack to absorb
